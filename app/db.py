@@ -9,7 +9,6 @@ load_dotenv()
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql+psycopg://postgres:postgres@localhost:5432/credit_risk_engine",
 )
 
 
@@ -31,5 +30,7 @@ def get_db() -> Generator[Session, None, None]:
 
 def init_db() -> None:
     from app.models.position import PositionORM  # noqa: F401
+    from app.models.deal import DealORM  # noqa: F401
+    from app.models.breach import BreachORM  # noqa: F401
 
     Base.metadata.create_all(bind=engine)

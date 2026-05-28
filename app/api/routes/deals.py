@@ -2,22 +2,26 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models.schemas import DealRequest, RiskEvaluation
-from app.services.portfolio_store import get_portfolio
-from app.services.risk_engine import RiskEngine
+from app.models.position import PositionORM
+from app.models.schemas import DealRequest
 
 router = APIRouter(prefix="/deals", tags=["deals"])
-risk_engine = RiskEngine()
 
 
-@router.post("/evaluate", response_model=RiskEvaluation)
+@router.post("/evaluate")
 def evaluate_deal(
     deal: DealRequest,
     db: Session = Depends(get_db),
-) -> RiskEvaluation:
+) -> dict[str, int]:
     """
-    Simulate adding a proposed deal to the portfolio and run
-    pre-trade concentration risk checks.
+    Insert a proposed deal as a new position and return its ID.
     """
-    portfolio = get_portfolio(db)
-    return risk_engine.evaluate_deal(portfolio, deal)
+    position = PositionORM(
+        name=deal.name,
+        value=deal.value,
+        industry=deal.industry,
+    )
+    db.add(position)
+    db.commit()
+    db.refresh(position)
+    return {"id": position.id}
