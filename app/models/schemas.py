@@ -23,7 +23,7 @@ class DealRequest(BaseModel):
 
 
 class Breach(BaseModel):
-    rule: Literal["industry_limit", "single_position_limit"]
+    rule: Literal["industry_concentration_limit", "portfolio_capital_limit"]
     limit_pct: float
     actual_pct: float
     detail: str
@@ -33,8 +33,8 @@ class RiskEvaluation(BaseModel):
     status: DecisionStatus
     breaches: list[Breach]
     portfolio_value: float
+    capital_utilization_pct: float
     industry_exposure: dict[str, float]
-    position_exposure: dict[str, float]
 
 
 class HealthResponse(BaseModel):

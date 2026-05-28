@@ -16,6 +16,7 @@ app = FastAPI(
 
 app.include_router(portfolio.router)
 app.include_router(deals.router)
+app.include_router(deals.breaches_router)
 
 
 @app.on_event("startup")

@@ -8,6 +8,8 @@ class BreachORM(Base):
     __tablename__ = "breaches"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    reason: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    industry: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
     rule: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
     limit_pct: Mapped[float] = mapped_column(Float, nullable=False)
     actual_pct: Mapped[float] = mapped_column(Float, nullable=False)
