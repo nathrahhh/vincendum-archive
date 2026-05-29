@@ -1,9 +1,9 @@
 import { fetchPortfolio } from "../api";
-import type { Position } from "../types";
+import type { PortfolioResponse } from "../types";
 import { toServiceError } from "./errors";
 
 /** GET /portfolio */
-export async function getPortfolio(): Promise<Position[]> {
+export async function getPortfolio(): Promise<PortfolioResponse> {
   try {
     return await fetchPortfolio();
   } catch (error) {

@@ -16,6 +16,19 @@ class Position(BaseModel):
     industry: str = Field(..., min_length=1)
 
 
+class IndustryExposure(BaseModel):
+    industry: str
+    value: float
+    percentage: float
+
+
+class PortfolioResponse(BaseModel):
+    positions: list[Position]
+    total_portfolio_value: float
+    capital_utilization_pct: float
+    industry_exposure: list[IndustryExposure]
+
+
 class DealRequest(BaseModel):
     name: str = Field(..., min_length=1)
     value: float = Field(..., gt=0)

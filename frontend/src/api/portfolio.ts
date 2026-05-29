@@ -1,7 +1,7 @@
 import { request } from "./client";
-import type { Position } from "../types";
+import type { PortfolioResponse } from "../types";
 
 /** GET /portfolio */
-export function fetchPortfolio(): Promise<Position[]> {
-  return request<Position[]>("/portfolio");
+export function fetchPortfolio(): Promise<PortfolioResponse> {
+  return request<PortfolioResponse>("/portfolio");
 }

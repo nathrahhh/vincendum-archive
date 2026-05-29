@@ -7,10 +7,10 @@ from app.models.breach import BreachORM
 from app.models.deal import DealORM
 from app.models.position import PositionORM
 from app.models.schemas import DealRequest, Position, RiskEvaluation
+from app.services.breach_helpers import industry_for_new_breach, reason_for_new_breach
 from app.services.risk_engine import RiskEngine
 
 router = APIRouter(prefix="/deals", tags=["deals"])
-breaches_router = APIRouter(tags=["breaches"])
 
 
 @router.post("/evaluate", response_model=RiskEvaluation)
@@ -41,6 +41,8 @@ def evaluate_deal(
         # Breaches are stored separately to preserve a normalized risk-event log.
         for breach in result.breaches:
             breach_row = BreachORM(
+                reason=reason_for_new_breach(breach),
+                industry=industry_for_new_breach(breach, deal.industry),
                 rule=breach.rule,
                 limit_pct=breach.limit_pct,
                 actual_pct=breach.actual_pct,
@@ -57,21 +59,3 @@ def evaluate_deal(
         db.refresh(position)
 
     return result
-
-
-@breaches_router.get("/breaches")
-def list_breaches(db: Session = Depends(get_db)) -> dict[str, list[dict[str, float | int | str]]]:
-    rows = db.execute(select(BreachORM).order_by(BreachORM.id.desc())).scalars().all()
-    grouped: dict[str, list[dict[str, float | int | str]]] = {}
-    for breach in rows:
-        grouped.setdefault(breach.industry, []).append(
-            {
-                "id": breach.id,
-                "reason": breach.reason,
-                "rule": breach.rule,
-                "limit_pct": breach.limit_pct,
-                "actual_pct": breach.actual_pct,
-                "detail": breach.detail,
-            }
-        )
-    return grouped
