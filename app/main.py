@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import breaches, deals, portfolio
 from app.db import SessionLocal, init_db
@@ -14,8 +15,18 @@ app = FastAPI(
     version="1.0.0",
 )
 
-app.include_router(portfolio.router)
-app.include_router(deals.router)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://credit-risk-engine-frontend.onrender.com",
+        "http://localhost:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(portfolio.router)app.include_router(deals.router)
 app.include_router(breaches.router)
 
 
