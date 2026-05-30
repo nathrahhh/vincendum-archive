@@ -6,11 +6,27 @@ from app.db import get_db
 from app.models.breach import BreachORM
 from app.models.deal import DealORM
 from app.models.position import PositionORM
-from app.models.schemas import DealRequest, Position, RiskEvaluation
+from app.models.schemas import DealRecord, DealRequest, Position, RiskEvaluation
 from app.services.breach_helpers import industry_for_new_breach, reason_for_new_breach
 from app.services.risk_engine import RiskEngine
 
 router = APIRouter(prefix="/deals", tags=["deals"])
+
+
+@router.get("", response_model=list[DealRecord])
+def list_deals(db: Session = Depends(get_db)) -> list[DealRecord]:
+    """Return historical evaluated deals, newest first."""
+    rows = db.execute(select(DealORM).order_by(DealORM.id.desc())).scalars().all()
+    return [
+        DealRecord(
+            id=row.id,
+            name=row.name,
+            value=row.value,
+            industry=row.industry,
+            status=row.status,
+        )
+        for row in rows
+    ]
 
 
 @router.post("/evaluate", response_model=RiskEvaluation)

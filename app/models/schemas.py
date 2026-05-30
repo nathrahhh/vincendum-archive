@@ -35,6 +35,14 @@ class DealRequest(BaseModel):
     industry: str = Field(..., min_length=1)
 
 
+class DealRecord(BaseModel):
+    id: int
+    name: str
+    value: float
+    industry: str
+    status: str | None = None
+
+
 class Breach(BaseModel):
     rule: Literal["industry_concentration_limit", "portfolio_capital_limit"]
     limit_pct: float
