@@ -26,7 +26,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(portfolio.router)app.include_router(deals.router)
+app.include_router(portfolio.router)
+app.include_router(deals.router)
 app.include_router(breaches.router)
 
 
