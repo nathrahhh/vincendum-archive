@@ -1,5 +1,10 @@
+import { DevRoleProvider } from "./devRole";
 import { AppRouter } from "./router";
 
 export default function App() {
-  return <AppRouter />;
+  return (
+    <DevRoleProvider>
+      <AppRouter />
+    </DevRoleProvider>
+  );
 }

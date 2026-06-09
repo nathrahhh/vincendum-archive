@@ -35,6 +35,9 @@ a {
   background: #fff;
   border-right: 1px solid #e2e5ea;
   padding: 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 .app-sidebar__brand {
@@ -65,6 +68,50 @@ a {
 
 .app-sidebar__link--active {
   background: #eef2ff;
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+.role-switcher {
+  margin-top: auto;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e5ea;
+}
+
+.role-switcher__label {
+  margin: 0 0 0.5rem;
+  padding: 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.role-switcher__buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.role-switcher__btn {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  text-align: left;
+  border: 1px solid #e2e5ea;
+  border-radius: 6px;
+  background: #fff;
+  color: #4b5563;
+  cursor: pointer;
+}
+
+.role-switcher__btn:hover {
+  background: #f3f4f6;
+}
+
+.role-switcher__btn--active {
+  background: #eef2ff;
+  border-color: #c7d2fe;
   color: #1e3a8a;
   font-weight: 600;
 }
@@ -301,6 +348,20 @@ a {
   color: #9ca3af;
 }
 
+.deal-form__section {
+  margin: 0 0 1.25rem;
+  padding: 0;
+  border: none;
+}
+
+.deal-form__section-title {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
 .deal-form__field {
   display: block;
   margin-bottom: 1rem;
@@ -496,4 +557,33 @@ a {
 /* Evaluations page */
 .evaluations-page {
   max-width: 960px;
+}
+
+.eval-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.eval-actions__btn {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8125rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.eval-actions__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.eval-actions__btn--approve {
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.eval-actions__btn--reject {
+  color: #b91c1c;
+  border-color: #fecaca;
 }

@@ -4,9 +4,13 @@ type EvaluationsTableProps = {
   deals: DealRecord[];
   isLoading?: boolean;
   error?: string | null;
+  onApprove?: (id: number) => void;
+  onReject?: (id: number) => void;
+  actionLoadingId?: number | null;
 };
 
 const statusClass: Record<string, string> = {
+  PENDING: "dashboard-badge dashboard-badge--warning",
   APPROVED: "dashboard-badge dashboard-badge--approved",
   WARNING: "dashboard-badge dashboard-badge--warning",
   REJECTED: "dashboard-badge dashboard-badge--rejected",
@@ -20,7 +24,14 @@ function formatValue(value: number): string {
   }).format(value);
 }
 
-export default function EvaluationsTable({ deals, isLoading, error }: EvaluationsTableProps) {
+export default function EvaluationsTable({
+  deals,
+  isLoading,
+  error,
+  onApprove,
+  onReject,
+  actionLoadingId,
+}: EvaluationsTableProps) {
   return (
     <section className="dashboard-panel">
       {error ? <p className="dashboard-error">{error}</p> : null}
@@ -37,6 +48,7 @@ export default function EvaluationsTable({ deals, isLoading, error }: Evaluation
                 <th>Value</th>
                 <th>Industry</th>
                 <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -49,6 +61,30 @@ export default function EvaluationsTable({ deals, isLoading, error }: Evaluation
                     <span className={statusClass[row.status ?? ""] ?? "dashboard-badge"}>
                       {row.status ?? "—"}
                     </span>
+                  </td>
+                  <td>
+                    {row.status === "PENDING" ? (
+                      <div className="eval-actions">
+                        <button
+                          type="button"
+                          className="eval-actions__btn eval-actions__btn--approve"
+                          disabled={actionLoadingId === row.id}
+                          onClick={() => onApprove?.(row.id)}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          className="eval-actions__btn eval-actions__btn--reject"
+                          disabled={actionLoadingId === row.id}
+                          onClick={() => onReject?.(row.id)}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    ) : (
+                      "—"
+                    )}
                   </td>
                 </tr>
               ))}

@@ -8,6 +8,8 @@ from app.models.deal import DealORM
 from app.models.position import PositionORM
 from app.models.schemas import DealRecord, DealRequest, Position, RiskEvaluation
 from app.services.breach_helpers import industry_for_new_breach, reason_for_new_breach
+from app.services.deal_service import approve_deal as approve_deal_service
+from app.services.deal_service import reject_deal as reject_deal_service
 from app.services.risk_engine import RiskEngine
 
 router = APIRouter(prefix="/deals", tags=["deals"])
@@ -43,11 +45,12 @@ def evaluate_deal(
     result = risk_engine.evaluate_deal(portfolio=portfolio, deal=deal)
 
     # Deals table is the full audit trail of every submitted trade attempt.
+    # Status is PENDING until manually approved and added to positions.
     logged_deal = DealORM(
         name=deal.name,
         value=deal.value,
         industry=deal.industry,
-        status=result.status.value,
+        status="PENDING",
     )
     db.add(logged_deal)
     db.commit()
@@ -67,11 +70,16 @@ def evaluate_deal(
             db.add(breach_row)
         db.commit()
 
-    if result.status.value == "APPROVED":
-        # Only approved deals become funded positions in the live portfolio.
-        position = PositionORM(name=deal.name, value=deal.value, industry=deal.industry)
-        db.add(position)
-        db.commit()
-        db.refresh(position)
-
     return result
+
+
+@router.post("/{deal_id}/approve", response_model=DealRecord)
+def approve_deal(deal_id: int, db: Session = Depends(get_db)) -> DealRecord:
+    """Approve a pending deal and add it to the portfolio."""
+    return approve_deal_service(db, deal_id)
+
+
+@router.post("/{deal_id}/reject", response_model=DealRecord)
+def reject_deal(deal_id: int, db: Session = Depends(get_db)) -> DealRecord:
+    """Reject a pending deal without creating a position."""
+    return reject_deal_service(db, deal_id)

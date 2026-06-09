@@ -1,13 +1,18 @@
 import { NavLink } from "react-router-dom";
+import { useDevRole } from "../../devRole";
+import RoleSwitcher from "./RoleSwitcher";
 
-const links = [
-  { to: "/dashboard", label: "Dashboard" },
-  { to: "/deal", label: "Deal" },
-  { to: "/evaluations", label: "Evaluations" },
-  { to: "/breaches", label: "Breaches" },
+const allLinks = [
+  { to: "/dashboard", label: "Dashboard", roles: ["admin"] as const },
+  { to: "/deal", label: "Deal", roles: ["client"] as const },
+  { to: "/evaluations", label: "Evaluations", roles: ["admin"] as const },
+  { to: "/breaches", label: "Breaches", roles: ["admin"] as const },
 ] as const;
 
 export default function Sidebar() {
+  const { role } = useDevRole();
+  const links = allLinks.filter((link) => (link.roles as readonly string[]).includes(role));
+
   return (
     <aside className="app-sidebar">
       <div className="app-sidebar__brand">Credit Risk Engine</div>
@@ -24,6 +29,7 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
+      <RoleSwitcher />
     </aside>
   );
 }
