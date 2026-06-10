@@ -44,13 +44,13 @@ def evaluate_deal(
     risk_engine = RiskEngine()
     result = risk_engine.evaluate_deal(portfolio=portfolio, deal=deal)
 
-    # Deals table is the full audit trail of every submitted trade attempt.
-    # Status is PENDING until manually approved and added to positions.
+    # RiskEngine gatekeeper: auto-reject fails risk checks; pass cases await admin approval.
+    deal_status = "REJECTED" if result.status.value == "REJECTED" else "PENDING"
     logged_deal = DealORM(
         name=deal.name,
         value=deal.value,
         industry=deal.industry,
-        status="PENDING",
+        status=deal_status,
     )
     db.add(logged_deal)
     db.commit()
