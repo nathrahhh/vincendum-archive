@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "../components/layout";
 import { defaultPathForRole, useDevRole } from "../devRole";
+import ClientsPage from "../pages/ClientsPage";
 import BreachesPage from "../pages/BreachesPage";
 import DashboardPage from "../pages/DashboardPage";
 import DealPage from "../pages/DealPage";
@@ -25,6 +26,7 @@ export default function AppRouter() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/evaluations" element={<EvaluationsPage />} />
             <Route path="/breaches" element={<BreachesPage />} />
+            <Route path="/clients" element={<ClientsPage />} />
             <Route path="/deal" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </>

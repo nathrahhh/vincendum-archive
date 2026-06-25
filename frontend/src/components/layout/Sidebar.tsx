@@ -7,6 +7,7 @@ const allLinks = [
   { to: "/deal", label: "Deal", roles: ["client"] as const },
   { to: "/evaluations", label: "Evaluations", roles: ["admin"] as const },
   { to: "/breaches", label: "Breaches", roles: ["admin"] as const },
+  { to: "/clients", label: "Clients", roles: ["admin"] as const },
 ] as const;
 
 export default function Sidebar() {

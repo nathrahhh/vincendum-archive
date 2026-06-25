@@ -559,6 +559,101 @@ a {
   max-width: 960px;
 }
 
+.clients-page {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.clients-page__list {
+  min-width: 0;
+}
+
+.clients-table__row {
+  cursor: pointer;
+}
+
+.clients-table__row:hover {
+  background: #f9fafb;
+}
+
+.clients-table__row--active {
+  background: #eef2ff;
+}
+
+.clients-panel {
+  background: #fff;
+  border: 1px solid #e2e5ea;
+  border-radius: 8px;
+  padding: 1.25rem;
+  min-height: 320px;
+}
+
+.clients-panel__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.clients-panel__meta {
+  margin: 0 0 0.35rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.clients-panel__hint {
+  margin: 1rem 0 0;
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.clients-chart__svg {
+  width: 100%;
+  height: auto;
+  margin-top: 1rem;
+}
+
+.clients-chart__legend {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.clients-chart__legend-item--historical::before,
+.clients-chart__legend-item--forecast::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 2px;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+
+.clients-chart__legend-item--historical::before {
+  background: #4f46e5;
+}
+
+.clients-chart__legend-item--forecast::before {
+  background: #059669;
+}
+
+.clients-chart__labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+@media (max-width: 900px) {
+  .clients-page {
+    grid-template-columns: 1fr;
+  }
+}
+
 .eval-actions {
   display: flex;
   gap: 0.5rem;
