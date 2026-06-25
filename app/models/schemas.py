@@ -1,3 +1,4 @@
+from datetime import date
 from enum import Enum
 from typing import Literal
 
@@ -61,3 +62,12 @@ class RiskEvaluation(BaseModel):
 class HealthResponse(BaseModel):
     status: str = "ok"
     service: str = "Credit Risk + Concentration Risk Engine"
+
+
+class ClientFinancialCreate(BaseModel):
+    client_id: int
+    month: date
+    revenue: float
+    cogs: float
+    opex: float
+    cash_balance: float

@@ -218,6 +218,20 @@ a {
   border-radius: 6px;
 }
 
+.client-financials-page {
+  max-width: 480px;
+}
+
+.client-financials__success {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 6px;
+}
+
 .dashboard-table-wrap {
   overflow-x: auto;
 }

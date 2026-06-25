@@ -1,5 +1,16 @@
-import { fetchClientFinancials, fetchClientForecast, fetchClients } from "../api";
-import type { Client, ClientFinancials, ClientForecast } from "../types";
+import {
+  fetchClientFinancials,
+  fetchClientForecast,
+  fetchClients,
+  postClientFinancial,
+} from "../api";
+import type {
+  Client,
+  ClientFinancialCreate,
+  ClientFinancialCreateResponse,
+  ClientFinancials,
+  ClientForecast,
+} from "../types";
 import { toServiceError } from "./errors";
 
 export async function getClients(): Promise<Client[]> {
@@ -23,5 +34,15 @@ export async function getClientForecast(clientId: number): Promise<ClientForecas
     return await fetchClientForecast(clientId);
   } catch (error) {
     throw toServiceError(error, "Failed to load client forecast");
+  }
+}
+
+export async function submitClientFinancial(
+  payload: ClientFinancialCreate,
+): Promise<ClientFinancialCreateResponse> {
+  try {
+    return await postClientFinancial(payload);
+  } catch (error) {
+    throw toServiceError(error, "Failed to submit client financials");
   }
 }

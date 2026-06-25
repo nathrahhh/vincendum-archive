@@ -1,5 +1,11 @@
 import { request } from "./client";
-import type { Client, ClientFinancials, ClientForecast } from "../types";
+import type {
+  Client,
+  ClientFinancialCreate,
+  ClientFinancialCreateResponse,
+  ClientFinancials,
+  ClientForecast,
+} from "../types";
 
 export function fetchClients(): Promise<Client[]> {
   return request<Client[]>("/clients");
@@ -11,4 +17,13 @@ export function fetchClientFinancials(clientId: number): Promise<ClientFinancial
 
 export function fetchClientForecast(clientId: number): Promise<ClientForecast> {
   return request<ClientForecast>(`/clients/${clientId}/forecast`);
+}
+
+export function postClientFinancial(
+  payload: ClientFinancialCreate,
+): Promise<ClientFinancialCreateResponse> {
+  return request<ClientFinancialCreateResponse>("/client-financials", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }

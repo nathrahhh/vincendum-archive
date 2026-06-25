@@ -1,4 +1,4 @@
-export type { Client, ClientFinancials, ClientForecast } from "./clients";
+export type { Client, ClientFinancials, ClientForecast, ClientFinancialCreate, ClientFinancialCreateResponse } from "./clients";
 export type { Position, IndustryExposure, PortfolioResponse } from "./portfolio";
 export type { DealPayload } from "./deal";
 export type { DealRecord } from "./deals";

@@ -5,6 +5,7 @@ import RoleSwitcher from "./RoleSwitcher";
 const allLinks = [
   { to: "/dashboard", label: "Dashboard", roles: ["admin"] as const },
   { to: "/deal", label: "Deal", roles: ["client"] as const },
+  { to: "/client-financials", label: "Client Financials", roles: ["client"] as const },
   { to: "/evaluations", label: "Evaluations", roles: ["admin"] as const },
   { to: "/breaches", label: "Breaches", roles: ["admin"] as const },
   { to: "/clients", label: "Clients", roles: ["admin"] as const },

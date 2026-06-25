@@ -26,3 +26,25 @@ export type ClientForecast = {
     cash_balance: number[];
   };
 };
+
+export type ClientFinancialCreate = {
+  client_id: number;
+  month: string;
+  revenue: number;
+  cogs: number;
+  opex: number;
+  cash_balance: number;
+};
+
+export type ClientFinancialCreateResponse = {
+  message: string;
+  record: {
+    id: number;
+    client_id: number;
+    month: string;
+    revenue: number;
+    cogs: number;
+    opex: number;
+    cash_balance: number;
+  };
+};

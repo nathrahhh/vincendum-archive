@@ -4,6 +4,7 @@ import { defaultPathForRole, useDevRole } from "../devRole";
 import ClientsPage from "../pages/ClientsPage";
 import BreachesPage from "../pages/BreachesPage";
 import DashboardPage from "../pages/DashboardPage";
+import ClientFinancialsPage from "../pages/ClientFinancialsPage";
 import DealPage from "../pages/DealPage";
 import EvaluationsPage from "../pages/EvaluationsPage";
 
@@ -19,6 +20,7 @@ export default function AppRouter() {
         {role === "client" ? (
           <>
             <Route path="/deal" element={<DealPage />} />
+            <Route path="/client-financials" element={<ClientFinancialsPage />} />
             <Route path="*" element={<Navigate to="/deal" replace />} />
           </>
         ) : (
