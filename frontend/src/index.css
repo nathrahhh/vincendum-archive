@@ -232,6 +232,20 @@ a {
   border-radius: 6px;
 }
 
+.client-apply__rejection {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+}
+
+.client-apply__reasons {
+  margin: 0 0 0.75rem;
+}
+
 .dashboard-table-wrap {
   overflow-x: auto;
 }

@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "../components/layout";
 import { defaultPathForRole, useDevRole } from "../devRole";
+import ApplyPage from "../pages/ApplyPage";
 import ClientsPage from "../pages/ClientsPage";
 import BreachesPage from "../pages/BreachesPage";
 import DashboardPage from "../pages/DashboardPage";
@@ -20,6 +21,7 @@ export default function AppRouter() {
         {role === "client" ? (
           <>
             <Route path="/deal" element={<DealPage />} />
+            <Route path="/apply" element={<ApplyPage />} />
             <Route path="/client-financials" element={<ClientFinancialsPage />} />
             <Route path="*" element={<Navigate to="/deal" replace />} />
           </>

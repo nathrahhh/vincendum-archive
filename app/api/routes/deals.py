@@ -10,7 +10,7 @@ from app.models.schemas import DealRecord, DealRequest, Position, RiskEvaluation
 from app.services.breach_helpers import industry_for_new_breach, reason_for_new_breach
 from app.services.deal_service import approve_deal as approve_deal_service
 from app.services.deal_service import reject_deal as reject_deal_service
-from app.services.risk_engine import RiskEngine
+from app.services.concentration_risk_engine import RiskEngine
 
 router = APIRouter(prefix="/deals", tags=["deals"])
 

@@ -71,3 +71,9 @@ class ClientFinancialCreate(BaseModel):
     cogs: float
     opex: float
     cash_balance: float
+
+
+class ClientApplicationCreate(BaseModel):
+    name: str = Field(..., min_length=1)
+    industry: str = Field(..., min_length=1)
+    credit_limit: float = Field(..., gt=0)

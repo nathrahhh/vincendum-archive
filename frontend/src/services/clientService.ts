@@ -2,10 +2,13 @@ import {
   fetchClientFinancials,
   fetchClientForecast,
   fetchClients,
+  postClientApplication,
   postClientFinancial,
 } from "../api";
 import type {
   Client,
+  ClientApplicationCreate,
+  ClientApplicationCreateResponse,
   ClientFinancialCreate,
   ClientFinancialCreateResponse,
   ClientFinancials,
@@ -44,5 +47,15 @@ export async function submitClientFinancial(
     return await postClientFinancial(payload);
   } catch (error) {
     throw toServiceError(error, "Failed to submit client financials");
+  }
+}
+
+export async function submitClientApplication(
+  payload: ClientApplicationCreate,
+): Promise<ClientApplicationCreateResponse> {
+  try {
+    return await postClientApplication(payload);
+  } catch (error) {
+    throw toServiceError(error, "Failed to submit application");
   }
 }
