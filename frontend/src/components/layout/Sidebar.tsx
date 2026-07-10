@@ -10,6 +10,7 @@ const allLinks = [
   { to: "/evaluations", label: "Evaluations", roles: ["admin"] as const },
   { to: "/breaches", label: "Breaches", roles: ["admin"] as const },
   { to: "/clients", label: "Clients", roles: ["admin"] as const },
+  { to: "/client-applications", label: "Client Applications", roles: ["admin"] as const },
 ] as const;
 
 export default function Sidebar() {

@@ -1,28 +1,31 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import text
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.models.client import ClientORM
 
 router = APIRouter(prefix="/clients", tags=["clients"])
 
 
+def _client_to_dict(client: ClientORM) -> dict:
+    return {
+        "id": client.id,
+        "name": client.name,
+        "industry": client.industry,
+        "credit_limit": client.credit_limit,
+    }
+
+
 @router.get("")
 def list_clients(db: Session = Depends(get_db)) -> list[dict]:
-    rows = db.execute(
-        text("SELECT id, name, industry, credit_limit FROM clients ORDER BY id ASC")
-    ).mappings()
-    return [dict(row) for row in rows.all()]
+    rows = db.execute(select(ClientORM).order_by(ClientORM.id.asc())).scalars().all()
+    return [_client_to_dict(row) for row in rows]
 
 
 @router.get("/{client_id}")
 def get_client(client_id: int, db: Session = Depends(get_db)) -> dict:
-    row = db.execute(
-        text(
-            "SELECT id, name, industry, credit_limit FROM clients WHERE id = :client_id"
-        ),
-        {"client_id": client_id},
-    ).mappings().first()
+    row = db.get(ClientORM, client_id)
     if row is None:
         raise HTTPException(status_code=404, detail=f"Client {client_id} not found")
-    return dict(row)
+    return _client_to_dict(row)

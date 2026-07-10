@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "../components/layout";
 import { defaultPathForRole, useDevRole } from "../devRole";
 import ApplyPage from "../pages/ApplyPage";
+import ClientApplicationsPage from "../pages/ClientApplicationsPage";
 import ClientsPage from "../pages/ClientsPage";
 import BreachesPage from "../pages/BreachesPage";
 import DashboardPage from "../pages/DashboardPage";
@@ -31,6 +32,7 @@ export default function AppRouter() {
             <Route path="/evaluations" element={<EvaluationsPage />} />
             <Route path="/breaches" element={<BreachesPage />} />
             <Route path="/clients" element={<ClientsPage />} />
+            <Route path="/client-applications" element={<ClientApplicationsPage />} />
             <Route path="/deal" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </>

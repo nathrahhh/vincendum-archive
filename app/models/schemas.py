@@ -31,6 +31,7 @@ class PortfolioResponse(BaseModel):
 
 
 class DealRequest(BaseModel):
+    client_id: int
     name: str = Field(..., min_length=1)
     value: float = Field(..., gt=0)
     industry: str = Field(..., min_length=1)
@@ -38,6 +39,7 @@ class DealRequest(BaseModel):
 
 class DealRecord(BaseModel):
     id: int
+    client_id: int | None = None
     name: str
     value: float
     industry: str

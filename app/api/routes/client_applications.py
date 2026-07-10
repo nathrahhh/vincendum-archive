@@ -3,6 +3,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.models.client import ClientORM
 from app.models.position import PositionORM
 from app.models.schemas import ClientApplicationCreate, DealRequest, Position
 from app.services.concentration_risk_engine import RiskEngine
@@ -105,27 +106,27 @@ def approve_client_application(
             detail="Only pending applications can be approved",
         )
 
-    client = db.execute(
-        text(
-            "INSERT INTO clients (name, industry, credit_limit) "
-            "VALUES (:name, :industry, :credit_limit) "
-            "RETURNING id, name, industry, credit_limit"
-        ),
-        {
-            "name": application["name"],
-            "industry": application["industry"],
-            "credit_limit": application["credit_limit"],
-        },
-    ).mappings().one()
+    client_row = ClientORM(
+        name=application["name"],
+        industry=application["industry"],
+        credit_limit=application["credit_limit"],
+    )
+    db.add(client_row)
     db.execute(
         text("UPDATE client_applications SET status = :status WHERE id = :id"),
         {"status": "approved", "id": application_id},
     )
     db.commit()
+    db.refresh(client_row)
 
     return {
         "message": "Client approved successfully",
-        "client": dict(client),
+        "client": {
+            "id": client_row.id,
+            "name": client_row.name,
+            "industry": client_row.industry,
+            "credit_limit": client_row.credit_limit,
+        },
     }
 
 

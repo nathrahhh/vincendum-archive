@@ -47,10 +47,11 @@ def evaluate_deal(
     # RiskEngine gatekeeper: auto-reject fails risk checks; pass cases await admin approval.
     deal_status = "REJECTED" if result.status.value == "REJECTED" else "PENDING"
     logged_deal = DealORM(
-        name=deal.name,
-        value=deal.value,
-        industry=deal.industry,
-        status=deal_status,
+     client_id=deal.client_id,
+     name=deal.name,
+     value=deal.value,
+     industry=deal.industry,
+     status=deal_status,
     )
     db.add(logged_deal)
     db.commit()
