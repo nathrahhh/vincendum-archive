@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { ClientDetailPanel } from "../components/clients";
-import { getClientFinancials, getClientForecast, getClients } from "../services/clientService";
+import {
+  getClient,
+  getClientFinancials,
+  getClientForecast,
+  getClients,
+} from "../services/clientService";
 import type { Client, ClientFinancials, ClientForecast } from "../types";
 
 function formatCurrency(value: number): string {
@@ -49,6 +54,10 @@ export default function ClientsPage() {
     };
   }, []);
 
+  function handleClientSelect(client: Client) {
+    setSelectedClient(client);
+  }
+
   useEffect(() => {
     if (!selectedClient) {
       setFinancials(null);
@@ -56,17 +65,20 @@ export default function ClientsPage() {
       return;
     }
 
+    const clientId = selectedClient.id;
     let cancelled = false;
 
     async function loadClientData() {
       setIsLoadingDetail(true);
       setError(null);
       try {
-        const [financialsData, forecastData] = await Promise.all([
-          getClientFinancials(selectedClient.id),
-          getClientForecast(selectedClient.id),
+        const [clientData, financialsData, forecastData] = await Promise.all([
+          getClient(clientId),
+          getClientFinancials(clientId),
+          getClientForecast(clientId),
         ]);
         if (!cancelled) {
+          setSelectedClient(clientData);
           setFinancials(financialsData);
           setForecast(forecastData);
         }
@@ -87,7 +99,7 @@ export default function ClientsPage() {
     return () => {
       cancelled = true;
     };
-  }, [selectedClient]);
+  }, [selectedClient?.id]);
 
   return (
     <div className="clients-page">
@@ -117,7 +129,7 @@ export default function ClientsPage() {
                         ? "clients-table__row clients-table__row--active"
                         : "clients-table__row"
                     }
-                    onClick={() => setSelectedClient(client)}
+                    onClick={() => handleClientSelect(client)}
                   >
                     <td>{client.name}</td>
                     <td>{client.industry}</td>

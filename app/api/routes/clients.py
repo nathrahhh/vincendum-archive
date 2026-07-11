@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models.client import ClientORM
+from app.services.client_exposure_service import get_client_exposure
 
 router = APIRouter(prefix="/clients", tags=["clients"])
 
@@ -28,4 +29,5 @@ def get_client(client_id: int, db: Session = Depends(get_db)) -> dict:
     row = db.get(ClientORM, client_id)
     if row is None:
         raise HTTPException(status_code=404, detail=f"Client {client_id} not found")
-    return _client_to_dict(row)
+    exposure = get_client_exposure(db, client_id)
+    return {**_client_to_dict(row), **exposure}

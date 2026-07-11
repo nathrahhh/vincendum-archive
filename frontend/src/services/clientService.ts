@@ -1,4 +1,5 @@
 import {
+  fetchClient,
   fetchClientFinancials,
   fetchClientForecast,
   fetchClients,
@@ -21,6 +22,14 @@ export async function getClients(): Promise<Client[]> {
     return await fetchClients();
   } catch (error) {
     throw toServiceError(error, "Failed to load clients");
+  }
+}
+
+export async function getClient(clientId: number): Promise<Client> {
+  try {
+    return await fetchClient(clientId);
+  } catch (error) {
+    throw toServiceError(error, "Failed to load client");
   }
 }
 

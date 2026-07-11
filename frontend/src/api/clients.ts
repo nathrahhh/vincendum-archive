@@ -11,6 +11,10 @@ export function fetchClients(): Promise<Client[]> {
   return request<Client[]>("/clients");
 }
 
+export function fetchClient(clientId: number): Promise<Client> {
+  return request<Client>(`/clients/${clientId}`);
+}
+
 export function fetchClientFinancials(clientId: number): Promise<ClientFinancials> {
   return request<ClientFinancials>(`/clients/${clientId}/financials`);
 }

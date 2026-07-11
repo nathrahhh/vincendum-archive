@@ -1,8 +1,21 @@
+export type ClientDeal = {
+  id: number;
+  name: string;
+  value: number;
+  industry: string;
+  status: string;
+};
+
 export type Client = {
   id: number;
   name: string;
   industry: string;
   credit_limit: number;
+  current_exposure?: number;
+  remaining_credit?: number;
+  utilization_pct?: number;
+  deal_count?: number;
+  deals?: ClientDeal[];
 };
 
 export type ClientFinancials = {

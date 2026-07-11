@@ -22,6 +22,7 @@ def list_deals(db: Session = Depends(get_db)) -> list[DealRecord]:
     return [
         DealRecord(
             id=row.id,
+            client_id=row.client_id,
             name=row.name,
             value=row.value,
             industry=row.industry,

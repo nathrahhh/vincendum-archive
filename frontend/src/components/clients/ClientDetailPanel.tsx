@@ -9,12 +9,22 @@ type ClientDetailPanelProps = {
   error: string | null;
 };
 
+const statusClass: Record<string, string> = {
+  PENDING: "dashboard-badge dashboard-badge--warning",
+  APPROVED: "dashboard-badge dashboard-badge--approved",
+  REJECTED: "dashboard-badge dashboard-badge--rejected",
+};
+
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function formatPercent(value: number): string {
+  return `${value.toFixed(2)}%`;
 }
 
 export default function ClientDetailPanel({
@@ -32,11 +42,60 @@ export default function ClientDetailPanel({
     );
   }
 
+  const deals = client.deals ?? [];
+
   return (
     <aside className="clients-panel">
       <h2 className="clients-panel__title">{client.name}</h2>
       <p className="clients-panel__meta">Industry: {client.industry}</p>
       <p className="clients-panel__meta">Credit limit: {formatCurrency(client.credit_limit)}</p>
+
+      <section>
+        <h3 className="deal-result-panel__breaches-title">Exposure</h3>
+        <p className="clients-panel__meta">
+          Current exposure: {formatCurrency(client.current_exposure ?? 0)}
+        </p>
+        <p className="clients-panel__meta">
+          Remaining credit: {formatCurrency(client.remaining_credit ?? 0)}
+        </p>
+        <p className="clients-panel__meta">
+          Utilization: {formatPercent(client.utilization_pct ?? 0)}
+        </p>
+      </section>
+
+      <section>
+        <h3 className="deal-result-panel__breaches-title">Deals</h3>
+        {deals.length === 0 ? (
+          <p className="clients-panel__hint">No approved deals for this client.</p>
+        ) : (
+          <div className="dashboard-table-wrap">
+            <table className="dashboard-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Value</th>
+                  <th>Industry</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deals.map((deal) => (
+                  <tr key={deal.id}>
+                    <td>{deal.name}</td>
+                    <td className="dashboard-table__num">{formatCurrency(deal.value)}</td>
+                    <td>{deal.industry}</td>
+                    <td>
+                      <span className={statusClass[deal.status] ?? "dashboard-badge"}>
+                        {deal.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       {error ? <p className="dashboard-error">{error}</p> : null}
       {isLoading ? <p className="clients-panel__hint">Loading client data…</p> : null}
