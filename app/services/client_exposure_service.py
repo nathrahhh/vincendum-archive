@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.client import ClientORM
-from app.models.deal import DealORM
+from app.models.position import PositionORM
 
 
 def get_client_exposure(db: Session, client_id: int) -> dict:
@@ -11,14 +11,13 @@ def get_client_exposure(db: Session, client_id: int) -> dict:
     if client is None:
         raise ValueError(f"Client {client_id} not found")
 
-    deals = db.execute(
-        select(DealORM).where(
-            DealORM.client_id == client_id,
-            DealORM.status == "APPROVED",
+    positions = db.execute(
+        select(PositionORM).where(
+            PositionORM.client_id == client_id,
         )
     ).scalars().all()
 
-    current_exposure = sum(deal.value for deal in deals)
+    current_exposure = sum(position.value for position in positions)
 
     remaining_credit = client.credit_limit - current_exposure
 
@@ -33,15 +32,15 @@ def get_client_exposure(db: Session, client_id: int) -> dict:
         "current_exposure": current_exposure,
         "remaining_credit": remaining_credit,
         "utilization_pct": round(utilization_pct, 2),
-        "deal_count": len(deals),
+        "deal_count": len(positions),
         "deals": [
             {
-                "id": deal.id,
-                "name": deal.name,
-                "value": deal.value,
-                "industry": deal.industry,
-                "status": deal.status,
+                "id": position.id,
+                "name": position.name,
+                "value": position.value,
+                "industry": position.industry,
+                "status": "APPROVED",
             }
-            for deal in deals
+            for position in positions
         ],
     }
