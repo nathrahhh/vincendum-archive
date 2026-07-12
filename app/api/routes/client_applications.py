@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
@@ -5,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models.client import ClientORM
 from app.models.position import PositionORM
-from app.models.schemas import ClientApplicationCreate, DealRequest, Position
+from app.models.schemas import ClientApplicationCreate, Position
 from app.services.concentration_risk_engine import RiskEngine
 
 router = APIRouter(tags=["client-applications"])
@@ -44,7 +46,7 @@ def create_client_application(
 
     existing_positions = db.execute(select(PositionORM).order_by(PositionORM.name)).scalars().all()
     portfolio = [Position(name=p.name, value=p.value, industry=p.industry) for p in existing_positions]
-    proposed_exposure = DealRequest(
+    proposed_exposure = SimpleNamespace(
         name=payload.name,
         value=payload.credit_limit,
         industry=payload.industry,

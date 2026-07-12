@@ -8,6 +8,7 @@ from app.models.deal import DealORM
 from app.models.position import PositionORM
 from app.models.schemas import DealRecord, DealRequest, Position, RiskEvaluation
 from app.services.breach_helpers import industry_for_new_breach, reason_for_new_breach
+from app.services.client_credit_engine import ClientCreditEngine
 from app.services.deal_service import approve_deal as approve_deal_service
 from app.services.deal_service import reject_deal as reject_deal_service
 from app.services.concentration_risk_engine import RiskEngine
@@ -44,9 +45,15 @@ def evaluate_deal(
     portfolio = [Position(name=p.name, value=p.value, industry=p.industry) for p in existing_positions]
     risk_engine = RiskEngine()
     result = risk_engine.evaluate_deal(portfolio=portfolio, deal=deal)
+    credit_result = ClientCreditEngine().evaluate_deal(
+        db=db,
+        client_id=deal.client_id,
+        deal_value=deal.value,
+    )
 
-    # RiskEngine gatekeeper: auto-reject fails risk checks; pass cases await admin approval.
-    deal_status = "REJECTED" if result.status.value == "REJECTED" else "PENDING"
+    concentration_rejected = result.status.value == "REJECTED"
+    credit_rejected = not credit_result["approved"]
+    deal_status = "REJECTED" if concentration_rejected or credit_rejected else "PENDING"
     logged_deal = DealORM(
      client_id=deal.client_id,
      name=deal.name,
@@ -70,6 +77,22 @@ def evaluate_deal(
                 detail=breach.detail,
             )
             db.add(breach_row)
+        db.commit()
+
+    if credit_rejected:
+        breach_row = BreachORM(
+            reason="CLIENT_CREDIT_LIMIT_EXCEEDED",
+            industry=deal.industry,
+            rule="client_credit_limit",
+            limit_pct=credit_result["credit_limit"],
+            actual_pct=credit_result["current_exposure"] + deal.value,
+            detail=(
+                f"Current exposure: {credit_result['current_exposure']:,.2f}, "
+                f"requested loan amount: {deal.value:,.2f}, "
+                f"credit limit: {credit_result['credit_limit']:,.2f}."
+            ),
+        )
+        db.add(breach_row)
         db.commit()
 
     return result
