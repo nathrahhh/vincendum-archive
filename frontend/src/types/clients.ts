@@ -17,14 +17,20 @@ export type Client = {
   deal_count?: number;
   deals?: ClientDeal[];
 };
+export type ClientFinancialRecord = {
+  id: number;
+  client_id: number;
+  month: string;
+  revenue: number;
+  cogs: number;
+  gross_profit: number;
+  opex: number;
+  cash_balance: number;
+};
 
 export type ClientFinancials = {
   client_id: number;
-  labels: string[];
-  revenue: number[];
-  cogs: number[];
-  opex: number[];
-  cash_balance: number[];
+  historical: ClientFinancialRecord[];
 };
 
 export type ClientForecast = {
@@ -47,6 +53,7 @@ export type ClientFinancialCreate = {
   cogs: number;
   opex: number;
   cash_balance: number;
+  gross_profit: number;
 };
 
 export type ClientFinancialCreateResponse = {
@@ -59,5 +66,6 @@ export type ClientFinancialCreateResponse = {
     cogs: number;
     opex: number;
     cash_balance: number;
+    gross_profit: number;
   };
 };

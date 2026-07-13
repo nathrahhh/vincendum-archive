@@ -32,5 +32,6 @@ def init_db() -> None:
     from app.models.position import PositionORM  # noqa: F401
     from app.models.deal import DealORM  # noqa: F401
     from app.models.breach import BreachORM  # noqa: F401
+    from app.models.client_financial import ClientFinancialORM  # noqa: F401
 
     Base.metadata.create_all(bind=engine)

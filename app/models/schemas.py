@@ -71,9 +71,25 @@ class ClientFinancialCreate(BaseModel):
     month: date
     revenue: float
     cogs: float
+    gross_profit: float
     opex: float
     cash_balance: float
 
+
+class ClientFinancialRecord(BaseModel):
+    id: int
+    client_id: int
+    month: date
+    revenue: float
+    cogs: float
+    gross_profit: float
+    opex: float
+    cash_balance: float
+
+
+class ClientFinancialResponse(BaseModel):
+    client_id: int
+    historical: list[ClientFinancialRecord]
 
 class ClientApplicationCreate(BaseModel):
     name: str = Field(..., min_length=1)
