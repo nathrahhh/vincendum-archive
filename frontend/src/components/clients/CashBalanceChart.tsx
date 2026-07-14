@@ -74,10 +74,10 @@ export default function CashBalanceChart({ financials, forecast }: CashBalanceCh
     );
   }
 
-  const historical = financials.cash_balance;
-  const forecastValues = forecast.forecast.cash_balance;
-  const historicalLabels = financials.labels;
-  const forecastLabels = forecast.forecast.labels;
+  const historicalLabels = financials.historical.map((record) => record.month.slice(0, 7));
+  const historical = financials.historical.map((record) => record.cash_balance);
+  const forecastLabels = forecast.forecast.map((record) => record.month);
+  const forecastValues = forecast.forecast.map((record) => record.cash_balance);
 
   const data = buildChartData(
     historicalLabels,

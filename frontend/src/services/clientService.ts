@@ -41,9 +41,12 @@ export async function getClientFinancials(clientId: number): Promise<ClientFinan
   }
 }
 
-export async function getClientForecast(clientId: number): Promise<ClientForecast> {
+export async function getClientForecast(
+  clientId: number,
+  revenueGrowthRate: number,
+): Promise<ClientForecast> {
   try {
-    return await fetchClientForecast(clientId);
+    return await fetchClientForecast(clientId, revenueGrowthRate);
   } catch (error) {
     throw toServiceError(error, "Failed to load client forecast");
   }

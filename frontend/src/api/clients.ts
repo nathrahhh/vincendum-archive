@@ -19,8 +19,13 @@ export function fetchClientFinancials(clientId: number): Promise<ClientFinancial
   return request<ClientFinancials>(`/clients/${clientId}/financials`);
 }
 
-export function fetchClientForecast(clientId: number): Promise<ClientForecast> {
-  return request<ClientForecast>(`/clients/${clientId}/forecast`);
+export function fetchClientForecast(
+  clientId: number,
+  revenueGrowthRate: number,
+): Promise<ClientForecast> {
+  return request<ClientForecast>(
+    `/clients/${clientId}/forecast?revenue_growth_rate=${revenueGrowthRate}`,
+  );
 }
 
 export function postClientFinancial(

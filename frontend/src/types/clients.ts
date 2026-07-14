@@ -17,6 +17,7 @@ export type Client = {
   deal_count?: number;
   deals?: ClientDeal[];
 };
+
 export type ClientFinancialRecord = {
   id: number;
   client_id: number;
@@ -33,17 +34,40 @@ export type ClientFinancials = {
   historical: ClientFinancialRecord[];
 };
 
+export type ForecastAssumptions = {
+  revenue_growth_rate: number;
+  average_cogs_ratio: number;
+  average_opex_ratio: number;
+  average_gross_margin: number;
+};
+
+export type ForecastHistoricalRecord = {
+  month: string;
+  revenue: number;
+  cogs: number;
+  opex: number;
+  reported_gross_profit: number;
+  calculated_gross_profit: number;
+  cash_balance: number;
+};
+
+export type ForecastRecord = {
+  month: string;
+  revenue: number;
+  cogs: number;
+  opex: number;
+  gross_profit_margin_method: number | null;
+  gross_profit_cogs_method: number;
+  gross_profit_difference: number | null;
+  net_cash_flow: number;
+  cash_balance: number;
+};
+
 export type ClientForecast = {
   client_id: number;
-  historical: {
-    labels: string[];
-    cash_balance: number[];
-    net_cash_flow: number[];
-  };
-  forecast: {
-    labels: string[];
-    cash_balance: number[];
-  };
+  assumptions: ForecastAssumptions;
+  historical: ForecastHistoricalRecord[];
+  forecast: ForecastRecord[];
 };
 
 export type ClientFinancialCreate = {

@@ -3,11 +3,13 @@ import { ClientDetailPanel } from "../components/clients";
 import {
   getClient,
   getClientFinancials,
+  getClientForecast,
   getClients,
 } from "../services/clientService";
 import type {
   Client,
   ClientFinancials,
+  ClientForecast,
 } from "../types";
 
 function formatCurrency(value: number): string {
@@ -22,12 +24,13 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [financials, setFinancials] = useState<ClientFinancials | null>(null);
+  const [forecast, setForecast] = useState<ClientForecast | null>(null);
+  const [revenueGrowthRate, setRevenueGrowthRate] = useState(5);
 
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
-
 
   useEffect(() => {
     async function loadClients() {
@@ -49,10 +52,10 @@ export default function ClientsPage() {
     loadClients();
   }, []);
 
-
   async function handleClientSelect(client: Client) {
     setSelectedClient(client);
     setFinancials(null);
+    setForecast(null);
     setError(null);
     setIsLoadingDetail(true);
 
@@ -60,11 +63,8 @@ export default function ClientsPage() {
       const clientData = await getClient(client.id);
       setSelectedClient(clientData);
 
-
       const financialData = await getClientFinancials(client.id);
       setFinancials(financialData);
-
-
     } catch (err) {
       setError(
         err instanceof Error
@@ -76,6 +76,47 @@ export default function ClientsPage() {
     }
   }
 
+  useEffect(() => {
+    if (!selectedClient) {
+      setForecast(null);
+      return;
+    }
+
+    const clientId = selectedClient.id;
+    let cancelled = false;
+
+    async function loadForecast() {
+      setIsLoadingDetail(true);
+      setError(null);
+      try {
+        const forecastData = await getClientForecast(
+          clientId,
+          revenueGrowthRate / 100,
+        );
+        if (!cancelled) {
+          setForecast(forecastData);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Failed to load client forecast"
+          );
+          setForecast(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingDetail(false);
+        }
+      }
+    }
+
+    loadForecast();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedClient?.id, revenueGrowthRate]);
 
   return (
     <div className="clients-page">
@@ -142,13 +183,26 @@ export default function ClientsPage() {
       </section>
 
 
-      <ClientDetailPanel
-        client={selectedClient}
-        financials={financials}
-        forecast={null}
-        isLoading={isLoadingDetail}
-        error={error}
-      />
+      <div>
+        <label className="deal-form__field">
+          <span className="deal-form__label">Revenue Growth Rate (%)</span>
+          <input
+            className="deal-form__input"
+            type="number"
+            step="any"
+            value={revenueGrowthRate}
+            onChange={(e) => setRevenueGrowthRate(Number(e.target.value))}
+          />
+        </label>
+
+        <ClientDetailPanel
+          client={selectedClient}
+          financials={financials}
+          forecast={forecast}
+          isLoading={isLoadingDetail}
+          error={error}
+        />
+      </div>
 
 
     </div>

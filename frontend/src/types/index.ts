@@ -1,4 +1,15 @@
-export type { Client, ClientFinancials, ClientForecast, ClientFinancialCreate, ClientFinancialCreateResponse } from "./clients";
+export type {
+  Client,
+  ClientDeal,
+  ClientFinancialRecord,
+  ClientFinancials,
+  ClientForecast,
+  ClientFinancialCreate,
+  ClientFinancialCreateResponse,
+  ForecastAssumptions,
+  ForecastHistoricalRecord,
+  ForecastRecord,
+} from "./clients";
 export type {
   ClientApplicationCreate,
   ClientApplicationCreateResponse,

@@ -1,5 +1,6 @@
 import type { Client, ClientFinancials, ClientForecast } from "../../types";
 import CashBalanceChart from "./CashBalanceChart";
+import RevenueGrossProfitChart from "./RevenueGrossProfitChart";
 
 type ClientDetailPanelProps = {
   client: Client | null;
@@ -134,7 +135,18 @@ export default function ClientDetailPanel({
       {error ? <p className="dashboard-error">{error}</p> : null}
       {isLoading ? <p className="clients-panel__hint">Loading client data…</p> : null}
 
-      {!isLoading ? <CashBalanceChart financials={financials} forecast={forecast} /> : null}
+      {!isLoading ? (
+        <>
+          <section>
+            <h3 className="deal-result-panel__breaches-title">Cash Balance</h3>
+            <CashBalanceChart financials={financials} forecast={forecast} />
+          </section>
+          <section>
+            <h3 className="deal-result-panel__breaches-title">Revenue & Gross Profit</h3>
+            <RevenueGrossProfitChart forecast={forecast} />
+          </section>
+        </>
+      ) : null}
     </aside>
   );
 }
