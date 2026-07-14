@@ -70,6 +70,12 @@ export type ClientForecast = {
   forecast: ForecastRecord[];
 };
 
+export type ClientForecastScenarios = {
+  base: ClientForecast;
+  best: ClientForecast;
+  worst: ClientForecast;
+};
+
 export type ClientFinancialCreate = {
   client_id: number;
   month: string;

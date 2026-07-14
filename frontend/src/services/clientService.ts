@@ -14,6 +14,7 @@ import type {
   ClientFinancialCreateResponse,
   ClientFinancials,
   ClientForecast,
+  ClientForecastScenarios,
 } from "../types";
 import { toServiceError } from "./errors";
 
@@ -49,6 +50,24 @@ export async function getClientForecast(
     return await fetchClientForecast(clientId, revenueGrowthRate);
   } catch (error) {
     throw toServiceError(error, "Failed to load client forecast");
+  }
+}
+
+export async function getClientForecastScenarios(
+  clientId: number,
+  baseGrowthRate: number,
+  bestGrowthRate: number,
+  worstGrowthRate: number,
+): Promise<ClientForecastScenarios> {
+  try {
+    const [base, best, worst] = await Promise.all([
+      fetchClientForecast(clientId, baseGrowthRate),
+      fetchClientForecast(clientId, bestGrowthRate),
+      fetchClientForecast(clientId, worstGrowthRate),
+    ]);
+    return { base, best, worst };
+  } catch (error) {
+    throw toServiceError(error, "Failed to load forecast scenarios");
   }
 }
 

@@ -1,4 +1,4 @@
-import type { ClientForecast } from "../../types";
+import type { ClientFinancials, ClientForecast } from "../../types";
 import {
   LineChart,
   Line,
@@ -11,7 +11,8 @@ import {
 } from "recharts";
 
 type RevenueGrossProfitChartProps = {
-  forecast: ClientForecast | null;
+  financials: ClientFinancials | null;
+  baseForecast: ClientForecast | null;
 };
 
 type ChartPoint = {
@@ -22,18 +23,21 @@ type ChartPoint = {
   forecastGrossProfit: number | null;
 };
 
-function buildChartData(forecast: ClientForecast): ChartPoint[] {
-  const historical = forecast.historical ?? [];
-  const projected = forecast.forecast ?? [];
+function buildChartData(
+  financials: ClientFinancials,
+  baseForecast: ClientForecast,
+): ChartPoint[] {
+  const historical = financials.historical ?? [];
+  const projected = baseForecast.forecast ?? [];
 
   if (historical.length === 0 && projected.length === 0) {
     return [];
   }
 
   const data: ChartPoint[] = historical.map((record) => ({
-    month: record.month,
+    month: record.month.slice(0, 7),
     historicalRevenue: record.revenue,
-    historicalGrossProfit: record.calculated_gross_profit,
+    historicalGrossProfit: record.gross_profit,
     forecastRevenue: null,
     forecastGrossProfit: null,
   }));
@@ -42,23 +46,24 @@ function buildChartData(forecast: ClientForecast): ChartPoint[] {
   if (lastHistoricalIndex >= 0) {
     data[lastHistoricalIndex].forecastRevenue = historical[lastHistoricalIndex].revenue;
     data[lastHistoricalIndex].forecastGrossProfit =
-      historical[lastHistoricalIndex].calculated_gross_profit;
+      historical[lastHistoricalIndex].gross_profit;
   }
 
-  const lastHistoricalMonth = historical[lastHistoricalIndex]?.month;
+  const lastHistoricalMonth = data[lastHistoricalIndex]?.month;
 
   for (const record of projected) {
-    if (record.month === lastHistoricalMonth) {
+    const month = record.month.slice(0, 7);
+    if (month === lastHistoricalMonth) {
       continue;
     }
 
-    const existingIndex = data.findIndex((point) => point.month === record.month);
+    const existingIndex = data.findIndex((point) => point.month === month);
     if (existingIndex >= 0) {
       data[existingIndex].forecastRevenue = record.revenue;
       data[existingIndex].forecastGrossProfit = record.gross_profit_cogs_method;
     } else {
       data.push({
-        month: record.month,
+        month,
         historicalRevenue: null,
         historicalGrossProfit: null,
         forecastRevenue: record.revenue,
@@ -70,14 +75,17 @@ function buildChartData(forecast: ClientForecast): ChartPoint[] {
   return data;
 }
 
-export default function RevenueGrossProfitChart({ forecast }: RevenueGrossProfitChartProps) {
-  if (!forecast) {
+export default function RevenueGrossProfitChart({
+  financials,
+  baseForecast,
+}: RevenueGrossProfitChartProps) {
+  if (!financials || !baseForecast) {
     return (
       <p className="clients-panel__hint">Select a client to view revenue and gross profit chart.</p>
     );
   }
 
-  const data = buildChartData(forecast);
+  const data = buildChartData(financials, baseForecast);
 
   if (data.length === 0) {
     return <p className="clients-panel__hint">No revenue or gross profit data available.</p>;

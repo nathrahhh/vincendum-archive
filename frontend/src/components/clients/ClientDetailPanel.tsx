@@ -1,11 +1,20 @@
+import { useEffect, useState } from "react";
 import type { Client, ClientFinancials, ClientForecast } from "../../types";
-import CashBalanceChart from "./CashBalanceChart";
 import RevenueGrossProfitChart from "./RevenueGrossProfitChart";
+import RevenueScenarioChart from "./RevenueScenarioChart";
 
 type ClientDetailPanelProps = {
   client: Client | null;
   financials: ClientFinancials | null;
-  forecast: ClientForecast | null;
+  baseForecast: ClientForecast | null;
+  bestForecast: ClientForecast | null;
+  worstForecast: ClientForecast | null;
+  baseGrowthRate: number;
+  bestGrowthRate: number;
+  worstGrowthRate: number;
+  onBaseGrowthRateChange: (value: number) => void;
+  onBestGrowthRateChange: (value: number) => void;
+  onWorstGrowthRateChange: (value: number) => void;
   isLoading: boolean;
   error: string | null;
 };
@@ -31,10 +40,34 @@ function formatPercent(value: number): string {
 export default function ClientDetailPanel({
   client,
   financials,
-  forecast,
+  baseForecast,
+  bestForecast,
+  worstForecast,
+  baseGrowthRate,
+  bestGrowthRate,
+  worstGrowthRate,
+  onBaseGrowthRateChange,
+  onBestGrowthRateChange,
+  onWorstGrowthRateChange,
   isLoading,
   error,
 }: ClientDetailPanelProps) {
+  const [draftBaseGrowthRate, setDraftBaseGrowthRate] = useState(baseGrowthRate);
+  const [draftBestGrowthRate, setDraftBestGrowthRate] = useState(bestGrowthRate);
+  const [draftWorstGrowthRate, setDraftWorstGrowthRate] = useState(worstGrowthRate);
+
+  useEffect(() => {
+    setDraftBaseGrowthRate(baseGrowthRate);
+  }, [baseGrowthRate]);
+
+  useEffect(() => {
+    setDraftBestGrowthRate(bestGrowthRate);
+  }, [bestGrowthRate]);
+
+  useEffect(() => {
+    setDraftWorstGrowthRate(worstGrowthRate);
+  }, [worstGrowthRate]);
+
   if (!client) {
     return (
       <aside className="clients-panel">
@@ -138,12 +171,89 @@ export default function ClientDetailPanel({
       {!isLoading ? (
         <>
           <section>
-            <h3 className="deal-result-panel__breaches-title">Cash Balance</h3>
-            <CashBalanceChart financials={financials} forecast={forecast} />
+            <h3 className="deal-result-panel__breaches-title">Revenue & Gross Profit Forecast</h3>
+            <label className="deal-form__field">
+              <span className="deal-form__label">Revenue Growth Rate (%)</span>
+              <input
+                className="deal-form__input"
+                type="number"
+                step="any"
+                value={draftBaseGrowthRate * 100}
+                onChange={(e) => setDraftBaseGrowthRate(Number(e.target.value) / 100)}
+              />
+            </label>
+            <button
+              className="deal-form__submit"
+              type="button"
+              onClick={() => onBaseGrowthRateChange(draftBaseGrowthRate)}
+            >
+              Update
+            </button>
+            <RevenueGrossProfitChart financials={financials} baseForecast={baseForecast} />
           </section>
+
           <section>
-            <h3 className="deal-result-panel__breaches-title">Revenue & Gross Profit</h3>
-            <RevenueGrossProfitChart forecast={forecast} />
+            <h3 className="deal-result-panel__breaches-title">Best / Worst Case Scenarios</h3>
+            <label className="deal-form__field">
+              <span className="deal-form__label">Base Case Growth Rate (%)</span>
+              <input
+                className="deal-form__input"
+                type="number"
+                step="any"
+                value={draftBaseGrowthRate * 100}
+                onChange={(e) => setDraftBaseGrowthRate(Number(e.target.value) / 100)}
+              />
+            </label>
+            <button
+              className="deal-form__submit"
+              type="button"
+              onClick={() => onBaseGrowthRateChange(draftBaseGrowthRate)}
+            >
+              Update
+            </button>
+
+            <label className="deal-form__field">
+              <span className="deal-form__label">Best Case Growth Rate (%)</span>
+              <input
+                className="deal-form__input"
+                type="number"
+                step="any"
+                value={draftBestGrowthRate * 100}
+                onChange={(e) => setDraftBestGrowthRate(Number(e.target.value) / 100)}
+              />
+            </label>
+            <button
+              className="deal-form__submit"
+              type="button"
+              onClick={() => onBestGrowthRateChange(draftBestGrowthRate)}
+            >
+              Update
+            </button>
+
+            <label className="deal-form__field">
+              <span className="deal-form__label">Worst Case Growth Rate (%)</span>
+              <input
+                className="deal-form__input"
+                type="number"
+                step="any"
+                value={draftWorstGrowthRate * 100}
+                onChange={(e) => setDraftWorstGrowthRate(Number(e.target.value) / 100)}
+              />
+            </label>
+            <button
+              className="deal-form__submit"
+              type="button"
+              onClick={() => onWorstGrowthRateChange(draftWorstGrowthRate)}
+            >
+              Update
+            </button>
+
+            <RevenueScenarioChart
+              financials={financials}
+              baseForecast={baseForecast}
+              bestForecast={bestForecast}
+              worstForecast={worstForecast}
+            />
           </section>
         </>
       ) : null}

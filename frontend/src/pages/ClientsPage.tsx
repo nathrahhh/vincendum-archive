@@ -3,7 +3,7 @@ import { ClientDetailPanel } from "../components/clients";
 import {
   getClient,
   getClientFinancials,
-  getClientForecast,
+  getClientForecastScenarios,
   getClients,
 } from "../services/clientService";
 import type {
@@ -24,12 +24,16 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [financials, setFinancials] = useState<ClientFinancials | null>(null);
-  const [forecast, setForecast] = useState<ClientForecast | null>(null);
-  const [revenueGrowthRate, setRevenueGrowthRate] = useState(5);
+  const [baseForecast, setBaseForecast] = useState<ClientForecast | null>(null);
+  const [bestForecast, setBestForecast] = useState<ClientForecast | null>(null);
+  const [worstForecast, setWorstForecast] = useState<ClientForecast | null>(null);
+
+  const [baseGrowthRate, setBaseGrowthRate] = useState(0.05);
+  const [bestGrowthRate, setBestGrowthRate] = useState(0.08);
+  const [worstGrowthRate, setWorstGrowthRate] = useState(0.02);
 
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
-
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,7 +59,9 @@ export default function ClientsPage() {
   async function handleClientSelect(client: Client) {
     setSelectedClient(client);
     setFinancials(null);
-    setForecast(null);
+    setBaseForecast(null);
+    setBestForecast(null);
+    setWorstForecast(null);
     setError(null);
     setIsLoadingDetail(true);
 
@@ -71,39 +77,43 @@ export default function ClientsPage() {
           ? err.message
           : "Failed to load client data"
       );
-    } finally {
       setIsLoadingDetail(false);
     }
   }
 
   useEffect(() => {
     if (!selectedClient) {
-      setForecast(null);
       return;
     }
 
     const clientId = selectedClient.id;
     let cancelled = false;
 
-    async function loadForecast() {
+    async function loadScenarios() {
       setIsLoadingDetail(true);
       setError(null);
       try {
-        const forecastData = await getClientForecast(
+        const scenarios = await getClientForecastScenarios(
           clientId,
-          revenueGrowthRate / 100,
+          baseGrowthRate,
+          bestGrowthRate,
+          worstGrowthRate,
         );
         if (!cancelled) {
-          setForecast(forecastData);
+          setBaseForecast(scenarios.base);
+          setBestForecast(scenarios.best);
+          setWorstForecast(scenarios.worst);
         }
       } catch (err) {
         if (!cancelled) {
           setError(
             err instanceof Error
               ? err.message
-              : "Failed to load client forecast"
+              : "Failed to load forecast scenarios"
           );
-          setForecast(null);
+          setBaseForecast(null);
+          setBestForecast(null);
+          setWorstForecast(null);
         }
       } finally {
         if (!cancelled) {
@@ -112,11 +122,11 @@ export default function ClientsPage() {
       }
     }
 
-    loadForecast();
+    loadScenarios();
     return () => {
       cancelled = true;
     };
-  }, [selectedClient?.id, revenueGrowthRate]);
+  }, [selectedClient?.id, baseGrowthRate, bestGrowthRate, worstGrowthRate]);
 
   return (
     <div className="clients-page">
@@ -183,26 +193,21 @@ export default function ClientsPage() {
       </section>
 
 
-      <div>
-        <label className="deal-form__field">
-          <span className="deal-form__label">Revenue Growth Rate (%)</span>
-          <input
-            className="deal-form__input"
-            type="number"
-            step="any"
-            value={revenueGrowthRate}
-            onChange={(e) => setRevenueGrowthRate(Number(e.target.value))}
-          />
-        </label>
-
-        <ClientDetailPanel
-          client={selectedClient}
-          financials={financials}
-          forecast={forecast}
-          isLoading={isLoadingDetail}
-          error={error}
-        />
-      </div>
+      <ClientDetailPanel
+        client={selectedClient}
+        financials={financials}
+        baseForecast={baseForecast}
+        bestForecast={bestForecast}
+        worstForecast={worstForecast}
+        baseGrowthRate={baseGrowthRate}
+        bestGrowthRate={bestGrowthRate}
+        worstGrowthRate={worstGrowthRate}
+        onBaseGrowthRateChange={setBaseGrowthRate}
+        onBestGrowthRateChange={setBestGrowthRate}
+        onWorstGrowthRateChange={setWorstGrowthRate}
+        isLoading={isLoadingDetail}
+        error={error}
+      />
 
 
     </div>
