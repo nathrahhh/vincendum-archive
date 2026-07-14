@@ -128,6 +128,30 @@ export default function ClientsPage() {
     };
   }, [selectedClient?.id, baseGrowthRate, bestGrowthRate, worstGrowthRate]);
 
+  async function handleClientUpdated() {
+    if (!selectedClient) {
+      return;
+    }
+
+    const clientId = selectedClient.id;
+    setError(null);
+    try {
+      const [clientData, clientsData] = await Promise.all([
+        getClient(clientId),
+        getClients(),
+      ]);
+      setSelectedClient(clientData);
+      setClients(clientsData);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to refresh client data"
+      );
+      throw err;
+    }
+  }
+
   return (
     <div className="clients-page">
 
@@ -205,6 +229,7 @@ export default function ClientsPage() {
         onBaseGrowthRateChange={setBaseGrowthRate}
         onBestGrowthRateChange={setBestGrowthRate}
         onWorstGrowthRateChange={setWorstGrowthRate}
+        onClientUpdated={handleClientUpdated}
         isLoading={isLoadingDetail}
         error={error}
       />

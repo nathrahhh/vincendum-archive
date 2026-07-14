@@ -36,3 +36,13 @@ export function postClientFinancial(
     body: JSON.stringify(payload),
   });
 }
+
+export function updateClientCreditLimit(
+  clientId: number,
+  creditLimit: number,
+): Promise<Client> {
+  return request<Client>(`/clients/${clientId}/credit-limit`, {
+    method: "PUT",
+    body: JSON.stringify({ credit_limit: creditLimit }),
+  });
+}

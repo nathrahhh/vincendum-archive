@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Client, ClientFinancials, ClientForecast } from "../../types";
+import { updateClientCreditLimit } from "../../services/clientService";
 import RevenueGrossProfitChart from "./RevenueGrossProfitChart";
 import RevenueScenarioChart from "./RevenueScenarioChart";
 
@@ -15,6 +16,7 @@ type ClientDetailPanelProps = {
   onBaseGrowthRateChange: (value: number) => void;
   onBestGrowthRateChange: (value: number) => void;
   onWorstGrowthRateChange: (value: number) => void;
+  onClientUpdated: () => Promise<void> | void;
   isLoading: boolean;
   error: string | null;
 };
@@ -49,12 +51,16 @@ export default function ClientDetailPanel({
   onBaseGrowthRateChange,
   onBestGrowthRateChange,
   onWorstGrowthRateChange,
+  onClientUpdated,
   isLoading,
   error,
 }: ClientDetailPanelProps) {
   const [draftBaseGrowthRate, setDraftBaseGrowthRate] = useState(baseGrowthRate);
   const [draftBestGrowthRate, setDraftBestGrowthRate] = useState(bestGrowthRate);
   const [draftWorstGrowthRate, setDraftWorstGrowthRate] = useState(worstGrowthRate);
+  const [draftCreditLimit, setDraftCreditLimit] = useState(client?.credit_limit ?? 0);
+  const [isUpdatingCreditLimit, setIsUpdatingCreditLimit] = useState(false);
+  const [creditLimitError, setCreditLimitError] = useState<string | null>(null);
 
   useEffect(() => {
     setDraftBaseGrowthRate(baseGrowthRate);
@@ -68,6 +74,11 @@ export default function ClientDetailPanel({
     setDraftWorstGrowthRate(worstGrowthRate);
   }, [worstGrowthRate]);
 
+  useEffect(() => {
+    setDraftCreditLimit(client?.credit_limit ?? 0);
+    setCreditLimitError(null);
+  }, [client?.id, client?.credit_limit]);
+
   if (!client) {
     return (
       <aside className="clients-panel">
@@ -78,11 +89,49 @@ export default function ClientDetailPanel({
 
   const deals = client.deals ?? [];
 
+  async function handleUpdateCreditLimit() {
+    setIsUpdatingCreditLimit(true);
+    setCreditLimitError(null);
+    try {
+      await updateClientCreditLimit(client.id, Number(draftCreditLimit));
+      await onClientUpdated();
+    } catch (err) {
+      setCreditLimitError(
+        err instanceof Error ? err.message : "Failed to update credit limit",
+      );
+    } finally {
+      setIsUpdatingCreditLimit(false);
+    }
+  }
+
   return (
     <aside className="clients-panel">
       <h2 className="clients-panel__title">{client.name}</h2>
       <p className="clients-panel__meta">Industry: {client.industry}</p>
-      <p className="clients-panel__meta">Credit limit: {formatCurrency(client.credit_limit)}</p>
+
+      <section>
+        <h3 className="deal-result-panel__breaches-title">Credit limit</h3>
+        <label className="deal-form__field">
+          <span className="deal-form__label">Credit Limit (USD)</span>
+          <input
+            className="deal-form__input"
+            type="number"
+            min="0"
+            step="any"
+            value={draftCreditLimit}
+            onChange={(e) => setDraftCreditLimit(Number(e.target.value))}
+          />
+        </label>
+        <button
+          className="deal-form__submit"
+          type="button"
+          disabled={isUpdatingCreditLimit}
+          onClick={handleUpdateCreditLimit}
+        >
+          {isUpdatingCreditLimit ? "Updating…" : "Update"}
+        </button>
+        {creditLimitError ? <p className="dashboard-error">{creditLimitError}</p> : null}
+      </section>
 
       <section>
         <h3 className="deal-result-panel__breaches-title">Exposure</h3>

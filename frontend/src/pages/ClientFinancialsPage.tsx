@@ -9,6 +9,7 @@ export default function ClientFinancialsPage() {
   const [month, setMonth] = useState(currentMonthValue);
   const [revenue, setRevenue] = useState("");
   const [cogs, setCogs] = useState("");
+  const [grossProfit, setGrossProfit] = useState("");
   const [opex, setOpex] = useState("");
   const [cashBalance, setCashBalance] = useState("");
   const [isLoadingClients, setIsLoadingClients] = useState(true);
@@ -54,6 +55,7 @@ export default function ClientFinancialsPage() {
       setSuccess(response.message);
       setRevenue("");
       setCogs("");
+      setGrossProfit("");
       setOpex("");
       setCashBalance("");
     } catch (err) {
@@ -73,6 +75,7 @@ export default function ClientFinancialsPage() {
         month={month}
         revenue={revenue}
         cogs={cogs}
+        grossProfit={grossProfit}
         opex={opex}
         cashBalance={cashBalance}
         isLoadingClients={isLoadingClients}
@@ -81,6 +84,7 @@ export default function ClientFinancialsPage() {
         onMonthChange={setMonth}
         onRevenueChange={setRevenue}
         onCogsChange={setCogs}
+        onGrossProfitChange={setGrossProfit}
         onOpexChange={setOpex}
         onCashBalanceChange={setCashBalance}
         onSubmit={handleSubmit}

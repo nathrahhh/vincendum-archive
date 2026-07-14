@@ -5,6 +5,7 @@ import {
   fetchClients,
   postClientApplication,
   postClientFinancial,
+  updateClientCreditLimit as putClientCreditLimit,
 } from "../api";
 import type {
   Client,
@@ -88,5 +89,16 @@ export async function submitClientApplication(
     return await postClientApplication(payload);
   } catch (error) {
     throw toServiceError(error, "Failed to submit application");
+  }
+}
+
+export async function updateClientCreditLimit(
+  clientId: number,
+  creditLimit: number,
+): Promise<Client> {
+  try {
+    return await putClientCreditLimit(clientId, creditLimit);
+  } catch (error) {
+    throw toServiceError(error, "Failed to update credit limit");
   }
 }

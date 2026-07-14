@@ -7,6 +7,7 @@ type ClientFinancialFormProps = {
   month: string;
   revenue: string;
   cogs: string;
+  grossProfit: string;
   opex: string;
   cashBalance: string;
   isLoadingClients: boolean;
@@ -15,6 +16,7 @@ type ClientFinancialFormProps = {
   onMonthChange: (value: string) => void;
   onRevenueChange: (value: string) => void;
   onCogsChange: (value: string) => void;
+  onGrossProfitChange: (value: string) => void;
   onOpexChange: (value: string) => void;
   onCashBalanceChange: (value: string) => void;
   onSubmit: (payload: ClientFinancialCreate) => void;
@@ -37,6 +39,7 @@ export default function ClientFinancialForm({
   month,
   revenue,
   cogs,
+  grossProfit,
   opex,
   cashBalance,
   isLoadingClients,
@@ -45,6 +48,7 @@ export default function ClientFinancialForm({
   onMonthChange,
   onRevenueChange,
   onCogsChange,
+  onGrossProfitChange,
   onOpexChange,
   onCashBalanceChange,
   onSubmit,
@@ -56,6 +60,7 @@ export default function ClientFinancialForm({
       month: monthToApiDate(month),
       revenue: Number(revenue),
       cogs: Number(cogs),
+      gross_profit: Number(grossProfit),
       opex: Number(opex),
       cash_balance: Number(cashBalance),
     });
@@ -119,6 +124,20 @@ export default function ClientFinancialForm({
           step="any"
           value={cogs}
           onChange={(e) => onCogsChange(e.target.value)}
+          required
+          disabled={isSubmitting}
+        />
+      </label>
+
+      <label className="deal-form__field">
+        <span className="deal-form__label">Gross Profit</span>
+        <input
+          className="deal-form__input"
+          type="number"
+          min="0"
+          step="any"
+          value={grossProfit}
+          onChange={(e) => onGrossProfitChange(e.target.value)}
           required
           disabled={isSubmitting}
         />
