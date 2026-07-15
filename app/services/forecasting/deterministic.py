@@ -69,29 +69,9 @@ def _fetch_client_financials(
     return [dict(row) for row in rows.all()]
 
 
-def build_client_forecast(
-    db: Session,
-    client_id: int,
-    revenue_growth_rate: float
+def _calculate_historical_metrics(
+    financial_history: list[dict[str, Any]]
 ) -> dict[str, Any]:
-
-    financial_history = _fetch_client_financials(
-        db,
-        client_id
-    )
-
-
-    if not financial_history:
-        return {
-            "client_id": client_id,
-            "historical": {},
-            "forecast": {}
-        }
-
-
-    # -----------------------------
-    # Historical calculations
-    # -----------------------------
 
     historical = []
 
@@ -100,7 +80,6 @@ def build_client_forecast(
     gross_profit_margins = []
 
     gross_profit_alerts = []
-
 
     for row in financial_history:
 
@@ -114,9 +93,7 @@ def build_client_forecast(
             else None
         )
 
-
         calculated_gp = revenue - cogs
-
 
         # Check client reported GP against calculation
 
@@ -125,7 +102,6 @@ def build_client_forecast(
             difference = abs(
                 reported_gp - calculated_gp
             ) / revenue
-
 
             if difference > GROSS_PROFIT_WARNING_THRESHOLD:
 
@@ -139,11 +115,9 @@ def build_client_forecast(
                     }
                 )
 
-
             gross_profit_margins.append(
                 reported_gp / revenue
             )
-
 
         if revenue != 0:
 
@@ -154,7 +128,6 @@ def build_client_forecast(
             opex_ratios.append(
                 opex / revenue
             )
-
 
         historical.append(
             {
@@ -168,11 +141,6 @@ def build_client_forecast(
             }
         )
 
-
-    # -----------------------------
-    # Historical averages
-    # -----------------------------
-
     avg_cogs_ratio = (
         sum(cogs_ratios)
         /
@@ -185,7 +153,6 @@ def build_client_forecast(
         len(opex_ratios)
     )
 
-
     avg_gross_margin = (
         sum(gross_profit_margins)
         /
@@ -194,11 +161,22 @@ def build_client_forecast(
         else None
     )
 
+    return {
+        "historical": historical,
+        "gross_profit_alerts": gross_profit_alerts,
+        "avg_cogs_ratio": avg_cogs_ratio,
+        "avg_opex_ratio": avg_opex_ratio,
+        "avg_gross_margin": avg_gross_margin,
+    }
 
-    # -----------------------------
-    # Forecast
-    # -----------------------------
 
+def _build_forecast(
+    financial_history: list[dict[str, Any]],
+    revenue_growth_rate: float,
+    avg_cogs_ratio: float,
+    avg_opex_ratio: float,
+    avg_gross_margin: float | None,
+) -> list[dict[str, Any]]:
 
     last_month = financial_history[-1]["month"]
 
@@ -210,9 +188,7 @@ def build_client_forecast(
         financial_history[-1]["cash_balance"]
     )
 
-
     forecast = []
-
 
     for month_number in range(
         1,
@@ -223,11 +199,9 @@ def build_client_forecast(
             1 + revenue_growth_rate
         )
 
-
         cogs = revenue * avg_cogs_ratio
 
         opex = revenue * avg_opex_ratio
-
 
         # Method 1:
         # Using historical reported GP margin
@@ -241,7 +215,6 @@ def build_client_forecast(
         else:
             gross_profit_margin_method = None
 
-
         # Method 2:
         # Revenue - forecast COGS
 
@@ -249,9 +222,7 @@ def build_client_forecast(
             revenue - cogs
         )
 
-
         gross_profit_difference = None
-
 
         if gross_profit_margin_method:
 
@@ -261,7 +232,6 @@ def build_client_forecast(
                 gross_profit_cogs_method
             )
 
-
         net_cash_flow = (
             revenue
             -
@@ -270,9 +240,7 @@ def build_client_forecast(
             opex
         )
 
-
         cash_balance += net_cash_flow
-
 
         forecast.append(
             {
@@ -319,6 +287,42 @@ def build_client_forecast(
             }
         )
 
+    return forecast
+
+
+def build_client_forecast(
+    db: Session,
+    client_id: int,
+    revenue_growth_rate: float
+) -> dict[str, Any]:
+
+    financial_history = _fetch_client_financials(
+        db,
+        client_id
+    )
+
+    if not financial_history:
+        return {
+            "client_id": client_id,
+            "historical": {},
+            "forecast": {}
+        }
+
+    metrics = _calculate_historical_metrics(financial_history)
+
+    historical = metrics["historical"]
+    gross_profit_alerts = metrics["gross_profit_alerts"]
+    avg_cogs_ratio = metrics["avg_cogs_ratio"]
+    avg_opex_ratio = metrics["avg_opex_ratio"]
+    avg_gross_margin = metrics["avg_gross_margin"]
+
+    forecast = _build_forecast(
+        financial_history,
+        revenue_growth_rate,
+        avg_cogs_ratio,
+        avg_opex_ratio,
+        avg_gross_margin,
+    )
 
     return {
 
