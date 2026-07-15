@@ -9,6 +9,7 @@ from app.models.client_financial import ClientFinancialORM
 
 
 FORECAST_MONTHS = 6
+HISTORICAL_MONTHS = 6
 
 BEST_CASE_ADJUSTMENT = 0.03
 WORST_CASE_ADJUSTMENT = -0.03
@@ -24,7 +25,16 @@ def _parse_month(value: Any) -> date:
     if isinstance(value, str):
         return date.fromisoformat(value[:10])
 
-    raise ValueError(f"Unsupported month value: {value!r}")
+    raise ValueError(
+        f"Unsupported month value: {value!r}"
+    )
+
+
+def _format_month(value: Any) -> str:
+    if isinstance(value, (date, datetime)):
+        return value.strftime("%Y-%m")
+
+    return str(value)[:7]
 
 
 def _fetch_revenue_history(
@@ -56,7 +66,8 @@ def _build_scenarios(
         ),
 
         "best": round(
-            revenue * (
+            revenue
+            * (
                 1
                 + revenue_growth_rate
                 + BEST_CASE_ADJUSTMENT
@@ -65,7 +76,8 @@ def _build_scenarios(
         ),
 
         "worst": round(
-            revenue * (
+            revenue
+            * (
                 1
                 + revenue_growth_rate
                 + WORST_CASE_ADJUSTMENT
@@ -73,6 +85,37 @@ def _build_scenarios(
             2,
         ),
     }
+
+
+def _train_prophet(
+    dataframe: pd.DataFrame,
+) -> Prophet:
+
+    model = Prophet(
+        yearly_seasonality=True,
+        weekly_seasonality=False,
+        daily_seasonality=False,
+    )
+
+    model.fit(dataframe)
+
+    return model
+
+
+def _build_prophet_dataframe(
+    history: list[ClientFinancialORM],
+    field: str,
+) -> pd.DataFrame:
+
+    return pd.DataFrame(
+        [
+            {
+                "ds": _parse_month(row.month),
+                "y": float(getattr(row, field)),
+            }
+            for row in history
+        ]
+    )
 
 
 def build_client_forecast(
@@ -87,91 +130,150 @@ def build_client_forecast(
     )
 
 
-    if len(history) < 2:
-        return {
-            "client_id": client_id,
-            "forecast": [],
+    if len(history) < 12:
+        raise ValueError(
+            "Prophet requires at least 12 months of data"
+        )
+
+
+    # -----------------------------
+    # Historical chart data
+    # -----------------------------
+
+    historical = [
+        {
+            "month": _format_month(row.month),
+
+            "revenue": float(row.revenue),
+
+            "gross_profit": float(row.gross_profit),
         }
+        for row in history[-HISTORICAL_MONTHS:]
+    ]
 
 
-    prophet_df = pd.DataFrame(
-        [
-            {
-                "ds": _parse_month(row.month),
-                "y": float(row.revenue),
-            }
-            for row in history
-        ]
+    # -----------------------------
+    # Revenue Prophet model
+    # -----------------------------
+
+    revenue_df = _build_prophet_dataframe(
+        history,
+        "revenue",
+    )
+
+    revenue_model = _train_prophet(
+        revenue_df
     )
 
 
-    model = Prophet(
-        yearly_seasonality=True,
-        weekly_seasonality=False,
-        daily_seasonality=False,
+    # -----------------------------
+    # Gross profit Prophet model
+    # -----------------------------
+
+    gross_profit_df = _build_prophet_dataframe(
+        history,
+        "gross_profit",
+    )
+
+    gross_profit_model = _train_prophet(
+        gross_profit_df
     )
 
 
-    model.fit(prophet_df)
+    # -----------------------------
+    # Future prediction
+    # -----------------------------
 
-
-    future = model.make_future_dataframe(
+    future = revenue_model.make_future_dataframe(
         periods=FORECAST_MONTHS,
         freq="MS",
     )
 
 
-    forecast = model.predict(
+    revenue_prediction = revenue_model.predict(
         future
     )
 
 
-    future_forecast = forecast.tail(
-        FORECAST_MONTHS
+    gross_profit_prediction = (
+        gross_profit_model.predict(
+            future
+        )
+    )
+
+
+    revenue_future = (
+        revenue_prediction
+        .tail(FORECAST_MONTHS)
+        .reset_index(drop=True)
+    )
+
+
+    gross_profit_future = (
+        gross_profit_prediction
+        .tail(FORECAST_MONTHS)
+        .reset_index(drop=True)
     )
 
 
     result = []
 
 
-    for _, row in future_forecast.iterrows():
+    for index in range(FORECAST_MONTHS):
 
-        prophet_revenue = float(
-            row["yhat"]
+        revenue_row = revenue_future.iloc[index]
+
+        gross_profit_row = (
+            gross_profit_future.iloc[index]
         )
 
+
+        predicted_revenue = float(
+            revenue_row["yhat"]
+        )
+
+
         scenarios = _build_scenarios(
-            revenue=prophet_revenue,
+            revenue=predicted_revenue,
             revenue_growth_rate=revenue_growth_rate,
         )
 
 
         result.append(
             {
-                "month": row["ds"].strftime("%Y-%m"),
+                "month": revenue_row["ds"].strftime(
+                    "%Y-%m"
+                ),
 
-                # Prophet base prediction
                 "revenue": round(
-                    prophet_revenue,
+                    predicted_revenue,
                     2,
                 ),
 
-                # Scenario lines for frontend chart
+                "gross_profit": round(
+                    float(
+                        gross_profit_row["yhat"]
+                    ),
+                    2,
+                ),
+
                 "base": scenarios["base"],
 
                 "best": scenarios["best"],
 
                 "worst": scenarios["worst"],
 
-
-                # Prophet uncertainty interval
                 "lower_bound": round(
-                    float(row["yhat_lower"]),
+                    float(
+                        revenue_row["yhat_lower"]
+                    ),
                     2,
                 ),
 
                 "upper_bound": round(
-                    float(row["yhat_upper"]),
+                    float(
+                        revenue_row["yhat_upper"]
+                    ),
                     2,
                 ),
             }
@@ -180,5 +282,10 @@ def build_client_forecast(
 
     return {
         "client_id": client_id,
+
+        "model_type": "prophet",
+
+        "historical": historical,
+
         "forecast": result,
     }
