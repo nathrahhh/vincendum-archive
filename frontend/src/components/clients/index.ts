@@ -3,4 +3,5 @@ export { default as ClientApplicationForm } from "./ClientApplicationForm";
 export { default as ClientDetailPanel } from "./ClientDetailPanel";
 export { default as ClientFinancialForm } from "./ClientFinancialForm";
 export { default as RevenueGrossProfitChart } from "./RevenueGrossProfitChart";
-export { default as RevenueScenarioChart } from "./RevenueScenarioChart";
+export { default as DeterministicForecastChart } from "./DeterministicForecastChart";
+export {default as ProphetForecastChart } from "./ProphetForecastChart";

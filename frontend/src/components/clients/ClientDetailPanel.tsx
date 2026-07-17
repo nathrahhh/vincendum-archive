@@ -1,21 +1,13 @@
 import { useEffect, useState } from "react";
 import type { Client, ClientFinancials, ClientForecast } from "../../types";
 import { updateClientCreditLimit } from "../../services/clientService";
-import RevenueGrossProfitChart from "./RevenueGrossProfitChart";
-import RevenueScenarioChart from "./RevenueScenarioChart";
+import DeterministicForecastChart from "./DeterministicForecastChart";
+import ProphetForecastChart from "./ProphetForecastChart";
 
 type ClientDetailPanelProps = {
   client: Client | null;
   financials: ClientFinancials | null;
-  baseForecast: ClientForecast | null;
-  bestForecast: ClientForecast | null;
-  worstForecast: ClientForecast | null;
-  baseGrowthRate: number;
-  bestGrowthRate: number;
-  worstGrowthRate: number;
-  onBaseGrowthRateChange: (value: number) => void;
-  onBestGrowthRateChange: (value: number) => void;
-  onWorstGrowthRateChange: (value: number) => void;
+  forecast: ClientForecast | null;
   onClientUpdated: () => Promise<void> | void;
   isLoading: boolean;
   error: string | null;
@@ -42,37 +34,14 @@ function formatPercent(value: number): string {
 export default function ClientDetailPanel({
   client,
   financials,
-  baseForecast,
-  bestForecast,
-  worstForecast,
-  baseGrowthRate,
-  bestGrowthRate,
-  worstGrowthRate,
-  onBaseGrowthRateChange,
-  onBestGrowthRateChange,
-  onWorstGrowthRateChange,
+  forecast,
   onClientUpdated,
   isLoading,
   error,
 }: ClientDetailPanelProps) {
-  const [draftBaseGrowthRate, setDraftBaseGrowthRate] = useState(baseGrowthRate);
-  const [draftBestGrowthRate, setDraftBestGrowthRate] = useState(bestGrowthRate);
-  const [draftWorstGrowthRate, setDraftWorstGrowthRate] = useState(worstGrowthRate);
   const [draftCreditLimit, setDraftCreditLimit] = useState(client?.credit_limit ?? 0);
   const [isUpdatingCreditLimit, setIsUpdatingCreditLimit] = useState(false);
   const [creditLimitError, setCreditLimitError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setDraftBaseGrowthRate(baseGrowthRate);
-  }, [baseGrowthRate]);
-
-  useEffect(() => {
-    setDraftBestGrowthRate(bestGrowthRate);
-  }, [bestGrowthRate]);
-
-  useEffect(() => {
-    setDraftWorstGrowthRate(worstGrowthRate);
-  }, [worstGrowthRate]);
 
   useEffect(() => {
     setDraftCreditLimit(client?.credit_limit ?? 0);
@@ -217,94 +186,24 @@ export default function ClientDetailPanel({
       {error ? <p className="dashboard-error">{error}</p> : null}
       {isLoading ? <p className="clients-panel__hint">Loading client data…</p> : null}
 
-      {!isLoading ? (
-        <>
-          <section>
-            <h3 className="deal-result-panel__breaches-title">Revenue & Gross Profit Forecast</h3>
-            <label className="deal-form__field">
-              <span className="deal-form__label">Revenue Growth Rate (%)</span>
-              <input
-                className="deal-form__input"
-                type="number"
-                step="any"
-                value={draftBaseGrowthRate * 100}
-                onChange={(e) => setDraftBaseGrowthRate(Number(e.target.value) / 100)}
-              />
-            </label>
-            <button
-              className="deal-form__submit"
-              type="button"
-              onClick={() => onBaseGrowthRateChange(draftBaseGrowthRate)}
-            >
-              Update
-            </button>
-            <RevenueGrossProfitChart financials={financials} baseForecast={baseForecast} />
-          </section>
+      {!isLoading && forecast?.model_type === "prophet" ? (
+        <section>
+          <h3 className="deal-result-panel__breaches-title">Forecast</h3>
+          <ProphetForecastChart
+            historical={forecast.historical}
+            forecast={forecast.forecast}
+          />
+        </section>
+      ) : null}
 
-          <section>
-            <h3 className="deal-result-panel__breaches-title">Best / Worst Case Scenarios</h3>
-            <label className="deal-form__field">
-              <span className="deal-form__label">Base Case Growth Rate (%)</span>
-              <input
-                className="deal-form__input"
-                type="number"
-                step="any"
-                value={draftBaseGrowthRate * 100}
-                onChange={(e) => setDraftBaseGrowthRate(Number(e.target.value) / 100)}
-              />
-            </label>
-            <button
-              className="deal-form__submit"
-              type="button"
-              onClick={() => onBaseGrowthRateChange(draftBaseGrowthRate)}
-            >
-              Update
-            </button>
-
-            <label className="deal-form__field">
-              <span className="deal-form__label">Best Case Growth Rate (%)</span>
-              <input
-                className="deal-form__input"
-                type="number"
-                step="any"
-                value={draftBestGrowthRate * 100}
-                onChange={(e) => setDraftBestGrowthRate(Number(e.target.value) / 100)}
-              />
-            </label>
-            <button
-              className="deal-form__submit"
-              type="button"
-              onClick={() => onBestGrowthRateChange(draftBestGrowthRate)}
-            >
-              Update
-            </button>
-
-            <label className="deal-form__field">
-              <span className="deal-form__label">Worst Case Growth Rate (%)</span>
-              <input
-                className="deal-form__input"
-                type="number"
-                step="any"
-                value={draftWorstGrowthRate * 100}
-                onChange={(e) => setDraftWorstGrowthRate(Number(e.target.value) / 100)}
-              />
-            </label>
-            <button
-              className="deal-form__submit"
-              type="button"
-              onClick={() => onWorstGrowthRateChange(draftWorstGrowthRate)}
-            >
-              Update
-            </button>
-
-            <RevenueScenarioChart
-              financials={financials}
-              baseForecast={baseForecast}
-              bestForecast={bestForecast}
-              worstForecast={worstForecast}
-            />
-          </section>
-        </>
+      {!isLoading && forecast?.model_type === "deterministic" ? (
+        <section>
+          <h3 className="deal-result-panel__breaches-title">Forecast</h3>
+          <DeterministicForecastChart
+            historical={forecast.historical}
+            forecast={forecast.forecast}
+          />
+        </section>
       ) : null}
     </aside>
   );

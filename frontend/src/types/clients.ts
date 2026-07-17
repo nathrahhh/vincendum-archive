@@ -38,7 +38,7 @@ export type ForecastAssumptions = {
   revenue_growth_rate: number;
   average_cogs_ratio: number;
   average_opex_ratio: number;
-  average_gross_margin: number;
+  average_gross_margin: number | null;
 };
 
 export type ForecastHistoricalRecord = {
@@ -46,12 +46,36 @@ export type ForecastHistoricalRecord = {
   revenue: number;
   cogs: number;
   opex: number;
-  reported_gross_profit: number;
+  reported_gross_profit: number | null;
   calculated_gross_profit: number;
   cash_balance: number;
 };
 
-export type ForecastRecord = {
+export type ProphetForecastRecord = {
+  month: string;
+  revenue: number;
+  gross_profit: number;
+  base: number;
+  best: number;
+  worst: number;
+  lower_bound: number;
+  upper_bound: number;
+};
+
+export type ProphetHistoricalRecord = {
+  month: string;
+  revenue: number;
+  gross_profit: number;
+};
+
+export type ProphetForecast = {
+  client_id: number;
+  model_type: "prophet";
+  historical: ProphetHistoricalRecord[];
+  forecast: ProphetForecastRecord[];
+};
+
+export type DeterministicForecastRecord = {
   month: string;
   revenue: number;
   cogs: number;
@@ -63,12 +87,27 @@ export type ForecastRecord = {
   cash_balance: number;
 };
 
-export type ClientForecast = {
+export type DeterministicForecastAlerts = {
+  gross_profit_alerts: {
+    month: string;
+    message: string;
+    difference_pct: number;
+  }[];
+};
+
+export type DeterministicForecast = {
   client_id: number;
+  model_type: "deterministic";
   assumptions: ForecastAssumptions;
   historical: ForecastHistoricalRecord[];
-  forecast: ForecastRecord[];
+  forecast: DeterministicForecastRecord[];
+  alerts: DeterministicForecastAlerts;
 };
+
+/** @deprecated Prefer DeterministicForecastRecord */
+export type ForecastRecord = DeterministicForecastRecord;
+
+export type ClientForecast = ProphetForecast | DeterministicForecast;
 
 export type ClientForecastScenarios = {
   base: ClientForecast;

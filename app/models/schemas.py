@@ -1,6 +1,7 @@
 from datetime import date
 from enum import Enum
 from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
@@ -99,3 +100,76 @@ class ClientApplicationCreate(BaseModel):
 
 class ClientCreditLimitUpdate(BaseModel):
     credit_limit: float = Field(..., gt=0)
+
+class ForecastAssumptions(BaseModel):
+    revenue_growth_rate: float
+    average_cogs_ratio: float
+    average_opex_ratio: float
+    average_gross_margin: float | None
+
+
+class ForecastHistoricalRecord(BaseModel):
+    month: str
+    revenue: float
+    cogs: float
+    opex: float
+    reported_gross_profit: float | None
+    calculated_gross_profit: float
+    cash_balance: float
+
+class DeterministicForecastRecord(BaseModel):
+    month: str
+    revenue: float
+    cogs: float
+    opex: float
+    gross_profit_margin_method: float | None
+    gross_profit_cogs_method: float
+    gross_profit_difference: float | None
+    net_cash_flow: float
+    cash_balance: float
+
+class GrossProfitAlert(BaseModel):
+    month: str
+    message: str
+    difference_pct: float
+
+
+class DeterministicForecastAlerts(BaseModel):
+    gross_profit_alerts: list[GrossProfitAlert]
+
+class DeterministicForecast(BaseModel):
+    client_id: int
+    model_type: Literal["deterministic"]
+
+    assumptions: ForecastAssumptions
+    historical: list[ForecastHistoricalRecord]
+    forecast: list[DeterministicForecastRecord]
+    alerts: DeterministicForecastAlerts
+
+class ProphetHistoricalRecord(BaseModel):
+    month: str
+    revenue: float
+    gross_profit: float
+
+class ProphetForecastRecord(BaseModel):
+    month: str
+    revenue: float
+
+    base: float
+    best: float
+    worst: float
+
+    lower_bound: float
+    upper_bound: float
+
+class ProphetForecast(BaseModel):
+    client_id: int
+    model_type: Literal["prophet"]
+
+    historical: list[ProphetHistoricalRecord]
+    forecast: list[ProphetForecastRecord]
+
+ClientForecast = Annotated[
+    ProphetForecast | DeterministicForecast,
+    Field(discriminator="model_type"),
+]

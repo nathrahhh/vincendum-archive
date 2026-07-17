@@ -3,7 +3,7 @@ import { ClientDetailPanel } from "../components/clients";
 import {
   getClient,
   getClientFinancials,
-  getClientForecastScenarios,
+  getClientForecast,
   getClients,
 } from "../services/clientService";
 import type {
@@ -24,13 +24,7 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [financials, setFinancials] = useState<ClientFinancials | null>(null);
-  const [baseForecast, setBaseForecast] = useState<ClientForecast | null>(null);
-  const [bestForecast, setBestForecast] = useState<ClientForecast | null>(null);
-  const [worstForecast, setWorstForecast] = useState<ClientForecast | null>(null);
-
-  const [baseGrowthRate, setBaseGrowthRate] = useState(0.05);
-  const [bestGrowthRate, setBestGrowthRate] = useState(0.08);
-  const [worstGrowthRate, setWorstGrowthRate] = useState(0.02);
+  const [forecast, setForecast] = useState<ClientForecast | null>(null);
 
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
@@ -56,12 +50,28 @@ export default function ClientsPage() {
     loadClients();
   }, []);
 
+  async function reloadForecast(clientId: number) {
+    setIsLoadingDetail(true);
+    setError(null);
+    try {
+      const forecastData = await getClientForecast(clientId, 0.05);
+      setForecast(forecastData);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to load forecast"
+      );
+      setForecast(null);
+    } finally {
+      setIsLoadingDetail(false);
+    }
+  }
+
   async function handleClientSelect(client: Client) {
     setSelectedClient(client);
     setFinancials(null);
-    setBaseForecast(null);
-    setBestForecast(null);
-    setWorstForecast(null);
+    setForecast(null);
     setError(null);
     setIsLoadingDetail(true);
 
@@ -71,62 +81,20 @@ export default function ClientsPage() {
 
       const financialData = await getClientFinancials(client.id);
       setFinancials(financialData);
+
+      const forecastData = await getClientForecast(client.id, 0.05);
+      setForecast(forecastData);
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
           : "Failed to load client data"
       );
+      setForecast(null);
+    } finally {
       setIsLoadingDetail(false);
     }
   }
-
-  useEffect(() => {
-    if (!selectedClient) {
-      return;
-    }
-
-    const clientId = selectedClient.id;
-    let cancelled = false;
-
-    async function loadScenarios() {
-      setIsLoadingDetail(true);
-      setError(null);
-      try {
-        const scenarios = await getClientForecastScenarios(
-          clientId,
-          baseGrowthRate,
-          bestGrowthRate,
-          worstGrowthRate,
-        );
-        if (!cancelled) {
-          setBaseForecast(scenarios.base);
-          setBestForecast(scenarios.best);
-          setWorstForecast(scenarios.worst);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Failed to load forecast scenarios"
-          );
-          setBaseForecast(null);
-          setBestForecast(null);
-          setWorstForecast(null);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoadingDetail(false);
-        }
-      }
-    }
-
-    loadScenarios();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedClient?.id, baseGrowthRate, bestGrowthRate, worstGrowthRate]);
 
   async function handleClientUpdated() {
     if (!selectedClient) {
@@ -220,15 +188,7 @@ export default function ClientsPage() {
       <ClientDetailPanel
         client={selectedClient}
         financials={financials}
-        baseForecast={baseForecast}
-        bestForecast={bestForecast}
-        worstForecast={worstForecast}
-        baseGrowthRate={baseGrowthRate}
-        bestGrowthRate={bestGrowthRate}
-        worstGrowthRate={worstGrowthRate}
-        onBaseGrowthRateChange={setBaseGrowthRate}
-        onBestGrowthRateChange={setBestGrowthRate}
-        onWorstGrowthRateChange={setWorstGrowthRate}
+        forecast={forecast}
         onClientUpdated={handleClientUpdated}
         isLoading={isLoadingDetail}
         error={error}
