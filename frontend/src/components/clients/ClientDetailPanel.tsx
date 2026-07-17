@@ -57,8 +57,10 @@ export default function ClientDetailPanel({
 }: ClientDetailPanelProps) {
   const [draftBaseGrowthRate, setDraftBaseGrowthRate] =
     useState(baseGrowthRate);
+
   const [draftBestGrowthRate, setDraftBestGrowthRate] =
     useState(bestGrowthRate);
+
   const [draftWorstGrowthRate, setDraftWorstGrowthRate] =
     useState(worstGrowthRate);
 
@@ -66,39 +68,37 @@ export default function ClientDetailPanel({
     client?.credit_limit ?? 0,
   );
 
-  const [isUpdatingCreditLimit, setIsUpdatingCreditLimit] = useState(false);
-  const [creditLimitError, setCreditLimitError] = useState<string | null>(null);
+  const [isUpdatingCreditLimit, setIsUpdatingCreditLimit] =
+    useState(false);
+
+  const [creditLimitError, setCreditLimitError] =
+    useState<string | null>(null);
+
 
   useEffect(() => {
     setDraftBaseGrowthRate(baseGrowthRate);
   }, [baseGrowthRate]);
 
+
   useEffect(() => {
     setDraftBestGrowthRate(bestGrowthRate);
   }, [bestGrowthRate]);
 
+
   useEffect(() => {
     setDraftWorstGrowthRate(worstGrowthRate);
   }, [worstGrowthRate]);
+
 
   useEffect(() => {
     setDraftCreditLimit(client?.credit_limit ?? 0);
     setCreditLimitError(null);
   }, [client?.id, client?.credit_limit]);
 
-  if (!client) {
-    return (
-      <aside className="clients-panel">
-        <p className="clients-panel__hint">
-          Select a client to view details.
-        </p>
-      </aside>
-    );
-  }
-
-  const deals = client.deals ?? [];
 
   async function handleUpdateCreditLimit() {
+    if (!client) return;
+
     setIsUpdatingCreditLimit(true);
     setCreditLimitError(null);
 
@@ -120,15 +120,33 @@ export default function ClientDetailPanel({
     }
   }
 
+
+  if (!client) {
+    return (
+      <aside className="clients-panel">
+        <p className="clients-panel__hint">
+          Select a client to view details.
+        </p>
+      </aside>
+    );
+  }
+
+
+  const deals = client.deals ?? [];
+
+
   return (
     <aside className="clients-panel">
+
       <h2 className="clients-panel__title">
         {client.name}
       </h2>
 
+
       <p className="clients-panel__meta">
         Industry: {client.industry}
       </p>
+
 
       <section>
         <h3 className="deal-result-panel__breaches-title">
@@ -152,6 +170,7 @@ export default function ClientDetailPanel({
           />
         </label>
 
+
         <button
           className="deal-form__submit"
           type="button"
@@ -161,12 +180,14 @@ export default function ClientDetailPanel({
           {isUpdatingCreditLimit ? "Updating…" : "Update"}
         </button>
 
-        {creditLimitError ? (
+
+        {creditLimitError && (
           <p className="dashboard-error">
             {creditLimitError}
           </p>
-        ) : null}
+        )}
       </section>
+
 
       <section>
         <h3 className="deal-result-panel__breaches-title">
@@ -174,17 +195,24 @@ export default function ClientDetailPanel({
         </h3>
 
         <p className="clients-panel__meta">
-          Current exposure: {formatCurrency(client.current_exposure ?? 0)}
+          Current exposure:
+          {" "}
+          {formatCurrency(client.current_exposure ?? 0)}
         </p>
 
         <p className="clients-panel__meta">
-          Remaining credit: {formatCurrency(client.remaining_credit ?? 0)}
+          Remaining credit:
+          {" "}
+          {formatCurrency(client.remaining_credit ?? 0)}
         </p>
 
         <p className="clients-panel__meta">
-          Utilization: {formatPercent(client.utilization_pct ?? 0)}
+          Utilization:
+          {" "}
+          {formatPercent(client.utilization_pct ?? 0)}
         </p>
       </section>
+
 
       <section>
         <h3 className="deal-result-panel__breaches-title">
@@ -211,10 +239,15 @@ export default function ClientDetailPanel({
                 {deals.map((deal) => (
                   <tr key={deal.id}>
                     <td>{deal.name}</td>
+
                     <td className="dashboard-table__num">
                       {formatCurrency(deal.value)}
                     </td>
-                    <td>{deal.industry}</td>
+
+                    <td>
+                      {deal.industry}
+                    </td>
+
                     <td>
                       <span
                         className={
@@ -232,6 +265,7 @@ export default function ClientDetailPanel({
           </div>
         )}
       </section>
+
 
       <section>
         <h3 className="deal-result-panel__breaches-title">
@@ -274,17 +308,22 @@ export default function ClientDetailPanel({
         )}
       </section>
 
-      {error ? (
-        <p className="dashboard-error">{error}</p>
-      ) : null}
 
-      {isLoading ? (
+      {error && (
+        <p className="dashboard-error">
+          {error}
+        </p>
+      )}
+
+
+      {isLoading && (
         <p className="clients-panel__hint">
           Loading client data…
         </p>
-      ) : null}
+      )}
 
-      {!isLoading ? (
+
+      {!isLoading && (
         <>
           <section>
             <h3 className="deal-result-panel__breaches-title">
@@ -308,6 +347,7 @@ export default function ClientDetailPanel({
               />
             </label>
 
+
             <button
               className="deal-form__submit"
               type="button"
@@ -318,16 +358,19 @@ export default function ClientDetailPanel({
               Update
             </button>
 
+
             <RevenueGrossProfitChart
               financials={financials}
               baseForecast={baseForecast}
             />
           </section>
 
+
           <section>
             <h3 className="deal-result-panel__breaches-title">
               Best / Worst Case Scenarios
             </h3>
+
 
             {[
               {
@@ -350,6 +393,7 @@ export default function ClientDetailPanel({
               },
             ].map((item) => (
               <div key={item.label}>
+
                 <label className="deal-form__field">
                   <span className="deal-form__label">
                     {item.label}
@@ -367,15 +411,20 @@ export default function ClientDetailPanel({
                   />
                 </label>
 
+
                 <button
                   className="deal-form__submit"
                   type="button"
-                  onClick={() => item.update(item.value)}
+                  onClick={() =>
+                    item.update(item.value)
+                  }
                 >
                   Update
                 </button>
+
               </div>
             ))}
+
 
             <RevenueScenarioChart
               financials={financials}
@@ -383,9 +432,11 @@ export default function ClientDetailPanel({
               bestForecast={bestForecast}
               worstForecast={worstForecast}
             />
+
           </section>
         </>
-      ) : null}
+      )}
+
     </aside>
   );
 }
