@@ -55,10 +55,17 @@ export default function ClientDetailPanel({
   isLoading,
   error,
 }: ClientDetailPanelProps) {
-  const [draftBaseGrowthRate, setDraftBaseGrowthRate] = useState(baseGrowthRate);
-  const [draftBestGrowthRate, setDraftBestGrowthRate] = useState(bestGrowthRate);
-  const [draftWorstGrowthRate, setDraftWorstGrowthRate] = useState(worstGrowthRate);
-  const [draftCreditLimit, setDraftCreditLimit] = useState(client?.credit_limit ?? 0);
+  const [draftBaseGrowthRate, setDraftBaseGrowthRate] =
+    useState(baseGrowthRate);
+  const [draftBestGrowthRate, setDraftBestGrowthRate] =
+    useState(bestGrowthRate);
+  const [draftWorstGrowthRate, setDraftWorstGrowthRate] =
+    useState(worstGrowthRate);
+
+  const [draftCreditLimit, setDraftCreditLimit] = useState(
+    client?.credit_limit ?? 0,
+  );
+
   const [isUpdatingCreditLimit, setIsUpdatingCreditLimit] = useState(false);
   const [creditLimitError, setCreditLimitError] = useState<string | null>(null);
 
@@ -82,7 +89,9 @@ export default function ClientDetailPanel({
   if (!client) {
     return (
       <aside className="clients-panel">
-        <p className="clients-panel__hint">Select a client to view details.</p>
+        <p className="clients-panel__hint">
+          Select a client to view details.
+        </p>
       </aside>
     );
   }
@@ -92,12 +101,19 @@ export default function ClientDetailPanel({
   async function handleUpdateCreditLimit() {
     setIsUpdatingCreditLimit(true);
     setCreditLimitError(null);
+
     try {
-      await updateClientCreditLimit(client.id, Number(draftCreditLimit));
+      await updateClientCreditLimit(
+        client.id,
+        Number(draftCreditLimit),
+      );
+
       await onClientUpdated();
     } catch (err) {
       setCreditLimitError(
-        err instanceof Error ? err.message : "Failed to update credit limit",
+        err instanceof Error
+          ? err.message
+          : "Failed to update credit limit",
       );
     } finally {
       setIsUpdatingCreditLimit(false);
@@ -106,22 +122,36 @@ export default function ClientDetailPanel({
 
   return (
     <aside className="clients-panel">
-      <h2 className="clients-panel__title">{client.name}</h2>
-      <p className="clients-panel__meta">Industry: {client.industry}</p>
+      <h2 className="clients-panel__title">
+        {client.name}
+      </h2>
+
+      <p className="clients-panel__meta">
+        Industry: {client.industry}
+      </p>
 
       <section>
-        <h3 className="deal-result-panel__breaches-title">Credit limit</h3>
+        <h3 className="deal-result-panel__breaches-title">
+          Credit Limit
+        </h3>
+
         <label className="deal-form__field">
-          <span className="deal-form__label">Credit Limit (USD)</span>
+          <span className="deal-form__label">
+            Credit Limit (USD)
+          </span>
+
           <input
             className="deal-form__input"
             type="number"
             min="0"
             step="any"
             value={draftCreditLimit}
-            onChange={(e) => setDraftCreditLimit(Number(e.target.value))}
+            onChange={(e) =>
+              setDraftCreditLimit(Number(e.target.value))
+            }
           />
         </label>
+
         <button
           className="deal-form__submit"
           type="button"
@@ -130,26 +160,41 @@ export default function ClientDetailPanel({
         >
           {isUpdatingCreditLimit ? "Updating…" : "Update"}
         </button>
-        {creditLimitError ? <p className="dashboard-error">{creditLimitError}</p> : null}
+
+        {creditLimitError ? (
+          <p className="dashboard-error">
+            {creditLimitError}
+          </p>
+        ) : null}
       </section>
 
       <section>
-        <h3 className="deal-result-panel__breaches-title">Exposure</h3>
+        <h3 className="deal-result-panel__breaches-title">
+          Exposure
+        </h3>
+
         <p className="clients-panel__meta">
           Current exposure: {formatCurrency(client.current_exposure ?? 0)}
         </p>
+
         <p className="clients-panel__meta">
           Remaining credit: {formatCurrency(client.remaining_credit ?? 0)}
         </p>
+
         <p className="clients-panel__meta">
           Utilization: {formatPercent(client.utilization_pct ?? 0)}
         </p>
       </section>
 
       <section>
-        <h3 className="deal-result-panel__breaches-title">Deals</h3>
+        <h3 className="deal-result-panel__breaches-title">
+          Deals
+        </h3>
+
         {deals.length === 0 ? (
-          <p className="clients-panel__hint">No approved deals for this client.</p>
+          <p className="clients-panel__hint">
+            No approved deals for this client.
+          </p>
         ) : (
           <div className="dashboard-table-wrap">
             <table className="dashboard-table">
@@ -161,14 +206,22 @@ export default function ClientDetailPanel({
                   <th>Status</th>
                 </tr>
               </thead>
+
               <tbody>
                 {deals.map((deal) => (
                   <tr key={deal.id}>
                     <td>{deal.name}</td>
-                    <td className="dashboard-table__num">{formatCurrency(deal.value)}</td>
+                    <td className="dashboard-table__num">
+                      {formatCurrency(deal.value)}
+                    </td>
                     <td>{deal.industry}</td>
                     <td>
-                      <span className={statusClass[deal.status] ?? "dashboard-badge"}>
+                      <span
+                        className={
+                          statusClass[deal.status] ??
+                          "dashboard-badge"
+                        }
+                      >
                         {deal.status}
                       </span>
                     </td>
@@ -181,9 +234,15 @@ export default function ClientDetailPanel({
       </section>
 
       <section>
-        <h3 className="deal-result-panel__breaches-title">Financial History</h3>
-        {!financials || financials.historical.length === 0 ? (
-          <p className="clients-panel__hint">No financial history for this client.</p>
+        <h3 className="deal-result-panel__breaches-title">
+          Financial History
+        </h3>
+
+        {!financials ||
+        financials.historical.length === 0 ? (
+          <p className="clients-panel__hint">
+            No financial history for this client.
+          </p>
         ) : (
           <div className="dashboard-table-wrap">
             <table className="dashboard-table">
@@ -197,15 +256,16 @@ export default function ClientDetailPanel({
                   <th>Cash Balance</th>
                 </tr>
               </thead>
+
               <tbody>
                 {financials.historical.map((record) => (
                   <tr key={record.id}>
                     <td>{record.month.slice(0, 7)}</td>
-                    <td className="dashboard-table__num">{formatCurrency(record.revenue)}</td>
-                    <td className="dashboard-table__num">{formatCurrency(record.cogs)}</td>
-                    <td className="dashboard-table__num">{formatCurrency(record.gross_profit)}</td>
-                    <td className="dashboard-table__num">{formatCurrency(record.opex)}</td>
-                    <td className="dashboard-table__num">{formatCurrency(record.cash_balance)}</td>
+                    <td>{formatCurrency(record.revenue)}</td>
+                    <td>{formatCurrency(record.cogs)}</td>
+                    <td>{formatCurrency(record.gross_profit)}</td>
+                    <td>{formatCurrency(record.opex)}</td>
+                    <td>{formatCurrency(record.cash_balance)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -214,88 +274,108 @@ export default function ClientDetailPanel({
         )}
       </section>
 
-      {error ? <p className="dashboard-error">{error}</p> : null}
-      {isLoading ? <p className="clients-panel__hint">Loading client data…</p> : null}
+      {error ? (
+        <p className="dashboard-error">{error}</p>
+      ) : null}
+
+      {isLoading ? (
+        <p className="clients-panel__hint">
+          Loading client data…
+        </p>
+      ) : null}
 
       {!isLoading ? (
         <>
           <section>
-            <h3 className="deal-result-panel__breaches-title">Revenue & Gross Profit Forecast</h3>
+            <h3 className="deal-result-panel__breaches-title">
+              Revenue & Gross Profit Forecast
+            </h3>
+
             <label className="deal-form__field">
-              <span className="deal-form__label">Revenue Growth Rate (%)</span>
+              <span className="deal-form__label">
+                Revenue Growth Rate (%)
+              </span>
+
               <input
                 className="deal-form__input"
                 type="number"
-                step="any"
                 value={draftBaseGrowthRate * 100}
-                onChange={(e) => setDraftBaseGrowthRate(Number(e.target.value) / 100)}
+                onChange={(e) =>
+                  setDraftBaseGrowthRate(
+                    Number(e.target.value) / 100,
+                  )
+                }
               />
             </label>
+
             <button
               className="deal-form__submit"
               type="button"
-              onClick={() => onBaseGrowthRateChange(draftBaseGrowthRate)}
+              onClick={() =>
+                onBaseGrowthRateChange(draftBaseGrowthRate)
+              }
             >
               Update
             </button>
-            <RevenueGrossProfitChart financials={financials} baseForecast={baseForecast} />
+
+            <RevenueGrossProfitChart
+              financials={financials}
+              baseForecast={baseForecast}
+            />
           </section>
 
           <section>
-            <h3 className="deal-result-panel__breaches-title">Best / Worst Case Scenarios</h3>
-            <label className="deal-form__field">
-              <span className="deal-form__label">Base Case Growth Rate (%)</span>
-              <input
-                className="deal-form__input"
-                type="number"
-                step="any"
-                value={draftBaseGrowthRate * 100}
-                onChange={(e) => setDraftBaseGrowthRate(Number(e.target.value) / 100)}
-              />
-            </label>
-            <button
-              className="deal-form__submit"
-              type="button"
-              onClick={() => onBaseGrowthRateChange(draftBaseGrowthRate)}
-            >
-              Update
-            </button>
+            <h3 className="deal-result-panel__breaches-title">
+              Best / Worst Case Scenarios
+            </h3>
 
-            <label className="deal-form__field">
-              <span className="deal-form__label">Best Case Growth Rate (%)</span>
-              <input
-                className="deal-form__input"
-                type="number"
-                step="any"
-                value={draftBestGrowthRate * 100}
-                onChange={(e) => setDraftBestGrowthRate(Number(e.target.value) / 100)}
-              />
-            </label>
-            <button
-              className="deal-form__submit"
-              type="button"
-              onClick={() => onBestGrowthRateChange(draftBestGrowthRate)}
-            >
-              Update
-            </button>
+            {[
+              {
+                label: "Base Case Growth Rate (%)",
+                value: draftBaseGrowthRate,
+                setValue: setDraftBaseGrowthRate,
+                update: onBaseGrowthRateChange,
+              },
+              {
+                label: "Best Case Growth Rate (%)",
+                value: draftBestGrowthRate,
+                setValue: setDraftBestGrowthRate,
+                update: onBestGrowthRateChange,
+              },
+              {
+                label: "Worst Case Growth Rate (%)",
+                value: draftWorstGrowthRate,
+                setValue: setDraftWorstGrowthRate,
+                update: onWorstGrowthRateChange,
+              },
+            ].map((item) => (
+              <div key={item.label}>
+                <label className="deal-form__field">
+                  <span className="deal-form__label">
+                    {item.label}
+                  </span>
 
-            <label className="deal-form__field">
-              <span className="deal-form__label">Worst Case Growth Rate (%)</span>
-              <input
-                className="deal-form__input"
-                type="number"
-                step="any"
-                value={draftWorstGrowthRate * 100}
-                onChange={(e) => setDraftWorstGrowthRate(Number(e.target.value) / 100)}
-              />
-            </label>
-            <button
-              className="deal-form__submit"
-              type="button"
-              onClick={() => onWorstGrowthRateChange(draftWorstGrowthRate)}
-            >
-              Update
-            </button>
+                  <input
+                    className="deal-form__input"
+                    type="number"
+                    value={item.value * 100}
+                    onChange={(e) =>
+                      item.setValue(
+                        Number(e.target.value) / 100,
+                      )
+                    }
+                  />
+                </label>
+
+                <button
+                  className="deal-form__submit"
+                  type="button"
+                  onClick={() => item.update(item.value)}
+                >
+                  Update
+                </button>
+              </div>
+            ))}
 
             <RevenueScenarioChart
               financials={financials}
