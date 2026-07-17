@@ -40,8 +40,6 @@ app.include_router(client_applications.router)
 @app.on_event("startup")
 def on_startup() -> None:
     init_db()
-    with SessionLocal() as db:
-        seed_portfolio_if_empty(db)
 
 
 @app.get("/", response_model=HealthResponse, tags=["health"])
