@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: credit-risk-postgres
+    environment:
+      POSTGRES_USER: credit_user
+      POSTGRES_PASSWORD: credit_password
+      POSTGRES_DB: credit_risk_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: credit-risk-backend
+    environment:
+      DATABASE_URL: postgresql://credit_user:credit_password@postgres:5432/credit_risk_db
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
+    restart: always
+
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: credit-risk-frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:4173"
+    restart: always
+
+
+volumes:
+  postgres_data:
