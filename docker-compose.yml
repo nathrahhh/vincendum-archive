@@ -6,9 +6,9 @@ services:
     image: postgres:16
     container_name: credit-risk-postgres
     environment:
-      POSTGRES_USER: credit_user
-      POSTGRES_PASSWORD: credit_password
-      POSTGRES_DB: credit_risk_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: always
@@ -20,7 +20,7 @@ services:
       dockerfile: Dockerfile.backend
     container_name: credit-risk-backend
     environment:
-      DATABASE_URL: postgresql://credit_user:credit_password@postgres:5432/credit_risk_db
+       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     depends_on:
       - postgres
     ports:
