@@ -230,9 +230,16 @@ export default function ClientForecastTab({
 
           {!isLoadingProphet && prophetForecast ? (
             <>
-              <ProphetForecastChart forecast={prophetForecast.forecast} />
-
-              {prophetForecast.forecast.length > 0 ? (
+              <ProphetForecastChart
+                historical={
+                  financials?.historical.map((record) => ({
+                    month: record.month,
+                    revenue: record.revenue,
+                  })) ?? []
+                }
+                forecast={prophetForecast.forecast ?? []}
+              />
+              {(prophetForecast.forecast ?? []).length > 0 ? (
                 <div className="dashboard-table-wrap">
                   <table className="dashboard-table">
                     <thead>
@@ -244,7 +251,7 @@ export default function ClientForecastTab({
                       </tr>
                     </thead>
                     <tbody>
-                      {prophetForecast.forecast.map((row) => (
+                      {(prophetForecast.forecast ?? []).map((row) => (
                         <tr key={row.month}>
                           <td>{row.month.slice(0, 7)}</td>
                           <td className="dashboard-table__num">

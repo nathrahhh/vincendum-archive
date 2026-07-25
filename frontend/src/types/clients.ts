@@ -76,10 +76,16 @@ export type ProphetForecastPoint = {
   lower_bound: number;
   upper_bound: number;
 };
+export type ProphetHistoricalPoint = {
+  month: string;
+  revenue: number;
+};
+
 
 export type ProphetForecastResponse = {
   client_id: number;
   model: "prophet";
+  historical: ProphetHistoricalPoint[];
   forecast: ProphetForecastPoint[];
 };
 

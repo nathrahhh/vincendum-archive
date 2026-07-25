@@ -19,14 +19,14 @@ type HistoricalRevenuePoint = {
 
 
 type ProphetForecastChartProps = {
-  historical: HistoricalRevenuePoint[];
-  forecast: ProphetForecastPoint[];
+  historical?: HistoricalRevenuePoint[];
+  forecast?: ProphetForecastPoint[];
 };
 
 
 export default function ProphetForecastChart({
-  historical,
-  forecast,
+  historical = [],
+  forecast = [],
 }: ProphetForecastChartProps) {
 
   const data = [
