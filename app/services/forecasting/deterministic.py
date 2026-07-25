@@ -69,7 +69,7 @@ def _fetch_client_financials(
     return [dict(row) for row in rows.all()]
 
 
-def build_client_forecast(
+def build_deterministic_forecast(
     db: Session,
     client_id: int,
     revenue_growth_rate: float

@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Client, ClientFinancials, ClientForecast } from "../../types";
-import { updateClientCreditLimit } from "../../services/clientService";
-import RevenueGrossProfitChart from "./RevenueGrossProfitChart";
-import RevenueScenarioChart from "./RevenueScenarioChart";
+import ClientDealsTab from "./ClientDealsTab";
+import ClientFinancialsTab from "./ClientFinancialsTab";
+import ClientForecastTab from "./ClientForecastTab";
+import ClientOverviewTab from "./ClientOverviewTab";
 
 type ClientDetailPanelProps = {
   client: Client | null;
@@ -21,23 +22,9 @@ type ClientDetailPanelProps = {
   error: string | null;
 };
 
-const statusClass: Record<string, string> = {
-  PENDING: "dashboard-badge dashboard-badge--warning",
-  APPROVED: "dashboard-badge dashboard-badge--approved",
-  REJECTED: "dashboard-badge dashboard-badge--rejected",
-};
+type ClientDetailTab = "Overview" | "Deals" | "Financials" | "Forecast";
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
-function formatPercent(value: number): string {
-  return `${value.toFixed(2)}%`;
-}
+const TABS: ClientDetailTab[] = ["Overview", "Deals", "Financials", "Forecast"];
 
 export default function ClientDetailPanel({
   client,
@@ -55,388 +42,73 @@ export default function ClientDetailPanel({
   isLoading,
   error,
 }: ClientDetailPanelProps) {
-  const [draftBaseGrowthRate, setDraftBaseGrowthRate] =
-    useState(baseGrowthRate);
-
-  const [draftBestGrowthRate, setDraftBestGrowthRate] =
-    useState(bestGrowthRate);
-
-  const [draftWorstGrowthRate, setDraftWorstGrowthRate] =
-    useState(worstGrowthRate);
-
-  const [draftCreditLimit, setDraftCreditLimit] = useState(
-    client?.credit_limit ?? 0,
-  );
-
-  const [isUpdatingCreditLimit, setIsUpdatingCreditLimit] =
-    useState(false);
-
-  const [creditLimitError, setCreditLimitError] =
-    useState<string | null>(null);
-
-
-  useEffect(() => {
-    setDraftBaseGrowthRate(baseGrowthRate);
-  }, [baseGrowthRate]);
-
-
-  useEffect(() => {
-    setDraftBestGrowthRate(bestGrowthRate);
-  }, [bestGrowthRate]);
-
-
-  useEffect(() => {
-    setDraftWorstGrowthRate(worstGrowthRate);
-  }, [worstGrowthRate]);
-
-
-  useEffect(() => {
-    setDraftCreditLimit(client?.credit_limit ?? 0);
-    setCreditLimitError(null);
-  }, [client?.id, client?.credit_limit]);
-
-
-  async function handleUpdateCreditLimit() {
-    if (!client) return;
-
-    setIsUpdatingCreditLimit(true);
-    setCreditLimitError(null);
-
-    try {
-      await updateClientCreditLimit(
-        client.id,
-        Number(draftCreditLimit),
-      );
-
-      await onClientUpdated();
-    } catch (err) {
-      setCreditLimitError(
-        err instanceof Error
-          ? err.message
-          : "Failed to update credit limit",
-      );
-    } finally {
-      setIsUpdatingCreditLimit(false);
-    }
-  }
-
+  const [activeTab, setActiveTab] = useState<ClientDetailTab>("Overview");
 
   if (!client) {
     return (
       <aside className="clients-panel">
-        <p className="clients-panel__hint">
-          Select a client to view details.
-        </p>
+        <p className="clients-panel__hint">Select a client to view details.</p>
       </aside>
     );
   }
 
-
   const deals = client.deals ?? [];
-
 
   return (
     <aside className="clients-panel">
+      <h2 className="clients-panel__title">{client.name}</h2>
 
-      <h2 className="clients-panel__title">
-        {client.name}
-      </h2>
+      <p className="clients-panel__meta">Industry: {client.industry}</p>
 
-
-      <p className="clients-panel__meta">
-        Industry: {client.industry}
-      </p>
-
-
-      <section>
-        <h3 className="deal-result-panel__breaches-title">
-          Credit Limit
-        </h3>
-
-        <label className="deal-form__field">
-          <span className="deal-form__label">
-            Credit Limit (USD)
-          </span>
-
-          <input
-            className="deal-form__input"
-            type="number"
-            min="0"
-            step="any"
-            value={draftCreditLimit}
-            onChange={(e) =>
-              setDraftCreditLimit(Number(e.target.value))
+      <nav className="clients-panel__tabs">
+        {TABS.map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            className={
+              activeTab === tab
+                ? "clients-panel__tab clients-panel__tab--active"
+                : "clients-panel__tab"
             }
-          />
-        </label>
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab}
+          </button>
+        ))}
+      </nav>
 
-
-        <button
-          className="deal-form__submit"
-          type="button"
-          disabled={isUpdatingCreditLimit}
-          onClick={handleUpdateCreditLimit}
-        >
-          {isUpdatingCreditLimit ? "Updating…" : "Update"}
-        </button>
-
-
-        {creditLimitError && (
-          <p className="dashboard-error">
-            {creditLimitError}
-          </p>
-        )}
-      </section>
-
-
-      <section>
-        <h3 className="deal-result-panel__breaches-title">
-          Exposure
-        </h3>
-
-        <p className="clients-panel__meta">
-          Current exposure:
-          {" "}
-          {formatCurrency(client.current_exposure ?? 0)}
-        </p>
-
-        <p className="clients-panel__meta">
-          Remaining credit:
-          {" "}
-          {formatCurrency(client.remaining_credit ?? 0)}
-        </p>
-
-        <p className="clients-panel__meta">
-          Utilization:
-          {" "}
-          {formatPercent(client.utilization_pct ?? 0)}
-        </p>
-      </section>
-
-
-      <section>
-        <h3 className="deal-result-panel__breaches-title">
-          Deals
-        </h3>
-
-        {deals.length === 0 ? (
-          <p className="clients-panel__hint">
-            No approved deals for this client.
-          </p>
-        ) : (
-          <div className="dashboard-table-wrap">
-            <table className="dashboard-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Value</th>
-                  <th>Industry</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {deals.map((deal) => (
-                  <tr key={deal.id}>
-                    <td>{deal.name}</td>
-
-                    <td className="dashboard-table__num">
-                      {formatCurrency(deal.value)}
-                    </td>
-
-                    <td>
-                      {deal.industry}
-                    </td>
-
-                    <td>
-                      <span
-                        className={
-                          statusClass[deal.status] ??
-                          "dashboard-badge"
-                        }
-                      >
-                        {deal.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-
-      <section>
-        <h3 className="deal-result-panel__breaches-title">
-          Financial History
-        </h3>
-
-        {!financials ||
-        financials.historical.length === 0 ? (
-          <p className="clients-panel__hint">
-            No financial history for this client.
-          </p>
-        ) : (
-          <div className="dashboard-table-wrap">
-            <table className="dashboard-table">
-              <thead>
-                <tr>
-                  <th>Month</th>
-                  <th>Revenue</th>
-                  <th>COGS</th>
-                  <th>Gross Profit</th>
-                  <th>Opex</th>
-                  <th>Cash Balance</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {financials.historical.map((record) => (
-                  <tr key={record.id}>
-                    <td>{record.month.slice(0, 7)}</td>
-                    <td>{formatCurrency(record.revenue)}</td>
-                    <td>{formatCurrency(record.cogs)}</td>
-                    <td>{formatCurrency(record.gross_profit)}</td>
-                    <td>{formatCurrency(record.opex)}</td>
-                    <td>{formatCurrency(record.cash_balance)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-
-      {error && (
-        <p className="dashboard-error">
-          {error}
-        </p>
-      )}
-
+      {error && <p className="dashboard-error">{error}</p>}
 
       {isLoading && (
-        <p className="clients-panel__hint">
-          Loading client data…
-        </p>
+        <p className="clients-panel__hint">Loading client data…</p>
       )}
 
+      {activeTab === "Overview" ? (
+        <ClientOverviewTab client={client} onClientUpdated={onClientUpdated} />
+      ) : null}
 
-      {!isLoading && (
-        <>
-          <section>
-            <h3 className="deal-result-panel__breaches-title">
-              Revenue & Gross Profit Forecast
-            </h3>
+      {activeTab === "Deals" ? <ClientDealsTab deals={deals} /> : null}
 
-            <label className="deal-form__field">
-              <span className="deal-form__label">
-                Revenue Growth Rate (%)
-              </span>
+      {activeTab === "Financials" ? (
+        <ClientFinancialsTab financials={financials} />
+      ) : null}
 
-              <input
-                className="deal-form__input"
-                type="number"
-                value={draftBaseGrowthRate * 100}
-                onChange={(e) =>
-                  setDraftBaseGrowthRate(
-                    Number(e.target.value) / 100,
-                  )
-                }
-              />
-            </label>
-
-
-            <button
-              className="deal-form__submit"
-              type="button"
-              onClick={() =>
-                onBaseGrowthRateChange(draftBaseGrowthRate)
-              }
-            >
-              Update
-            </button>
-
-
-            <RevenueGrossProfitChart
-              financials={financials}
-              baseForecast={baseForecast}
-            />
-          </section>
-
-
-          <section>
-            <h3 className="deal-result-panel__breaches-title">
-              Best / Worst Case Scenarios
-            </h3>
-
-
-            {[
-              {
-                label: "Base Case Growth Rate (%)",
-                value: draftBaseGrowthRate,
-                setValue: setDraftBaseGrowthRate,
-                update: onBaseGrowthRateChange,
-              },
-              {
-                label: "Best Case Growth Rate (%)",
-                value: draftBestGrowthRate,
-                setValue: setDraftBestGrowthRate,
-                update: onBestGrowthRateChange,
-              },
-              {
-                label: "Worst Case Growth Rate (%)",
-                value: draftWorstGrowthRate,
-                setValue: setDraftWorstGrowthRate,
-                update: onWorstGrowthRateChange,
-              },
-            ].map((item) => (
-              <div key={item.label}>
-
-                <label className="deal-form__field">
-                  <span className="deal-form__label">
-                    {item.label}
-                  </span>
-
-                  <input
-                    className="deal-form__input"
-                    type="number"
-                    value={item.value * 100}
-                    onChange={(e) =>
-                      item.setValue(
-                        Number(e.target.value) / 100,
-                      )
-                    }
-                  />
-                </label>
-
-
-                <button
-                  className="deal-form__submit"
-                  type="button"
-                  onClick={() =>
-                    item.update(item.value)
-                  }
-                >
-                  Update
-                </button>
-
-              </div>
-            ))}
-
-
-            <RevenueScenarioChart
-              financials={financials}
-              baseForecast={baseForecast}
-              bestForecast={bestForecast}
-              worstForecast={worstForecast}
-            />
-
-          </section>
-        </>
-      )}
-
+      {activeTab === "Forecast" ? (
+        <ClientForecastTab
+          clientId={client.id}
+          financials={financials}
+          baseForecast={baseForecast}
+          bestForecast={bestForecast}
+          worstForecast={worstForecast}
+          baseGrowthRate={baseGrowthRate}
+          bestGrowthRate={bestGrowthRate}
+          worstGrowthRate={worstGrowthRate}
+          onBaseGrowthRateChange={onBaseGrowthRateChange}
+          onBestGrowthRateChange={onBestGrowthRateChange}
+          onWorstGrowthRateChange={onWorstGrowthRateChange}
+          isLoading={isLoading}
+        />
+      ) : null}
     </aside>
   );
 }

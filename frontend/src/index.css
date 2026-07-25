@@ -630,6 +630,36 @@ a {
   color: #6b7280;
 }
 
+.clients-panel__tabs {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 1rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e5ea;
+}
+
+.clients-panel__tab {
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 0.9375rem;
+  color: #4b5563;
+  cursor: pointer;
+}
+
+.clients-panel__tab:hover {
+  background: #f3f4f6;
+}
+
+.clients-panel__tab--active {
+  background: #eef2ff;
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
 .clients-panel__hint {
   margin: 1rem 0 0;
   font-size: 0.875rem;
