@@ -4,7 +4,7 @@ import type {
   ClientForecast,
   ForecastModel,
   ProphetForecastResponse,
-} from "../../types";
+} from "../../types/clients";
 import { getClientForecast } from "../../services/clientService";
 import ProphetForecastChart from "./ProphetForecastChart";
 import RevenueGrossProfitChart from "./RevenueGrossProfitChart";

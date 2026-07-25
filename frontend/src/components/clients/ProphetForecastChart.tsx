@@ -1,4 +1,7 @@
-import type { ProphetForecastPoint } from "../../types";
+import type {
+  ProphetForecastPoint,
+  ProphetHistoricalPoint,
+} from "../../types/clients";
 
 import {
   LineChart,
@@ -12,14 +15,8 @@ import {
 } from "recharts";
 
 
-type HistoricalRevenuePoint = {
-  month: string;
-  revenue: number;
-};
-
-
 type ProphetForecastChartProps = {
-  historical?: HistoricalRevenuePoint[];
+  historical?: ProphetHistoricalPoint[];
   forecast?: ProphetForecastPoint[];
 };
 
@@ -32,18 +29,18 @@ export default function ProphetForecastChart({
   const data = [
     ...historical.map((record) => ({
       month: record.month.slice(0, 7),
-      historicalRevenue: record.revenue,
-      prophetRevenue: null,
+      revenue: record.revenue,
       lowerBound: null,
       upperBound: null,
+      type: "historical",
     })),
 
     ...forecast.map((record) => ({
       month: record.month.slice(0, 7),
-      historicalRevenue: null,
-      prophetRevenue: record.revenue,
+      revenue: record.revenue,
       lowerBound: record.lower_bound,
       upperBound: record.upper_bound,
+      type: "forecast",
     })),
   ];
 
@@ -76,29 +73,19 @@ export default function ProphetForecastChart({
 
           <Line
             type="monotone"
-            dataKey="historicalRevenue"
-            name="Historical revenue"
+            dataKey="revenue"
+            name="Revenue"
             stroke="#2563eb"
             strokeWidth={2}
             dot
-          />
-
-
-          <Line
-            type="monotone"
-            dataKey="prophetRevenue"
-            name="Prophet forecast"
-            stroke="#059669"
-            strokeWidth={2}
-            strokeDasharray="6 4"
-            dot
+            connectNulls
           />
 
 
           <Line
             type="monotone"
             dataKey="lowerBound"
-            name="Lower bound"
+            name="Lower confidence bound"
             stroke="#9ca3af"
             strokeWidth={1}
             strokeDasharray="2 4"
@@ -109,7 +96,7 @@ export default function ProphetForecastChart({
           <Line
             type="monotone"
             dataKey="upperBound"
-            name="Upper bound"
+            name="Upper confidence bound"
             stroke="#9ca3af"
             strokeWidth={1}
             strokeDasharray="2 4"
