@@ -70,6 +70,21 @@ export type ClientForecast = {
   forecast: ForecastRecord[];
 };
 
+export type ProphetForecastPoint = {
+  month: string;
+  revenue: number;
+  lower_bound: number;
+  upper_bound: number;
+};
+
+export type ProphetForecastResponse = {
+  client_id: number;
+  model: "prophet";
+  forecast: ProphetForecastPoint[];
+};
+
+export type ForecastModel = "deterministic" | "prophet";
+
 export type ClientForecastScenarios = {
   base: ClientForecast;
   best: ClientForecast;

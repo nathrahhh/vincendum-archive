@@ -99,3 +99,45 @@ class ClientApplicationCreate(BaseModel):
 
 class ClientCreditLimitUpdate(BaseModel):
     credit_limit: float = Field(..., gt=0)
+
+
+class ForecastRevenuePoint(BaseModel):
+    month: str
+    revenue: float
+
+
+class DeterministicForecastPoint(BaseModel):
+    month: str
+    revenue: float
+    cogs: float
+    opex: float
+    reported_gross_profit: float | None = None
+    calculated_gross_profit: float | None = None
+    cash_balance: float
+    gross_profit_margin_method: float | None = None
+    gross_profit_cogs_method: float
+    gross_profit_difference: float | None = None
+    net_cash_flow: float
+
+
+class ProphetForecastPoint(BaseModel):
+    month: str
+    revenue: float
+    lower_bound: float
+    upper_bound: float
+
+
+class ProphetForecastResponse(BaseModel):
+    client_id: int
+    model: Literal["prophet"]
+    historical: list[ForecastRevenuePoint]
+    forecast: list[ProphetForecastPoint]
+
+
+class DeterministicForecastResponse(BaseModel):
+    client_id: int
+    model: Literal["deterministic"] = "deterministic"
+    assumptions: dict
+    historical: list[dict]
+    forecast: list[DeterministicForecastPoint]
+    alerts: dict

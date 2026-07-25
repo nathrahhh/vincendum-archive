@@ -9,7 +9,10 @@ export type {
   ClientFinancialCreateResponse,
   ForecastAssumptions,
   ForecastHistoricalRecord,
+  ForecastModel,
   ForecastRecord,
+  ProphetForecastPoint,
+  ProphetForecastResponse,
 } from "./clients";
 export type {
   ClientApplicationCreate,

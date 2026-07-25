@@ -16,6 +16,8 @@ import type {
   ClientFinancials,
   ClientForecast,
   ClientForecastScenarios,
+  ForecastModel,
+  ProphetForecastResponse,
 } from "../types";
 import { toServiceError } from "./errors";
 
@@ -46,9 +48,10 @@ export async function getClientFinancials(clientId: number): Promise<ClientFinan
 export async function getClientForecast(
   clientId: number,
   revenueGrowthRate: number,
-): Promise<ClientForecast> {
+  model: ForecastModel = "deterministic",
+): Promise<ClientForecast | ProphetForecastResponse> {
   try {
-    return await fetchClientForecast(clientId, revenueGrowthRate);
+    return await fetchClientForecast(clientId, revenueGrowthRate, model);
   } catch (error) {
     throw toServiceError(error, "Failed to load client forecast");
   }
@@ -62,11 +65,15 @@ export async function getClientForecastScenarios(
 ): Promise<ClientForecastScenarios> {
   try {
     const [base, best, worst] = await Promise.all([
-      fetchClientForecast(clientId, baseGrowthRate),
-      fetchClientForecast(clientId, bestGrowthRate),
-      fetchClientForecast(clientId, worstGrowthRate),
+      fetchClientForecast(clientId, baseGrowthRate, "deterministic"),
+      fetchClientForecast(clientId, bestGrowthRate, "deterministic"),
+      fetchClientForecast(clientId, worstGrowthRate, "deterministic"),
     ]);
-    return { base, best, worst };
+    return {
+      base: base as ClientForecast,
+      best: best as ClientForecast,
+      worst: worst as ClientForecast,
+    };
   } catch (error) {
     throw toServiceError(error, "Failed to load forecast scenarios");
   }

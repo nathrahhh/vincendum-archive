@@ -95,6 +95,7 @@ export default function ClientDetailPanel({
 
       {activeTab === "Forecast" ? (
         <ClientForecastTab
+          clientId={client.id}
           financials={financials}
           baseForecast={baseForecast}
           bestForecast={bestForecast}

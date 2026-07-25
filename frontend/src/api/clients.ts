@@ -5,6 +5,8 @@ import type {
   ClientFinancialCreateResponse,
   ClientFinancials,
   ClientForecast,
+  ForecastModel,
+  ProphetForecastResponse,
 } from "../types";
 
 export function fetchClients(): Promise<Client[]> {
@@ -22,9 +24,18 @@ export function fetchClientFinancials(clientId: number): Promise<ClientFinancial
 export function fetchClientForecast(
   clientId: number,
   revenueGrowthRate: number,
-): Promise<ClientForecast> {
-  return request<ClientForecast>(
-    `/clients/${clientId}/forecast?revenue_growth_rate=${revenueGrowthRate}`,
+  model: ForecastModel = "deterministic",
+): Promise<ClientForecast | ProphetForecastResponse> {
+  const params = new URLSearchParams({
+    model,
+  });
+
+  if (model === "deterministic") {
+    params.set("revenue_growth_rate", String(revenueGrowthRate));
+  }
+
+  return request<ClientForecast | ProphetForecastResponse>(
+    `/clients/${clientId}/forecast?${params.toString()}`,
   );
 }
 
