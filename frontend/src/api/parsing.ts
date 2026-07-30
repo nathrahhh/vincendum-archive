@@ -8,10 +8,13 @@ export async function postFinancialStatementExtract(
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${API_BASE}/financials/extract`, {
-    method: "POST",
-    body: formData,
-  });
+  const response = await fetch(
+    `${API_BASE}/parsing/financial-statement`,
+    {
+      method: "POST",
+      body: formData,
+    },
+  );
 
   if (!response.ok) {
     throw new Error(`API ${response.status}: ${response.statusText}`);

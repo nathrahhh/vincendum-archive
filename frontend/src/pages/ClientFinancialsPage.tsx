@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import ClientFinancialForm, { currentMonthValue } from "../components/clients/ClientFinancialForm";
+import FinancialStatementUpload from "../components/clients/FinancialStatementUpload";
 import { getClients, submitClientFinancial } from "../services/clientService";
-import type { Client, ClientFinancialCreate } from "../types";
+import type { Client, ClientFinancialCreate, FinancialStatementExtraction } from "../types";
 
 export default function ClientFinancialsPage() {
   const [clients, setClients] = useState<Client[]>([]);
@@ -46,6 +47,24 @@ export default function ClientFinancialsPage() {
     };
   }, []);
 
+  function handleFinancialExtraction(data: FinancialStatementExtraction) {
+    if (data.revenue !== null) {
+      setRevenue(String(data.revenue));
+    }
+    if (data.cogs !== null) {
+      setCogs(String(Math.abs(data.cogs)));
+    }
+    if (data.gross_profit !== null) {
+      setGrossProfit(String(data.gross_profit));
+    }
+    if (data.opex !== null) {
+      setOpex(String(Math.abs(data.opex)));
+    }
+    if (data.cash !== null) {
+      setCashBalance(String(data.cash));
+    }
+  }
+
   async function handleSubmit(payload: ClientFinancialCreate) {
     setIsSubmitting(true);
     setError(null);
@@ -69,6 +88,7 @@ export default function ClientFinancialsPage() {
     <div className="client-financials-page">
       {error ? <p className="dashboard-error">{error}</p> : null}
       {success ? <p className="client-financials__success">{success}</p> : null}
+      <FinancialStatementUpload onExtract={handleFinancialExtraction} />
       <ClientFinancialForm
         clients={clients}
         clientId={clientId}
