@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-# Canonical field name → accepted label aliases.
-# Add new aliases (or new canonical keys) here to extend support.
+
+# Canonical field name → accepted accounting labels.
 _LABEL_GROUPS: dict[str, tuple[str, ...]] = {
     "revenue": (
         "revenue",
@@ -17,15 +17,15 @@ _LABEL_GROUPS: dict[str, tuple[str, ...]] = {
         "cost of sales",
         "cost of revenue",
     ),
+    "gross_profit": (
+        "gross profit",
+        "gross income",
+    ),
     "opex": (
         "opex",
         "operating expenses",
         "administrative expenses",
         "selling expenses",
-    ),
-    "gross_profit": (
-        "gross profit",
-        "gross income",
     ),
     "cash": (
         "cash",
@@ -48,61 +48,74 @@ _LABEL_GROUPS: dict[str, tuple[str, ...]] = {
 }
 
 
-def _build_label_map(groups: dict[str, tuple[str, ...]]) -> dict[str, str]:
-    """Flatten alias groups into a lookup of normalized alias → canonical key."""
-    mapping: dict[str, str] = {}
-    for canonical, aliases in groups.items():
-        for alias in aliases:
-            mapping[_canonicalize_text(alias)] = canonical
-    return mapping
-
-
 def _canonicalize_text(value: str) -> str:
-    """Lowercase and collapse whitespace for stable label matching."""
+    """Normalize text for matching."""
     return " ".join(value.lower().strip().split())
 
 
-# Flat lookup used by normalize_label. Rebuilds whenever _LABEL_GROUPS changes.
-LABEL_MAP: dict[str, str] = _build_label_map(_LABEL_GROUPS)
+def _build_label_map(
+    groups: dict[str, tuple[str, ...]]
+) -> dict[str, str]:
+    """
+    Build lookup:
+    
+    "gross profit" -> "gross_profit"
+    "revenue" -> "revenue"
+    """
+    mapping: dict[str, str] = {}
+
+    for canonical, aliases in groups.items():
+        for alias in aliases:
+            mapping[_canonicalize_text(alias)] = canonical
+
+    return mapping
+
+
+LABEL_MAP = _build_label_map(_LABEL_GROUPS)
 
 
 def normalize_label(label: str) -> str | None:
     """
-    Convert an accounting label into a standardized field name.
-
-    Args:
-        label: Raw line-item label from a financial statement
-            (e.g. ``"Net Sales"``, ``"COGS"``).
-
-    Returns:
-        Canonical field name such as ``"revenue"`` or ``"cogs"``,
-        or ``None`` if the label is not recognized.
+    Convert accounting labels into application field names.
     """
+
     if not label or not label.strip():
         return None
 
-    return LABEL_MAP.get(_canonicalize_text(label))
+    cleaned = _canonicalize_text(label)
+
+    # Already standardized?
+    if cleaned in _LABEL_GROUPS:
+        return cleaned
+
+    return LABEL_MAP.get(cleaned)
 
 
 def normalize_financial_data(raw_data: dict) -> dict:
     """
-    Convert extracted accounting labels into standardized field names.
+    Convert extracted financial data into standardized fields.
 
-    Args:
-        raw_data: Dictionary of raw label → value pairs from extraction.
+    Accepts both:
 
-    Returns:
-        Dictionary keyed by canonical field names. Unknown labels are omitted.
+    {
+        "Gross Profit": 400000
+    }
+
+    and:
+
+    {
+        "gross_profit": 400000
+    }
     """
-    # TODO: Parse numeric strings (commas, currency symbols, parentheses)
-    # when values are still raw strings rather than floats.
+
     normalized: dict = {}
 
     for label, value in raw_data.items():
         key = normalize_label(str(label))
+
         if key is None:
             continue
-        # First match wins when multiple aliases map to the same key.
+
         if key not in normalized:
             normalized[key] = value
 

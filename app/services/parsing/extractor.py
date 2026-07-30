@@ -16,26 +16,71 @@ class FieldRule:
 
 # Add new FieldRule entries here to support additional statement labels.
 FIELD_RULES: list[FieldRule] = [
+    # Revenue
     FieldRule("revenue", re.compile(r"^\s*revenue\b", re.IGNORECASE)),
+    FieldRule("revenue", re.compile(r"^\s*turnover\b", re.IGNORECASE)),
     FieldRule("revenue", re.compile(r"^\s*net sales\b", re.IGNORECASE)),
     FieldRule("revenue", re.compile(r"^\s*sales\b", re.IGNORECASE)),
+    FieldRule("revenue", re.compile(r"^\s*income from sales\b", re.IGNORECASE)),
 
+    # Cost of goods sold / cost of sales
     FieldRule("cogs", re.compile(r"^\s*cost of goods sold\b", re.IGNORECASE)),
     FieldRule("cogs", re.compile(r"^\s*cost of sales\b", re.IGNORECASE)),
     FieldRule("cogs", re.compile(r"^\s*cost of revenue\b", re.IGNORECASE)),
     FieldRule("cogs", re.compile(r"^\s*cogs\b", re.IGNORECASE)),
 
+    # Gross profit
     FieldRule("gross_profit", re.compile(r"^\s*gross profit\b", re.IGNORECASE)),
     FieldRule("gross_profit", re.compile(r"^\s*gross income\b", re.IGNORECASE)),
 
+    # Operating expenses
     FieldRule("opex", re.compile(r"^\s*operating expenses\b", re.IGNORECASE)),
-    FieldRule("cash", re.compile(r"^\s*cash\b(?!\s+flow)", re.IGNORECASE)),
+    FieldRule("opex", re.compile(r"^\s*administrative expenses\b", re.IGNORECASE)),
+    FieldRule("opex", re.compile(r"^\s*general and administrative expenses\b", re.IGNORECASE)),
+    FieldRule("opex", re.compile(r"^\s*overheads\b", re.IGNORECASE)),
+
+    # Cash
+    FieldRule(
+        "cash",
+        re.compile(r"^\s*cash\b(?!\s+flow)", re.IGNORECASE),
+    ),
+    FieldRule(
+        "cash",
+        re.compile(r"^\s*cash at bank and in hand\b", re.IGNORECASE),
+    ),
+    FieldRule(
+        "cash",
+        re.compile(r"^\s*cash and cash equivalents\b", re.IGNORECASE),
+    ),
+
+    # Assets
     FieldRule("assets", re.compile(r"^\s*total assets\b", re.IGNORECASE)),
+    FieldRule("assets", re.compile(r"^\s*net assets\b", re.IGNORECASE)),
+
+    # Liabilities
     FieldRule(
         "liabilities",
         re.compile(r"^\s*total liabilities\b", re.IGNORECASE),
     ),
+    FieldRule(
+        "liabilities",
+        re.compile(r"^\s*creditors\b", re.IGNORECASE),
+    ),
+    FieldRule(
+        "liabilities",
+        re.compile(r"^\s*provisions for liabilities\b", re.IGNORECASE),
+    ),
+
+    # Equity
     FieldRule("equity", re.compile(r"^\s*equity\b", re.IGNORECASE)),
+    FieldRule(
+        "equity",
+        re.compile(r"^\s*shareholders'? funds\b", re.IGNORECASE),
+    ),
+    FieldRule(
+        "equity",
+        re.compile(r"^\s*capital and reserves\b", re.IGNORECASE),
+    ),
 ]
 
 

@@ -1,7 +1,10 @@
-"""Orchestrate PDF financial statement parsing end-to-end."""
+"""Orchestrate financial statement parsing end-to-end."""
 
 from __future__ import annotations
 
+from pathlib import Path
+
+from app.schemas.financial_extraction import FinancialStatementExtraction
 from app.services.parsing.extractor import extract_financial_data
 from app.services.parsing.normalizer import normalize_financial_data
 from app.services.parsing.pdf_reader import PDFReadError, extract_text_from_pdf
@@ -82,3 +85,47 @@ def parse_financial_statement(file_path: str) -> dict[str, float]:
         )
 
     return result
+
+
+def parse_uploaded_financial_statement(
+    file_path: str,
+) -> FinancialStatementExtraction:
+    """
+    Parse an uploaded financial statement file by extension.
+
+    Routes:
+        - ``.pdf`` → ``parse_financial_statement``
+        - ``.csv`` → ``parse_csv_financial_statement``
+
+    Args:
+        file_path: Path to the uploaded PDF or CSV file.
+
+    Returns:
+        Extracted financial fields as ``FinancialStatementExtraction``.
+
+    Raises:
+        FinancialStatementParseError: If the extension is unsupported or
+            parsing fails.
+        PDFReadError: If a PDF cannot be opened or read.
+    """
+    if not isinstance(file_path, str) or not file_path.strip():
+        raise FinancialStatementParseError(
+            "file_path must be a non-empty string."
+        )
+
+    extension = Path(file_path).suffix.lower()
+
+    if extension == ".pdf":
+        extracted = parse_financial_statement(file_path)
+        return FinancialStatementExtraction(**extracted)
+
+    if extension == ".csv":
+        # Local import avoids a circular dependency with csv_parser.
+        from app.services.parsing.csv_parser import parse_csv_financial_statement
+
+        return parse_csv_financial_statement(file_path)
+
+    raise FinancialStatementParseError(
+        f"Unsupported file type '{extension or '(none)'}'. "
+        "Supported types: .pdf, .csv."
+    )

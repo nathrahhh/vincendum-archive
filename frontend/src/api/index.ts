@@ -12,3 +12,4 @@ export {
 } from "./clients";
 export { postClientApplication } from "./clientApplications";
 export { fetchHealth } from "./health";
+export { postFinancialStatementExtract } from "./parsing";
