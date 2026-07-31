@@ -19,13 +19,16 @@ FIELD_RULES: list[FieldRule] = [
     # Revenue
     FieldRule("revenue", re.compile(r"^\s*revenue\b", re.IGNORECASE)),
     FieldRule("revenue", re.compile(r"^\s*turnover\b", re.IGNORECASE)),
+    FieldRule("revenue", re.compile(r"^\s*total turnover\b", re.IGNORECASE)),
     FieldRule("revenue", re.compile(r"^\s*net sales\b", re.IGNORECASE)),
     FieldRule("revenue", re.compile(r"^\s*sales\b", re.IGNORECASE)),
     FieldRule("revenue", re.compile(r"^\s*income from sales\b", re.IGNORECASE)),
 
     # Cost of goods sold / cost of sales
     FieldRule("cogs", re.compile(r"^\s*cost of goods sold\b", re.IGNORECASE)),
+    FieldRule("cogs", re.compile(r"^\s*total cost of goods sold\b", re.IGNORECASE)),
     FieldRule("cogs", re.compile(r"^\s*cost of sales\b", re.IGNORECASE)),
+    FieldRule("cogs", re.compile(r"^\s*total cost of sales\b", re.IGNORECASE)),
     FieldRule("cogs", re.compile(r"^\s*cost of revenue\b", re.IGNORECASE)),
     FieldRule("cogs", re.compile(r"^\s*cogs\b", re.IGNORECASE)),
 
@@ -36,6 +39,8 @@ FIELD_RULES: list[FieldRule] = [
     # Operating expenses
     FieldRule("opex", re.compile(r"^\s*operating expenses\b", re.IGNORECASE)),
     FieldRule("opex", re.compile(r"^\s*administrative expenses\b", re.IGNORECASE)),
+    FieldRule("opex", re.compile(r"^\s*administrative costs\b", re.IGNORECASE)),
+    FieldRule("opex", re.compile(r"^\s*total administrative costs\b", re.IGNORECASE)),
     FieldRule("opex", re.compile(r"^\s*general and administrative expenses\b", re.IGNORECASE)),
     FieldRule("opex", re.compile(r"^\s*overheads\b", re.IGNORECASE)),
 

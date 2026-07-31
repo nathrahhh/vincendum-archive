@@ -13,13 +13,27 @@ from app.services.parsing.pdf_reader import PDFReadError
 
 router = APIRouter(prefix="/parsing", tags=["parsing"])
 
-SUPPORTED_EXTENSIONS = {".pdf", ".csv"}
+SUPPORTED_EXTENSIONS = {".pdf", ".csv", ".xlsx"}
 SUPPORTED_CONTENT_TYPES = {
     "application/pdf",
     "application/x-pdf",
     "text/csv",
     "application/csv",
     "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+}
+
+XLSX_CONTENT_TYPES = {
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+}
+CSV_CONTENT_TYPES = {
+    "text/csv",
+    "application/csv",
+    "application/vnd.ms-excel",
+}
+PDF_CONTENT_TYPES = {
+    "application/pdf",
+    "application/x-pdf",
 }
 
 
@@ -46,14 +60,16 @@ def _resolve_temp_suffix(file: UploadFile) -> str:
         return extension
 
     content_type = (file.content_type or "").lower()
-    if content_type in {"text/csv", "application/csv", "application/vnd.ms-excel"}:
+    if content_type in XLSX_CONTENT_TYPES:
+        return ".xlsx"
+    if content_type in CSV_CONTENT_TYPES:
         return ".csv"
-    if content_type in {"application/pdf", "application/x-pdf"}:
+    if content_type in PDF_CONTENT_TYPES:
         return ".pdf"
 
     raise HTTPException(
         status_code=400,
-        detail="Uploaded file must be a PDF or CSV.",
+        detail="Uploaded file must be a PDF, CSV, or XLSX.",
     )
 
 
@@ -65,12 +81,12 @@ async def parse_financial_statement_upload(
     file: UploadFile = File(...),
 ) -> FinancialStatementExtraction:
     """
-    Accept a financial statement PDF or CSV upload and return extracted fields.
+    Accept a financial statement PDF, CSV, or XLSX upload and return extracted fields.
     """
     if not _is_supported_upload(file):
         raise HTTPException(
             status_code=400,
-            detail="Uploaded file must be a PDF or CSV.",
+            detail="Uploaded file must be a PDF, CSV, or XLSX.",
         )
 
     temp_path: str | None = None
@@ -80,7 +96,7 @@ async def parse_financial_statement_upload(
         if not contents:
             raise HTTPException(
                 status_code=400,
-                detail="Uploaded PDF or CSV file is empty.",
+                detail="Uploaded PDF, CSV, or XLSX file is empty.",
             )
 
         suffix = _resolve_temp_suffix(file)
@@ -106,9 +122,5 @@ async def parse_financial_statement_upload(
             detail="Failed to parse financial statement file.",
         ) from exc
     finally:
-        if temp_path is not None:
-            try:
-                os.unlink(temp_path)
-            except OSError:
-                pass
+        pass
         await file.close()

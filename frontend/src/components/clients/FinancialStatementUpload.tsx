@@ -2,8 +2,9 @@ import { useId, useState, type ChangeEvent } from "react";
 import { extractFinancialStatement } from "../../services";
 import type { FinancialStatementExtraction } from "../../types";
 
-const ACCEPTED_EXTENSIONS = [".pdf", ".csv"] as const;
-const ACCEPT_ATTR = ".pdf,.csv,application/pdf,text/csv";
+const ACCEPTED_EXTENSIONS = [".pdf", ".csv", ".xlsx"] as const;
+const ACCEPT_ATTR =
+  ".pdf,.csv,.xlsx,application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
 const FIELD_LABELS: { key: keyof FinancialStatementExtraction; label: string }[] = [
   { key: "revenue", label: "Revenue" },
@@ -53,7 +54,7 @@ export default function FinancialStatementUpload({
 
     if (!isAllowedFile(file)) {
       setSelectedFile(null);
-      setError("Only PDF and CSV files are allowed.");
+      setError("Only PDF, CSV, and Excel (.xlsx) files are allowed.");
       event.target.value = "";
       return;
     }
@@ -87,7 +88,7 @@ export default function FinancialStatementUpload({
     <div className="deal-form">
       <h2 className="deal-form__title">Financial Statement Upload</h2>
       <p className="deal-form__subtitle">
-        Upload a PDF or CSV statement to extract financial values
+        Upload a PDF, CSV, or Excel statement to extract financial values
       </p>
 
       <label className="deal-form__field" htmlFor={inputId}>

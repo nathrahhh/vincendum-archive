@@ -96,9 +96,10 @@ def parse_uploaded_financial_statement(
     Routes:
         - ``.pdf`` → ``parse_financial_statement``
         - ``.csv`` → ``parse_csv_financial_statement``
+        - ``.xlsx`` → ``parse_excel_financial_statement``
 
     Args:
-        file_path: Path to the uploaded PDF or CSV file.
+        file_path: Path to the uploaded PDF, CSV, or Excel file.
 
     Returns:
         Extracted financial fields as ``FinancialStatementExtraction``.
@@ -125,7 +126,13 @@ def parse_uploaded_financial_statement(
 
         return parse_csv_financial_statement(file_path)
 
+    if extension == ".xlsx":
+        # Local import avoids a circular dependency with excel_parser.
+        from app.services.parsing.excel_parser import parse_excel_financial_statement
+
+        return parse_excel_financial_statement(file_path)
+
     raise FinancialStatementParseError(
         f"Unsupported file type '{extension or '(none)'}'. "
-        "Supported types: .pdf, .csv."
+        "Supported types: .pdf, .csv, .xlsx."
     )

@@ -66,6 +66,30 @@ def test_parse_financial_statement_csv_success():
     assert temp_path.endswith(".csv")
 
 
+def test_parse_financial_statement_xlsx_success():
+    with patch(
+        "app.api.routes.parsing.parse_uploaded_financial_statement",
+        return_value=MOCK_FINANCIAL_DATA,
+    ) as mock_parse:
+        response = client.post(
+            "/parsing/financial-statement",
+            files={
+                "file": (
+                    "statement.xlsx",
+                    b"PK fake xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                ),
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json()["revenue"] == 1_000_000.0
+
+    mock_parse.assert_called_once()
+    (temp_path,) = mock_parse.call_args.args
+    assert temp_path.endswith(".xlsx")
+
+
 def test_parse_financial_statement_rejects_unsupported_type():
     with patch(
         "app.api.routes.parsing.parse_uploaded_financial_statement",
@@ -78,5 +102,5 @@ def test_parse_financial_statement_rejects_unsupported_type():
         )
 
     assert response.status_code == 400
-    assert response.json()["detail"] == "Uploaded file must be a PDF or CSV."
+    assert response.json()["detail"] == "Uploaded file must be a PDF, CSV, or XLSX."
     mock_parse.assert_not_called()
