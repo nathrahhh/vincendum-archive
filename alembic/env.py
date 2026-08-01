@@ -17,9 +17,12 @@ from app.db import DATABASE_URL, Base
 # Import all ORM models so they register on Base.metadata.
 from app.models.breach import BreachORM  # noqa: F401
 from app.models.client import ClientORM  # noqa: F401
+from app.models.client_application import ClientApplicationORM  # noqa: F401
 from app.models.client_financial import ClientFinancialORM  # noqa: F401
 from app.models.deal import DealORM  # noqa: F401
+from app.models.lender import LenderORM  # noqa: F401
 from app.models.position import PositionORM  # noqa: F401
+from app.models.user import UserORM  # noqa: F401
 
 config = context.config
 
@@ -32,7 +35,8 @@ if not DATABASE_URL:
         "running Alembic."
     )
 
-config.set_main_option("sqlalchemy.url", DATABASE_URL)
+# Escape % for ConfigParser interpolation (passwords may contain %xx encodings).
+config.set_main_option("sqlalchemy.url", DATABASE_URL.replace("%", "%%"))
 
 target_metadata = Base.metadata
 
