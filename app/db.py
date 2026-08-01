@@ -29,9 +29,11 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def init_db() -> None:
-    from app.models.position import PositionORM  # noqa: F401
-    from app.models.deal import DealORM  # noqa: F401
+    # Import ORM models so they register on Base.metadata before create_all.
     from app.models.breach import BreachORM  # noqa: F401
+    from app.models.client import ClientORM  # noqa: F401
     from app.models.client_financial import ClientFinancialORM  # noqa: F401
+    from app.models.deal import DealORM  # noqa: F401
+    from app.models.position import PositionORM  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
