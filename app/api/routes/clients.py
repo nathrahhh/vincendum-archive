@@ -2,9 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.auth.permissions import require_admin
 from app.db import get_db
 from app.models.client import ClientORM
 from app.models.schemas import ClientCreditLimitUpdate
+from app.models.user import UserORM
 from app.services.client_exposure_service import get_client_exposure
 
 router = APIRouter(prefix="/clients", tags=["clients"])
@@ -20,13 +22,20 @@ def _client_to_dict(client: ClientORM) -> dict:
 
 
 @router.get("")
-def list_clients(db: Session = Depends(get_db)) -> list[dict]:
+def list_clients(
+    db: Session = Depends(get_db),
+    current_user: UserORM = Depends(require_admin),
+) -> list[dict]:
     rows = db.execute(select(ClientORM).order_by(ClientORM.id.asc())).scalars().all()
     return [_client_to_dict(row) for row in rows]
 
 
 @router.get("/{client_id}")
-def get_client(client_id: int, db: Session = Depends(get_db)) -> dict:
+def get_client(
+    client_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserORM = Depends(require_admin),
+) -> dict:
     row = db.get(ClientORM, client_id)
     if row is None:
         raise HTTPException(status_code=404, detail=f"Client {client_id} not found")
@@ -39,6 +48,7 @@ def update_client_credit_limit(
     client_id: int,
     payload: ClientCreditLimitUpdate,
     db: Session = Depends(get_db),
+    current_user: UserORM = Depends(require_admin),
 ) -> dict:
     row = db.get(ClientORM, client_id)
     if row is None:

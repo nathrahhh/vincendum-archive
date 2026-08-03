@@ -4,17 +4,22 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from app.auth.permissions import require_admin, require_client
 from app.db import get_db
 from app.models.client import ClientORM
 from app.models.position import PositionORM
 from app.models.schemas import ClientApplicationCreate, Position
+from app.models.user import UserORM
 from app.services.concentration_risk_engine import RiskEngine
 
 router = APIRouter(tags=["client-applications"])
 
 
 @router.get("/client-applications")
-def list_client_applications(db: Session = Depends(get_db)) -> list[dict]:
+def list_client_applications(
+    db: Session = Depends(get_db),
+    current_user: UserORM = Depends(require_admin),
+) -> list[dict]:
     rows = db.execute(
         text(
             "SELECT id, name, industry, credit_limit, status, created_at "
@@ -28,6 +33,7 @@ def list_client_applications(db: Session = Depends(get_db)) -> list[dict]:
 def create_client_application(
     payload: ClientApplicationCreate,
     db: Session = Depends(get_db),
+    current_user: UserORM = Depends(require_client),
 ) -> dict:
     application = db.execute(
         text(
@@ -89,6 +95,7 @@ def create_client_application(
 def approve_client_application(
     application_id: int,
     db: Session = Depends(get_db),
+    current_user: UserORM = Depends(require_admin),
 ) -> dict:
     application = db.execute(
         text(
@@ -136,6 +143,7 @@ def approve_client_application(
 def reject_client_application(
     application_id: int,
     db: Session = Depends(get_db),
+    current_user: UserORM = Depends(require_admin),
 ) -> dict:
     application = db.execute(
         text(

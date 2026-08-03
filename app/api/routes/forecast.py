@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.auth.permissions import require_admin
 from app.db import get_db
 from app.models.schemas import (
     DeterministicForecastResponse,
     ProphetForecastResponse,
 )
+from app.models.user import UserORM
 from app.services.forecasting.deterministic import build_deterministic_forecast
 from app.services.forecasting.prophet import build_prophet_forecast
 
@@ -29,6 +31,7 @@ def get_client_forecast(
         description="Expected monthly revenue growth rate (e.g. 0.05 = 5%). Used by deterministic model only.",
     ),
     db: Session = Depends(get_db),
+    current_user: UserORM = Depends(require_admin),
 ) -> DeterministicForecastResponse | ProphetForecastResponse:
     selected_model = model.strip().lower()
 

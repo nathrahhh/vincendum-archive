@@ -1,9 +1,10 @@
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from pathlib import Path
 import os
 import tempfile
-from pathlib import Path
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
-
+from app.auth.permissions import require_client
+from app.models.user import UserORM
 from app.schemas.financial_extraction import FinancialStatementExtraction
 from app.services.parsing.parser import (
     FinancialStatementParseError,
@@ -79,6 +80,7 @@ def _resolve_temp_suffix(file: UploadFile) -> str:
 )
 async def parse_financial_statement_upload(
     file: UploadFile = File(...),
+    current_user: UserORM = Depends(require_client),
 ) -> FinancialStatementExtraction:
     """
     Accept a financial statement PDF, CSV, or XLSX upload and return extracted fields.

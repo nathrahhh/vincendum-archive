@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.auth.permissions import require_admin, require_client
 from app.db import get_db
 from app.models.client import ClientORM
 from app.models.client_financial import ClientFinancialORM
@@ -10,6 +11,7 @@ from app.models.schemas import (
     ClientFinancialRecord,
     ClientFinancialResponse,
 )
+from app.models.user import UserORM
 
 router = APIRouter(tags=["client-financials"])
 
@@ -31,6 +33,7 @@ def _to_record(row: ClientFinancialORM) -> ClientFinancialRecord:
 def create_client_financial(
     payload: ClientFinancialCreate,
     db: Session = Depends(get_db),
+    current_user: UserORM = Depends(require_client),
 ) -> dict:
     client = db.get(ClientORM, payload.client_id)
     if client is None:
@@ -74,6 +77,7 @@ def create_client_financial(
 def list_client_financials(
     client_id: int,
     db: Session = Depends(get_db),
+    current_user: UserORM = Depends(require_admin),
 ) -> ClientFinancialResponse:
     rows = db.execute(
         select(ClientFinancialORM)
