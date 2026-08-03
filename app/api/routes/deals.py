@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.permissions import require_admin, require_client
+from app.auth.tenant import get_user_lender_id, require_lender_user
 from app.db import get_db
 from app.models.breach import BreachORM
+from app.models.client import ClientORM
 from app.models.deal import DealORM
 from app.models.position import PositionORM
 from app.models.schemas import DealRecord, DealRequest, Position, RiskEvaluation
@@ -18,13 +20,35 @@ from app.services.concentration_risk_engine import RiskEngine
 router = APIRouter(prefix="/deals", tags=["deals"])
 
 
+def _deal_for_lender(
+    db: Session,
+    deal_id: int,
+    lender_id: int,
+) -> DealORM | None:
+    return db.execute(
+        select(DealORM)
+        .join(ClientORM, DealORM.client_id == ClientORM.id)
+        .where(
+            DealORM.id == deal_id,
+            ClientORM.lender_id == lender_id,
+        )
+    ).scalar_one_or_none()
+
+
 @router.get("", response_model=list[DealRecord])
 def list_deals(
     db: Session = Depends(get_db),
     current_user: UserORM = Depends(require_admin),
+    _: UserORM = Depends(require_lender_user),
 ) -> list[DealRecord]:
-    """Return historical evaluated deals, newest first."""
-    rows = db.execute(select(DealORM).order_by(DealORM.id.desc())).scalars().all()
+    """Return historical evaluated deals for this lender, newest first."""
+    lender_id = get_user_lender_id(current_user)
+    rows = db.execute(
+        select(DealORM)
+        .join(ClientORM, DealORM.client_id == ClientORM.id)
+        .where(ClientORM.lender_id == lender_id)
+        .order_by(DealORM.id.desc())
+    ).scalars().all()
     return [
         DealRecord(
             id=row.id,
@@ -46,6 +70,9 @@ def evaluate_deal(
 ) -> RiskEvaluation:
     """
     Evaluate a proposed deal using RiskEngine and persist audit records.
+
+    Tenant note: UserORM has no client_id link, so ownership of deal.client_id
+    cannot be enforced yet for client users.
     """
     existing_positions = db.execute(select(PositionORM).order_by(PositionORM.name)).scalars().all()
     portfolio = [Position(name=p.name, value=p.value, industry=p.industry) for p in existing_positions]
@@ -109,8 +136,13 @@ def approve_deal(
     deal_id: int,
     db: Session = Depends(get_db),
     current_user: UserORM = Depends(require_admin),
+    _: UserORM = Depends(require_lender_user),
 ) -> DealRecord:
     """Approve a pending deal and add it to the portfolio."""
+    lender_id = get_user_lender_id(current_user)
+    deal = _deal_for_lender(db, deal_id, lender_id)
+    if deal is None:
+        raise HTTPException(status_code=404, detail=f"Deal {deal_id} not found")
     return approve_deal_service(db, deal_id)
 
 
@@ -119,6 +151,11 @@ def reject_deal(
     deal_id: int,
     db: Session = Depends(get_db),
     current_user: UserORM = Depends(require_admin),
+    _: UserORM = Depends(require_lender_user),
 ) -> DealRecord:
     """Reject a pending deal without creating a position."""
+    lender_id = get_user_lender_id(current_user)
+    deal = _deal_for_lender(db, deal_id, lender_id)
+    if deal is None:
+        raise HTTPException(status_code=404, detail=f"Deal {deal_id} not found")
     return reject_deal_service(db, deal_id)

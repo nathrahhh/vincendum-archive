@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.permissions import require_admin
+from app.auth.tenant import get_user_lender_id, require_lender_user
 from app.db import get_db
 from app.models.client import ClientORM
 from app.models.schemas import ClientCreditLimitUpdate
@@ -25,8 +26,14 @@ def _client_to_dict(client: ClientORM) -> dict:
 def list_clients(
     db: Session = Depends(get_db),
     current_user: UserORM = Depends(require_admin),
+    _: UserORM = Depends(require_lender_user),
 ) -> list[dict]:
-    rows = db.execute(select(ClientORM).order_by(ClientORM.id.asc())).scalars().all()
+    lender_id = get_user_lender_id(current_user)
+    rows = db.execute(
+        select(ClientORM)
+        .where(ClientORM.lender_id == lender_id)
+        .order_by(ClientORM.id.asc())
+    ).scalars().all()
     return [_client_to_dict(row) for row in rows]
 
 
@@ -35,8 +42,15 @@ def get_client(
     client_id: int,
     db: Session = Depends(get_db),
     current_user: UserORM = Depends(require_admin),
+    _: UserORM = Depends(require_lender_user),
 ) -> dict:
-    row = db.get(ClientORM, client_id)
+    lender_id = get_user_lender_id(current_user)
+    row = db.execute(
+        select(ClientORM).where(
+            ClientORM.id == client_id,
+            ClientORM.lender_id == lender_id,
+        )
+    ).scalar_one_or_none()
     if row is None:
         raise HTTPException(status_code=404, detail=f"Client {client_id} not found")
     exposure = get_client_exposure(db, client_id)
@@ -49,8 +63,15 @@ def update_client_credit_limit(
     payload: ClientCreditLimitUpdate,
     db: Session = Depends(get_db),
     current_user: UserORM = Depends(require_admin),
+    _: UserORM = Depends(require_lender_user),
 ) -> dict:
-    row = db.get(ClientORM, client_id)
+    lender_id = get_user_lender_id(current_user)
+    row = db.execute(
+        select(ClientORM).where(
+            ClientORM.id == client_id,
+            ClientORM.lender_id == lender_id,
+        )
+    ).scalar_one_or_none()
     if row is None:
         raise HTTPException(status_code=404, detail=f"Client {client_id} not found")
 

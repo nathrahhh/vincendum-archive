@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.permissions import require_admin
+from app.auth.tenant import require_lender_user
 from app.db import get_db
 from app.models.breach import BreachORM
 from app.models.user import UserORM
@@ -19,7 +20,14 @@ router = APIRouter(tags=["breaches"])
 def list_breaches(
     db: Session = Depends(get_db),
     current_user: UserORM = Depends(require_admin),
+    _: UserORM = Depends(require_lender_user),
 ) -> dict[str, list[dict[str, float | int | str]]]:
+    """
+    List breaches for lender staff.
+
+    Tenant isolation is not applied in the query yet: BreachORM has no deal_id
+    or client_id, so Breach → Deal → Client → Lender cannot be joined.
+    """
     rows = db.execute(select(BreachORM).order_by(BreachORM.id.desc())).scalars().all()
     logger.info("list_breaches fetched row_count=%d", len(rows))
 

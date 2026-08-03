@@ -25,6 +25,16 @@ def require_admin(
         )
     return current_user
 
+def require_admin_lender(
+    current_user: UserORM = Depends(require_admin),
+) -> UserORM:
+    if current_user.lender_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin is not assigned to a lender",
+        )
+
+    return current_user
 
 def require_client(
     current_user: UserORM = Depends(get_current_user),

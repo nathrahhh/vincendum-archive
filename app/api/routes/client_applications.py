@@ -5,6 +5,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.auth.permissions import require_admin, require_client
+from app.auth.tenant import get_user_lender_id, require_lender_user
 from app.db import get_db
 from app.models.client import ClientORM
 from app.models.position import PositionORM
@@ -19,12 +20,17 @@ router = APIRouter(tags=["client-applications"])
 def list_client_applications(
     db: Session = Depends(get_db),
     current_user: UserORM = Depends(require_admin),
+    _: UserORM = Depends(require_lender_user),
 ) -> list[dict]:
+    lender_id = get_user_lender_id(current_user)
     rows = db.execute(
         text(
             "SELECT id, name, industry, credit_limit, status, created_at "
-            "FROM client_applications ORDER BY created_at DESC"
-        )
+            "FROM client_applications "
+            "WHERE lender_id = :lender_id "
+            "ORDER BY created_at DESC"
+        ),
+        {"lender_id": lender_id},
     ).mappings()
     return [dict(row) for row in rows.all()]
 
@@ -35,6 +41,7 @@ def create_client_application(
     db: Session = Depends(get_db),
     current_user: UserORM = Depends(require_client),
 ) -> dict:
+    # lender_id intentionally omitted: client users may not be assigned yet.
     application = db.execute(
         text(
             "INSERT INTO client_applications (name, industry, credit_limit, status) "
@@ -96,13 +103,16 @@ def approve_client_application(
     application_id: int,
     db: Session = Depends(get_db),
     current_user: UserORM = Depends(require_admin),
+    _: UserORM = Depends(require_lender_user),
 ) -> dict:
+    lender_id = get_user_lender_id(current_user)
     application = db.execute(
         text(
             "SELECT id, name, industry, credit_limit, status "
-            "FROM client_applications WHERE id = :id"
+            "FROM client_applications "
+            "WHERE id = :id AND lender_id = :lender_id"
         ),
-        {"id": application_id},
+        {"id": application_id, "lender_id": lender_id},
     ).mappings().first()
     if application is None:
         raise HTTPException(
@@ -119,11 +129,15 @@ def approve_client_application(
         name=application["name"],
         industry=application["industry"],
         credit_limit=application["credit_limit"],
+        lender_id=lender_id,
     )
     db.add(client_row)
     db.execute(
-        text("UPDATE client_applications SET status = :status WHERE id = :id"),
-        {"status": "approved", "id": application_id},
+        text(
+            "UPDATE client_applications SET status = :status "
+            "WHERE id = :id AND lender_id = :lender_id"
+        ),
+        {"status": "approved", "id": application_id, "lender_id": lender_id},
     )
     db.commit()
     db.refresh(client_row)
@@ -144,13 +158,16 @@ def reject_client_application(
     application_id: int,
     db: Session = Depends(get_db),
     current_user: UserORM = Depends(require_admin),
+    _: UserORM = Depends(require_lender_user),
 ) -> dict:
+    lender_id = get_user_lender_id(current_user)
     application = db.execute(
         text(
             "SELECT id, name, industry, credit_limit, status "
-            "FROM client_applications WHERE id = :id"
+            "FROM client_applications "
+            "WHERE id = :id AND lender_id = :lender_id"
         ),
-        {"id": application_id},
+        {"id": application_id, "lender_id": lender_id},
     ).mappings().first()
     if application is None:
         raise HTTPException(
@@ -165,10 +182,11 @@ def reject_client_application(
 
     application = db.execute(
         text(
-            "UPDATE client_applications SET status = :status WHERE id = :id "
+            "UPDATE client_applications SET status = :status "
+            "WHERE id = :id AND lender_id = :lender_id "
             "RETURNING id, name, industry, credit_limit, status, created_at"
         ),
-        {"status": "rejected", "id": application_id},
+        {"status": "rejected", "id": application_id, "lender_id": lender_id},
     ).mappings().one()
     db.commit()
 

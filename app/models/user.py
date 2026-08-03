@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 
 if TYPE_CHECKING:
+    from app.models.client import ClientORM
     from app.models.lender import LenderORM
 
 
@@ -50,3 +51,8 @@ class UserORM(Base):
     )
 
     lender: Mapped[LenderORM | None] = relationship(back_populates="users")
+    # Present for role=client users once a ClientORM profile is linked.
+    client: Mapped[ClientORM | None] = relationship(
+        back_populates="user",
+        uselist=False,
+    )

@@ -9,6 +9,7 @@ from app.db import Base
 
 if TYPE_CHECKING:
     from app.models.lender import LenderORM
+    from app.models.user import UserORM
 
 
 class ClientORM(Base):
@@ -24,5 +25,13 @@ class ClientORM(Base):
         nullable=True,
         index=True,
     )
+    # One client profile per client user (Auth0-backed UserORM).
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
 
     lender: Mapped[LenderORM | None] = relationship(back_populates="clients")
+    user: Mapped[UserORM] = relationship(back_populates="client")
