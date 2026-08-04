@@ -4,7 +4,17 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.schemas.financial_extraction import FinancialStatementExtraction
+from app.auth.dependencies import get_current_user
+from app.models.user import UserORM
 
+
+app.dependency_overrides[get_current_user] = lambda: UserORM(
+    id=1,
+    email="test@example.com",
+    auth0_user_id="auth0|test",
+    role="admin",
+    lender_id=1,
+)
 client = TestClient(app)
 
 MOCK_FINANCIAL_DATA = FinancialStatementExtraction(

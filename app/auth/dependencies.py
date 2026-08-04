@@ -30,7 +30,7 @@ def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
     db: Session = Depends(get_db),
 ) -> UserORM:
-    print ("🔥 ENTERED get_current_user")
+    
     """
     Resolve the authenticated ``UserORM`` for the current request.
 
@@ -79,7 +79,7 @@ def get_current_user(
 
     user = get_user_by_auth0_id(db, auth0_user_id)
 
-    print("LOOKUP RESULT:", user)
+    
 
     if user is not None:
         return user
@@ -94,12 +94,5 @@ def get_current_user(
     db.add(user)
     db.commit()
     db.refresh(user)
-
-    print(
-        "CREATED USER:",
-        user.id,
-        user.email,
-        user.auth0_user_id,
-    )
 
     return user
