@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from app import models
 from app.api.routes import (
     breaches,
     client_applications,

@@ -80,7 +80,6 @@ def _resolve_temp_suffix(file: UploadFile) -> str:
 )
 async def parse_financial_statement_upload(
     file: UploadFile = File(...),
-    current_user: UserORM = Depends(require_client),
 ) -> FinancialStatementExtraction:
     """
     Accept a financial statement PDF, CSV, or XLSX upload and return extracted fields.
