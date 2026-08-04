@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth.permissions import require_admin, require_client
+from app.auth.client import get_current_client
+from app.auth.permissions import require_admin
 from app.db import get_db
 from app.models.client import ClientORM
 from app.models.client_financial import ClientFinancialORM
@@ -33,15 +34,11 @@ def _to_record(row: ClientFinancialORM) -> ClientFinancialRecord:
 def create_client_financial(
     payload: ClientFinancialCreate,
     db: Session = Depends(get_db),
-    current_user: UserORM = Depends(require_client),
+    current_client: ClientORM = Depends(get_current_client),
 ) -> dict:
-    client = db.get(ClientORM, payload.client_id)
-    if client is None:
-        raise HTTPException(status_code=404, detail=f"Client {payload.client_id} not found")
-
     existing = db.execute(
         select(ClientFinancialORM).where(
-            ClientFinancialORM.client_id == payload.client_id,
+            ClientFinancialORM.client_id == current_client.id,
             ClientFinancialORM.month == payload.month,
         )
     ).scalars().first()
@@ -49,13 +46,13 @@ def create_client_financial(
         raise HTTPException(
             status_code=409,
             detail=(
-                f"Financial record already exists for client {payload.client_id} "
+                f"Financial record already exists for client {current_client.id} "
                 f"and month {payload.month}"
             ),
         )
 
     row = ClientFinancialORM(
-        client_id=payload.client_id,
+        client_id=current_client.id,
         month=payload.month,
         revenue=payload.revenue,
         cogs=payload.cogs,

@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth.permissions import require_admin, require_client
+from app.auth.client import get_current_client
+from app.auth.permissions import require_admin
 from app.auth.tenant import get_user_lender_id, require_lender_user
 from app.db import get_db
 from app.models.breach import BreachORM
@@ -66,13 +67,12 @@ def list_deals(
 def evaluate_deal(
     deal: DealRequest,
     db: Session = Depends(get_db),
-    current_user: UserORM = Depends(require_client),
+    current_client: ClientORM = Depends(get_current_client),
 ) -> RiskEvaluation:
     """
     Evaluate a proposed deal using RiskEngine and persist audit records.
 
-    Tenant note: UserORM has no client_id link, so ownership of deal.client_id
-    cannot be enforced yet for client users.
+    Ownership comes from the authenticated client profile, not deal.client_id.
     """
     existing_positions = db.execute(select(PositionORM).order_by(PositionORM.name)).scalars().all()
     portfolio = [Position(name=p.name, value=p.value, industry=p.industry) for p in existing_positions]
@@ -80,7 +80,7 @@ def evaluate_deal(
     result = risk_engine.evaluate_deal(portfolio=portfolio, deal=deal)
     credit_result = ClientCreditEngine().evaluate_deal(
         db=db,
-        client_id=deal.client_id,
+        client_id=current_client.id,
         deal_value=deal.value,
     )
 
@@ -88,7 +88,7 @@ def evaluate_deal(
     credit_rejected = not credit_result["approved"]
     deal_status = "REJECTED" if concentration_rejected or credit_rejected else "PENDING"
     logged_deal = DealORM(
-     client_id=deal.client_id,
+     client_id=current_client.id,
      name=deal.name,
      value=deal.value,
      industry=deal.industry,
