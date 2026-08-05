@@ -101,6 +101,22 @@ class ClientCreditLimitUpdate(BaseModel):
     credit_limit: float = Field(..., gt=0)
 
 
+class LenderOnboardRequest(BaseModel):
+    name: str = Field(..., min_length=1)
+
+
+class LenderResponse(BaseModel):
+    id: int
+    name: str
+
+
+class CurrentUserResponse(BaseModel):
+    id: int
+    email: str
+    role: str
+    lender_id: int | None
+
+
 class ForecastRevenuePoint(BaseModel):
     month: str
     revenue: float

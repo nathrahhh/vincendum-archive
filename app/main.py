@@ -8,8 +8,10 @@ from app.api.routes import (
     clients,
     deals,
     forecast,
+    lenders,
     parsing,
     portfolio,
+    users,
 )
 from app.db import SessionLocal, init_db
 from app.models.schemas import HealthResponse
@@ -45,6 +47,8 @@ app.include_router(clients.router)
 app.include_router(client_financials.router)
 app.include_router(client_applications.router)
 app.include_router(parsing.router)
+app.include_router(lenders.router)
+app.include_router(users.router)
 
 
 @app.on_event("startup")

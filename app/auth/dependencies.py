@@ -54,6 +54,7 @@ def get_current_user(
 
     try:
         claims = verify_auth0_token(credentials.credentials)
+        print("AUTH0 CLAIMS:", claims)
     except Auth0TokenError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -69,7 +70,7 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    email = _email_from_claims(claims) or "unknown@example.com"
+    email = _email_from_claims(claims) 
     if email is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

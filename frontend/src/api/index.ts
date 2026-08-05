@@ -13,3 +13,5 @@ export {
 export { postClientApplication } from "./clientApplications";
 export { fetchHealth } from "./health";
 export { postFinancialStatementExtract } from "./parsing";
+export { fetchCurrentUser } from "./users";
+export { postLenderOnboard } from "./lenders";
