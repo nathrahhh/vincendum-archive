@@ -14,15 +14,28 @@ services:
     restart: always
 
 
+  redis:
+    image: redis:7-alpine
+    container_name: credit-risk-redis
+    restart: always
+
+
   backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
     container_name: credit-risk-backend
     environment:
-       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
+
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      AUTH0_ISSUER: ${AUTH0_ISSUER}
+
     depends_on:
       - postgres
+      - redis
     ports:
       - "8000:8000"
     restart: always
