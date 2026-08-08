@@ -4,6 +4,8 @@ import pandas as pd
 from prophet import Prophet
 from sqlalchemy.orm import Session
 
+from app.services.cache.redis_client import DEFAULT_TTL_SECONDS, cache_get_json, cache_set_json
+from app.services.forecasting.cache_keys import prophet_forecast_cache_key
 from app.services.forecasting.deterministic import (
     FORECAST_MONTHS,
     _fetch_client_financials,
@@ -13,6 +15,25 @@ from app.services.forecasting.deterministic import (
 
 
 def build_prophet_forecast(
+    db: Session,
+    client_id: int,
+) -> dict[str, Any]:
+    cache_key = prophet_forecast_cache_key(client_id)
+    cached = cache_get_json(cache_key)
+    if cached is not None:
+        return cached
+
+    result = _compute_prophet_forecast(db=db, client_id=client_id)
+
+    # Do not cache empty / missing-history responses.
+    forecast = result.get("forecast")
+    if isinstance(forecast, list) and forecast:
+        cache_set_json(cache_key, result, ttl_seconds=DEFAULT_TTL_SECONDS)
+
+    return result
+
+
+def _compute_prophet_forecast(
     db: Session,
     client_id: int,
 ) -> dict[str, Any]:
