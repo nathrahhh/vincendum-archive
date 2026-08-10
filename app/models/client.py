@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 
 if TYPE_CHECKING:
+    from app.models.client_invitation import ClientInvitationORM
     from app.models.lender import LenderORM
     from app.models.user import UserORM
 
@@ -52,5 +53,9 @@ class ClientORM(Base):
 
     # Multiple users can belong to the same client.
     users: Mapped[list[UserORM]] = relationship(
+        back_populates="client",
+    )
+
+    invitations: Mapped[list[ClientInvitationORM]] = relationship(
         back_populates="client",
     )

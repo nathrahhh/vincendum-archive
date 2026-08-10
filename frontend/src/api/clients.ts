@@ -5,6 +5,7 @@ import type {
   ClientFinancialCreateResponse,
   ClientFinancials,
   ClientForecast,
+  ClientInvitation,
   ForecastModel,
   ProphetForecastResponse,
 } from "../types";
@@ -55,5 +56,15 @@ export function updateClientCreditLimit(
   return request<Client>(`/clients/${clientId}/credit-limit`, {
     method: "PUT",
     body: JSON.stringify({ credit_limit: creditLimit }),
+  });
+}
+
+export function postClientInvite(
+  clientId: number,
+  email: string,
+): Promise<ClientInvitation> {
+  return request<ClientInvitation>(`/clients/${clientId}/invite`, {
+    method: "POST",
+    body: JSON.stringify({ email }),
   });
 }

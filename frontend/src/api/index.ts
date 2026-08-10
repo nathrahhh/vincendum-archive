@@ -8,6 +8,7 @@ export {
   fetchClientFinancials,
   fetchClientForecast,
   postClientFinancial,
+  postClientInvite,
   updateClientCreditLimit,
 } from "./clients";
 export { postClientApplication } from "./clientApplications";

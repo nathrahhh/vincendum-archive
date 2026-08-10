@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from enum import Enum
 from typing import Literal
 
@@ -99,6 +99,21 @@ class ClientApplicationCreate(BaseModel):
 
 class ClientCreditLimitUpdate(BaseModel):
     credit_limit: float = Field(..., gt=0)
+
+
+class ClientInviteRequest(BaseModel):
+    email: str = Field(..., min_length=3)
+
+
+class ClientInviteResponse(BaseModel):
+    id: int
+    client_id: int
+    email: str
+    status: str
+    expires_at: datetime
+    # Returned once for development/testing; never store or log long-term.
+    token: str
+    invitation_url: str
 
 
 class LenderOnboardRequest(BaseModel):

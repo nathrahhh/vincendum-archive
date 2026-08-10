@@ -5,6 +5,7 @@ import {
   fetchClients,
   postClientApplication,
   postClientFinancial,
+  postClientInvite,
   updateClientCreditLimit as putClientCreditLimit,
 } from "../api";
 import type {
@@ -16,10 +17,13 @@ import type {
   ClientFinancials,
   ClientForecast,
   ClientForecastScenarios,
+  ClientInvitation,
   ForecastModel,
   ProphetForecastResponse,
 } from "../types";
 import { toServiceError } from "./errors";
+
+export type { ClientInvitation };
 
 export async function getClients(): Promise<Client[]> {
   try {
@@ -107,5 +111,16 @@ export async function updateClientCreditLimit(
     return await putClientCreditLimit(clientId, creditLimit);
   } catch (error) {
     throw toServiceError(error, "Failed to update credit limit");
+  }
+}
+
+export async function inviteClientUser(
+  clientId: number,
+  email: string,
+): Promise<ClientInvitation> {
+  try {
+    return await postClientInvite(clientId, email);
+  } catch (error) {
+    throw toServiceError(error, "Failed to invite client user");
   }
 }

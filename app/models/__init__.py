@@ -2,6 +2,7 @@ from app.models.breach import BreachORM
 from app.models.client import ClientORM
 from app.models.client_application import ClientApplicationORM
 from app.models.client_financial import ClientFinancialORM
+from app.models.client_invitation import ClientInvitationORM
 from app.models.deal import DealORM
 from app.models.lender import LenderORM
 from app.models.position import PositionORM

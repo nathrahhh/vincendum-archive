@@ -7,6 +7,7 @@ export type {
   ClientForecastScenarios,
   ClientFinancialCreate,
   ClientFinancialCreateResponse,
+  ClientInvitation,
   ForecastAssumptions,
   ForecastHistoricalRecord,
   ForecastModel,

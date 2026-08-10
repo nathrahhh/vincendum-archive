@@ -19,6 +19,7 @@ from app.models.breach import BreachORM  # noqa: F401
 from app.models.client import ClientORM  # noqa: F401
 from app.models.client_application import ClientApplicationORM  # noqa: F401
 from app.models.client_financial import ClientFinancialORM  # noqa: F401
+from app.models.client_invitation import ClientInvitationORM  # noqa: F401
 from app.models.deal import DealORM  # noqa: F401
 from app.models.lender import LenderORM  # noqa: F401
 from app.models.position import PositionORM  # noqa: F401

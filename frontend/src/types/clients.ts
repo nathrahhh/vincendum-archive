@@ -121,3 +121,13 @@ export type ClientFinancialCreateResponse = {
     gross_profit: number;
   };
 };
+
+export type ClientInvitation = {
+  id: number;
+  client_id: number;
+  email: string;
+  status: string;
+  expires_at: string;
+  token: string;
+  invitation_url: string;
+};
