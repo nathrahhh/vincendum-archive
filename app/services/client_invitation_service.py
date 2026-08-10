@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.models.client import ClientORM
 from app.models.client_invitation import ClientInvitationORM
+from app.models.user import UserORM
 
 INVITATION_TTL_DAYS = 7
 
@@ -94,3 +95,98 @@ def create_client_invitation(
     db.commit()
     db.refresh(invitation)
     return invitation, raw_token
+
+
+def _as_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
+def accept_client_invitation(
+    db: Session,
+    *,
+    auth0_user_id: str,
+    email: str,
+    raw_token: str,
+) -> tuple[ClientInvitationORM, ClientORM, UserORM]:
+    """
+    Accept a pending invitation for an authenticated Auth0 identity.
+
+    Creates or updates the local ``UserORM`` as a client user. ``client_id``
+    and ``lender_id`` come only from the invitation row matched by token hash.
+    """
+    token = raw_token.strip()
+    if not token:
+        raise HTTPException(status_code=422, detail="Invitation token is required")
+
+    invitation = db.execute(
+        select(ClientInvitationORM).where(
+            ClientInvitationORM.token_hash == hash_invitation_token(token),
+        )
+    ).scalar_one_or_none()
+    if invitation is None:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+
+    now = datetime.now(timezone.utc)
+    if _as_utc(invitation.expires_at) <= now:
+        if invitation.status == "pending":
+            invitation.status = "expired"
+            db.commit()
+        raise HTTPException(status_code=410, detail="Invitation has expired")
+
+    if invitation.status != "pending":
+        raise HTTPException(
+            status_code=409,
+            detail=f"Invitation is {invitation.status}",
+        )
+
+    if normalize_invitation_email(email) != normalize_invitation_email(
+        invitation.email,
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Authenticated email does not match this invitation",
+        )
+
+    client = db.execute(
+        select(ClientORM).where(ClientORM.id == invitation.client_id)
+    ).scalar_one_or_none()
+    if client is None:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    user = db.execute(
+        select(UserORM).where(UserORM.auth0_user_id == auth0_user_id)
+    ).scalar_one_or_none()
+
+    if user is None:
+        user = UserORM(
+            email=normalize_invitation_email(email),
+            auth0_user_id=auth0_user_id,
+            role="client",
+            lender_id=invitation.lender_id,
+            client_id=invitation.client_id,
+        )
+        db.add(user)
+    else:
+        if (
+            user.client_id is not None
+            and user.client_id != invitation.client_id
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="User is already linked to a different client",
+            )
+        user.email = normalize_invitation_email(email)
+        user.role = "client"
+        user.client_id = invitation.client_id
+        user.lender_id = invitation.lender_id
+
+    invitation.status = "accepted"
+    invitation.accepted_at = now
+
+    db.commit()
+    db.refresh(invitation)
+    db.refresh(user)
+    db.refresh(client)
+    return invitation, client, user

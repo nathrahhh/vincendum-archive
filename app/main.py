@@ -5,6 +5,7 @@ from app.api.routes import (
     breaches,
     client_applications,
     client_financials,
+    client_invitations,
     clients,
     deals,
     forecast,
@@ -46,6 +47,7 @@ app.include_router(forecast.router)
 app.include_router(clients.router)
 app.include_router(client_financials.router)
 app.include_router(client_applications.router)
+app.include_router(client_invitations.router)
 app.include_router(parsing.router)
 app.include_router(lenders.router)
 app.include_router(users.router)

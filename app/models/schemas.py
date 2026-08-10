@@ -116,6 +116,18 @@ class ClientInviteResponse(BaseModel):
     invitation_url: str
 
 
+class ClientInvitationAcceptRequest(BaseModel):
+    token: str = Field(..., min_length=1)
+
+
+class ClientInvitationAcceptResponse(BaseModel):
+    invitation_id: int
+    client_id: int
+    client_name: str
+    status: str
+    role: str
+
+
 class LenderOnboardRequest(BaseModel):
     name: str = Field(..., min_length=1)
 
