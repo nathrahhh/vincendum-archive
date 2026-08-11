@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -15,6 +17,7 @@ from app.models.user import UserORM
 from app.services.breach_helpers import industry_for_new_breach, reason_for_new_breach
 from app.services.client_credit_engine import ClientCreditEngine
 from app.services.deal_service import approve_deal as approve_deal_service
+from app.services.deal_service import create_deal as create_deal_service
 from app.services.deal_service import reject_deal as reject_deal_service
 from app.services.concentration_risk_engine import RiskEngine
 
@@ -54,14 +57,13 @@ def list_deals(
     ).scalars().all()
     return [
         DealRecord(
-            id=row.id,
-            client_id=row.client_id,
-            name=row.name,
-            value=row.value,
-            industry=row.industry,
-            status=row.status,
+            id=deal.id,
+            client_id=deal.client_id,
+            name=deal.name,
+            value=deal.value,
+            status=deal.status,
         )
-        for row in rows
+        for deal in rows
     ]
 
 
@@ -74,12 +76,17 @@ def evaluate_deal(
     """
     Evaluate a proposed deal using RiskEngine and persist audit records.
 
-    Ownership comes from the authenticated client profile, not deal.client_id.
+    Ownership and industry come from the authenticated client profile.
     """
     existing_positions = db.execute(select(PositionORM).order_by(PositionORM.name)).scalars().all()
     portfolio = [Position(name=p.name, value=p.value, industry=p.industry) for p in existing_positions]
+    risk_deal = SimpleNamespace(
+        name=deal.name,
+        value=deal.value,
+        industry=current_client.industry,
+    )
     risk_engine = RiskEngine()
-    result = risk_engine.evaluate_deal(portfolio=portfolio, deal=deal)
+    result = risk_engine.evaluate_deal(portfolio=portfolio, deal=risk_deal)
     credit_result = ClientCreditEngine().evaluate_deal(
         db=db,
         client_id=current_client.id,
@@ -90,11 +97,10 @@ def evaluate_deal(
     credit_rejected = not credit_result["approved"]
     deal_status = "REJECTED" if concentration_rejected or credit_rejected else "PENDING"
     logged_deal = DealORM(
-     client_id=current_client.id,
-     name=deal.name,
-     value=deal.value,
-     industry=deal.industry,
-     status=deal_status,
+        client_id=current_client.id,
+        name=deal.name,
+        value=deal.value,
+        status=deal_status,
     )
     db.add(logged_deal)
     db.commit()
@@ -105,7 +111,7 @@ def evaluate_deal(
         for breach in result.breaches:
             breach_row = BreachORM(
                 reason=reason_for_new_breach(breach),
-                industry=industry_for_new_breach(breach, deal.industry),
+                industry=industry_for_new_breach(breach, current_client.industry),
                 rule=breach.rule,
                 limit_pct=breach.limit_pct,
                 actual_pct=breach.actual_pct,
@@ -117,7 +123,7 @@ def evaluate_deal(
     if credit_rejected:
         breach_row = BreachORM(
             reason="CLIENT_CREDIT_LIMIT_EXCEEDED",
-            industry=deal.industry,
+            industry=current_client.industry,
             rule="client_credit_limit",
             limit_pct=credit_result["credit_limit"],
             actual_pct=credit_result["current_exposure"] + deal.value,
@@ -179,11 +185,28 @@ def list_my_client_deals(
             client_id=row.client_id,
             name=row.name,
             value=row.value,
-            industry=row.industry,
             status=row.status,
         )
         for row in rows
     ]
+
+
+@client_me_router.post("/me/deals", response_model=DealRecord)
+def create_my_client_deal(
+    payload: DealRequest,
+    db: Session = Depends(get_db),
+    current_client: ClientORM = Depends(get_current_client),
+) -> DealRecord:
+    """
+    Submit a new PENDING deal for the authenticated client.
+
+    ``client_id`` is taken only from the authenticated client profile.
+    """
+    return create_deal_service(
+        db,
+        current_client=current_client,
+        payload=payload,
+    )
 
 
 router.include_router(deals_router)

@@ -120,14 +120,12 @@ def seeded_db(db_session: Session) -> Session:
             client_id=2,
             name="Client 2 Deal",
             value=1_000.0,
-            industry="tech",
             status="PENDING",
         ),
         DealORM(
             client_id=3,
             name="Client 3 Deal",
             value=9_000.0,
-            industry="retail",
             status="PENDING",
         ),
     ]

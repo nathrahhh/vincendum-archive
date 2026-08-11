@@ -31,18 +31,15 @@ class PortfolioResponse(BaseModel):
 
 
 class DealRequest(BaseModel):
-    client_id: int
     name: str = Field(..., min_length=1)
     value: float = Field(..., gt=0)
-    industry: str = Field(..., min_length=1)
 
 
 class DealRecord(BaseModel):
     id: int
-    client_id: int | None = None
+    client_id: int
     name: str
     value: float
-    industry: str
     status: str | None = None
 
 
