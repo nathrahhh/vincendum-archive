@@ -8,6 +8,8 @@ import {
 type ClientOverviewTabProps = {
   client: Client;
   onClientUpdated: () => Promise<void> | void;
+  /** Admin view includes credit-limit editing and invites. Client view is read-only. */
+  mode?: "admin" | "client";
 };
 
 function formatCurrency(value: number): string {
@@ -25,7 +27,9 @@ function formatPercent(value: number): string {
 export default function ClientOverviewTab({
   client,
   onClientUpdated,
+  mode = "admin",
 }: ClientOverviewTabProps) {
+  const isAdmin = mode === "admin";
   const [draftCreditLimit, setDraftCreditLimit] = useState(
     client.credit_limit ?? 0,
   );
@@ -89,30 +93,38 @@ export default function ClientOverviewTab({
       <section>
         <h3 className="deal-result-panel__breaches-title">Credit Limit</h3>
 
-        <label className="deal-form__field">
-          <span className="deal-form__label">Credit Limit (USD)</span>
+        {isAdmin ? (
+          <>
+            <label className="deal-form__field">
+              <span className="deal-form__label">Credit Limit (USD)</span>
 
-          <input
-            className="deal-form__input"
-            type="number"
-            min="0"
-            step="any"
-            value={draftCreditLimit}
-            onChange={(e) => setDraftCreditLimit(Number(e.target.value))}
-          />
-        </label>
+              <input
+                className="deal-form__input"
+                type="number"
+                min="0"
+                step="any"
+                value={draftCreditLimit}
+                onChange={(e) => setDraftCreditLimit(Number(e.target.value))}
+              />
+            </label>
 
-        <button
-          className="deal-form__submit"
-          type="button"
-          disabled={isUpdatingCreditLimit}
-          onClick={handleUpdateCreditLimit}
-        >
-          {isUpdatingCreditLimit ? "Updating…" : "Update"}
-        </button>
+            <button
+              className="deal-form__submit"
+              type="button"
+              disabled={isUpdatingCreditLimit}
+              onClick={handleUpdateCreditLimit}
+            >
+              {isUpdatingCreditLimit ? "Updating…" : "Update"}
+            </button>
 
-        {creditLimitError && (
-          <p className="dashboard-error">{creditLimitError}</p>
+            {creditLimitError && (
+              <p className="dashboard-error">{creditLimitError}</p>
+            )}
+          </>
+        ) : (
+          <p className="clients-panel__meta">
+            Credit limit: {formatCurrency(client.credit_limit ?? 0)}
+          </p>
         )}
       </section>
 
@@ -132,42 +144,44 @@ export default function ClientOverviewTab({
         </p>
       </section>
 
-      <section>
-        <h3 className="deal-result-panel__breaches-title">Invite client user</h3>
+      {isAdmin ? (
+        <section>
+          <h3 className="deal-result-panel__breaches-title">Invite client user</h3>
 
-        <label className="deal-form__field">
-          <span className="deal-form__label">Email</span>
+          <label className="deal-form__field">
+            <span className="deal-form__label">Email</span>
 
-          <input
-            className="deal-form__input"
-            type="email"
-            value={inviteEmail}
-            onChange={(e) => setInviteEmail(e.target.value)}
-            placeholder="client@example.com"
-            disabled={isInviting}
-          />
-        </label>
+            <input
+              className="deal-form__input"
+              type="email"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              placeholder="client@example.com"
+              disabled={isInviting}
+            />
+          </label>
 
-        <button
-          className="deal-form__submit"
-          type="button"
-          disabled={isInviting || !inviteEmail.trim()}
-          onClick={handleInviteClientUser}
-        >
-          {isInviting ? "Inviting…" : "Invite user"}
-        </button>
+          <button
+            className="deal-form__submit"
+            type="button"
+            disabled={isInviting || !inviteEmail.trim()}
+            onClick={handleInviteClientUser}
+          >
+            {isInviting ? "Inviting…" : "Invite user"}
+          </button>
 
-        {inviteError && <p className="dashboard-error">{inviteError}</p>}
+          {inviteError && <p className="dashboard-error">{inviteError}</p>}
 
-        {invitationUrl && (
-          <p className="clients-panel__meta">
-            Invitation URL:{" "}
-            <a href={invitationUrl} target="_blank" rel="noreferrer">
-              {invitationUrl}
-            </a>
-          </p>
-        )}
-      </section>
+          {invitationUrl && (
+            <p className="clients-panel__meta">
+              Invitation URL:{" "}
+              <a href={invitationUrl} target="_blank" rel="noreferrer">
+                {invitationUrl}
+              </a>
+            </p>
+          )}
+        </section>
+      ) : null}
     </>
   );
 }

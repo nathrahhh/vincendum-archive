@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Client, ClientFinancials, ClientForecast } from "../../types";
+import type { Client, ClientDeal, ClientFinancials, ClientForecast } from "../../types";
 import ClientDealsTab from "./ClientDealsTab";
 import ClientFinancialsTab from "./ClientFinancialsTab";
 import ClientForecastTab from "./ClientForecastTab";
@@ -20,6 +20,10 @@ type ClientDetailPanelProps = {
   onClientUpdated: () => Promise<void> | void;
   isLoading: boolean;
   error: string | null;
+  /** Admin keeps edit/invite controls. Client is read-only overview. */
+  mode?: "admin" | "client";
+  /** Optional deals override (used by client POV from GET /client/me/deals). */
+  deals?: ClientDeal[];
 };
 
 type ClientDetailTab = "Overview" | "Deals" | "Financials" | "Forecast";
@@ -41,18 +45,24 @@ export default function ClientDetailPanel({
   onClientUpdated,
   isLoading,
   error,
+  mode = "admin",
+  deals,
 }: ClientDetailPanelProps) {
   const [activeTab, setActiveTab] = useState<ClientDetailTab>("Overview");
 
   if (!client) {
     return (
       <aside className="clients-panel">
-        <p className="clients-panel__hint">Select a client to view details.</p>
+        <p className="clients-panel__hint">
+          {mode === "client"
+            ? "Loading your client details…"
+            : "Select a client to view details."}
+        </p>
       </aside>
     );
   }
 
-  const deals = client.deals ?? [];
+  const resolvedDeals = deals ?? client.deals ?? [];
 
   return (
     <aside className="clients-panel">
@@ -84,10 +94,14 @@ export default function ClientDetailPanel({
       )}
 
       {activeTab === "Overview" ? (
-        <ClientOverviewTab client={client} onClientUpdated={onClientUpdated} />
+        <ClientOverviewTab
+          client={client}
+          onClientUpdated={onClientUpdated}
+          mode={mode}
+        />
       ) : null}
 
-      {activeTab === "Deals" ? <ClientDealsTab deals={deals} /> : null}
+      {activeTab === "Deals" ? <ClientDealsTab deals={resolvedDeals} /> : null}
 
       {activeTab === "Financials" ? (
         <ClientFinancialsTab financials={financials} />
@@ -107,6 +121,7 @@ export default function ClientDetailPanel({
           onBestGrowthRateChange={onBestGrowthRateChange}
           onWorstGrowthRateChange={onWorstGrowthRateChange}
           isLoading={isLoading}
+          forecastApi={mode === "client" ? "me" : "admin"}
         />
       ) : null}
     </aside>

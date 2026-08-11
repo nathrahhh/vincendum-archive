@@ -1,8 +1,8 @@
 import { Route, Routes } from "react-router-dom";
 import AuthAccessTokenBridge from "./auth/AuthAccessTokenBridge";
+import { CurrentUserProvider } from "./auth/CurrentUserProvider";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import RequireLenderOnboarded from "./auth/RequireLenderOnboarded";
-import { DevRoleProvider } from "./devRole";
 import ClientInvitationPage from "./pages/ClientInvitationPage";
 import LoginPage from "./pages/LoginPage";
 import OnboardingPage from "./pages/OnboardingPage";
@@ -19,7 +19,9 @@ export default function App() {
           path="/onboarding"
           element={
             <ProtectedRoute>
-              <OnboardingPage />
+              <CurrentUserProvider>
+                <OnboardingPage />
+              </CurrentUserProvider>
             </ProtectedRoute>
           }
         />
@@ -27,11 +29,11 @@ export default function App() {
           path="*"
           element={
             <ProtectedRoute>
-              <RequireLenderOnboarded>
-                <DevRoleProvider>
+              <CurrentUserProvider>
+                <RequireLenderOnboarded>
                   <AppRouter />
-                </DevRoleProvider>
-              </RequireLenderOnboarded>
+                </RequireLenderOnboarded>
+              </CurrentUserProvider>
             </ProtectedRoute>
           }
         />

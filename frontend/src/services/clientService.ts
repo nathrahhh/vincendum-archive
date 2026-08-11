@@ -3,6 +3,10 @@ import {
   fetchClientFinancials,
   fetchClientForecast,
   fetchClients,
+  fetchMyClient,
+  fetchMyClientDeals,
+  fetchMyClientFinancials,
+  fetchMyClientForecast,
   postClientApplication,
   postClientFinancial,
   postClientInvite,
@@ -12,6 +16,7 @@ import type {
   Client,
   ClientApplicationCreate,
   ClientApplicationCreateResponse,
+  ClientDeal,
   ClientFinancialCreate,
   ClientFinancialCreateResponse,
   ClientFinancials,
@@ -122,5 +127,68 @@ export async function inviteClientUser(
     return await postClientInvite(clientId, email);
   } catch (error) {
     throw toServiceError(error, "Failed to invite client user");
+  }
+}
+
+export async function getMyClient(): Promise<Client> {
+  try {
+    return await fetchMyClient();
+  } catch (error) {
+    throw toServiceError(error, "Failed to load your client profile");
+  }
+}
+
+export async function getMyClientFinancials(): Promise<ClientFinancials> {
+  try {
+    return await fetchMyClientFinancials();
+  } catch (error) {
+    throw toServiceError(error, "Failed to load your financials");
+  }
+}
+
+export async function getMyClientForecast(
+  revenueGrowthRate: number,
+  model: ForecastModel = "deterministic",
+): Promise<ClientForecast | ProphetForecastResponse> {
+  try {
+    return await fetchMyClientForecast(revenueGrowthRate, model);
+  } catch (error) {
+    throw toServiceError(error, "Failed to load your forecast");
+  }
+}
+
+export async function getMyClientForecastScenarios(
+  baseGrowthRate: number,
+  bestGrowthRate: number,
+  worstGrowthRate: number,
+): Promise<ClientForecastScenarios> {
+  try {
+    const [base, best, worst] = await Promise.all([
+      fetchMyClientForecast(baseGrowthRate, "deterministic"),
+      fetchMyClientForecast(bestGrowthRate, "deterministic"),
+      fetchMyClientForecast(worstGrowthRate, "deterministic"),
+    ]);
+    return {
+      base: base as ClientForecast,
+      best: best as ClientForecast,
+      worst: worst as ClientForecast,
+    };
+  } catch (error) {
+    throw toServiceError(error, "Failed to load your forecast scenarios");
+  }
+}
+
+export async function getMyClientDeals(): Promise<ClientDeal[]> {
+  try {
+    const deals = await fetchMyClientDeals();
+    return deals.map((deal) => ({
+      id: deal.id,
+      name: deal.name,
+      value: deal.value,
+      industry: deal.industry,
+      status: deal.status ?? "PENDING",
+    }));
+  } catch (error) {
+    throw toServiceError(error, "Failed to load your deals");
   }
 }

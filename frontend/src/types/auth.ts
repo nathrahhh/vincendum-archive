@@ -3,6 +3,7 @@ export type CurrentUser = {
   email: string;
   role: string;
   lender_id: number | null;
+  client_id: number | null;
 };
 
 export type Lender = {

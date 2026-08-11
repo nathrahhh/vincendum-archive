@@ -68,3 +68,41 @@ export function postClientInvite(
     body: JSON.stringify({ email }),
   });
 }
+
+export function fetchMyClient(): Promise<Client> {
+  return request<Client>("/client/me");
+}
+
+export function fetchMyClientFinancials(): Promise<ClientFinancials> {
+  return request<ClientFinancials>("/client/me/financials");
+}
+
+export function fetchMyClientForecast(
+  revenueGrowthRate: number,
+  model: ForecastModel = "deterministic",
+): Promise<ClientForecast | ProphetForecastResponse> {
+  const params = new URLSearchParams({
+    model,
+  });
+
+  if (model === "deterministic") {
+    params.set("revenue_growth_rate", String(revenueGrowthRate));
+  }
+
+  return request<ClientForecast | ProphetForecastResponse>(
+    `/client/me/forecast?${params.toString()}`,
+  );
+}
+
+export function fetchMyClientDeals(): Promise<
+  Array<{
+    id: number;
+    client_id: number | null;
+    name: string;
+    value: number;
+    industry: string;
+    status: string | null;
+  }>
+> {
+  return request("/client/me/deals");
+}

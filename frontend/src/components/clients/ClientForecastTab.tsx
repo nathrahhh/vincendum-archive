@@ -5,7 +5,7 @@ import type {
   ForecastModel,
   ProphetForecastResponse,
 } from "../../types/clients";
-import { getClientForecast } from "../../services/clientService";
+import { getClientForecast, getMyClientForecast } from "../../services/clientService";
 import ProphetForecastChart from "./ProphetForecastChart";
 import RevenueGrossProfitChart from "./RevenueGrossProfitChart";
 import RevenueScenarioChart from "./RevenueScenarioChart";
@@ -23,6 +23,8 @@ type ClientForecastTabProps = {
   onBestGrowthRateChange: (value: number) => void;
   onWorstGrowthRateChange: (value: number) => void;
   isLoading: boolean;
+  /** admin: /clients/{id}/forecast; me: /client/me/forecast */
+  forecastApi?: "admin" | "me";
 };
 
 function formatCurrency(value: number): string {
@@ -46,6 +48,7 @@ export default function ClientForecastTab({
   onBestGrowthRateChange,
   onWorstGrowthRateChange,
   isLoading,
+  forecastApi = "admin",
 }: ClientForecastTabProps) {
   const [forecastModel, setForecastModel] = useState<ForecastModel>("deterministic");
   const [draftBaseGrowthRate, setDraftBaseGrowthRate] = useState(baseGrowthRate);
@@ -78,7 +81,10 @@ export default function ClientForecastTab({
       setIsLoadingProphet(true);
       setProphetError(null);
       try {
-        const response = await getClientForecast(clientId, 0, "prophet");
+        const response =
+          forecastApi === "me"
+            ? await getMyClientForecast(0, "prophet")
+            : await getClientForecast(clientId, 0, "prophet");
         if (!cancelled) {
           setProphetForecast(response as ProphetForecastResponse);
         }
@@ -100,7 +106,7 @@ export default function ClientForecastTab({
     return () => {
       cancelled = true;
     };
-  }, [clientId, forecastModel]);
+  }, [clientId, forecastModel, forecastApi]);
 
   if (isLoading && forecastModel === "deterministic") {
     return null;

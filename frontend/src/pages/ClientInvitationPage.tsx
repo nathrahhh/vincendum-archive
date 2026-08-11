@@ -4,7 +4,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { request } from "../api/client";
 
 const INVITATION_TOKEN_STORAGE_KEY = "client_invitation_token";
-const DEV_ROLE_STORAGE_KEY = "credit-risk-dev-role";
 
 type ClientInvitationAcceptResponse = {
   invitation_id: number;
@@ -73,8 +72,7 @@ export default function ClientInvitationPage() {
         sessionStorage.removeItem(INVITATION_TOKEN_STORAGE_KEY);
 
         if (result.role === "client") {
-          localStorage.setItem(DEV_ROLE_STORAGE_KEY, "client");
-          navigate("/client-dashboard", { replace: true });
+          navigate("/client", { replace: true });
           return;
         }
 

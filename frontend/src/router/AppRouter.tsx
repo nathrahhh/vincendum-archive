@@ -1,6 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "../components/layout";
-import { defaultPathForRole, useDevRole } from "../devRole";
+import {
+  defaultPathForRole,
+  useCurrentUser,
+} from "../auth/CurrentUserProvider";
 import ApplyPage from "../pages/ApplyPage";
 import ClientApplicationsPage from "../pages/ClientApplicationsPage";
 import ClientDashboardPage from "../pages/ClientDashboardPage";
@@ -12,8 +15,12 @@ import DealPage from "../pages/DealPage";
 import EvaluationsPage from "../pages/EvaluationsPage";
 
 export default function AppRouter() {
-  const { role } = useDevRole();
+  const { role, isLoading } = useCurrentUser();
   const defaultPath = defaultPathForRole(role);
+
+  if (isLoading) {
+    return <div>Loading account...</div>;
+  }
 
   return (
     <Routes>
@@ -22,11 +29,15 @@ export default function AppRouter() {
 
         {role === "client" ? (
           <>
-            <Route path="/client-dashboard" element={<ClientDashboardPage />} />
+            <Route path="/client" element={<ClientDashboardPage />} />
+            <Route
+              path="/client-dashboard"
+              element={<Navigate to="/client" replace />}
+            />
             <Route path="/deal" element={<DealPage />} />
             <Route path="/apply" element={<ApplyPage />} />
             <Route path="/client-financials" element={<ClientFinancialsPage />} />
-            <Route path="*" element={<Navigate to="/client-dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/client" replace />} />
           </>
         ) : (
           <>

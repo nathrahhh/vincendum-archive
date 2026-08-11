@@ -1,32 +1,32 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { getCurrentUser, onboardLender } from "../services/authService";
+import {
+  defaultPathForRole,
+  useCurrentUser,
+} from "../auth/CurrentUserProvider";
+import { onboardLender } from "../services/authService";
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
+  const { user, isLoading, refreshUser } = useCurrentUser();
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function checkOnboardingStatus() {
-      try {
-        const user = await getCurrentUser();
-        if (!cancelled && user.lender_id !== null) {
-          navigate("/dashboard", { replace: true });
-        }
-      } catch {
-        // Stay on onboarding; submit will surface auth/API errors.
-      }
+    if (isLoading || !user) {
+      return;
     }
 
-    checkOnboardingStatus();
-    return () => {
-      cancelled = true;
-    };
-  }, [navigate]);
+    if (user.role === "client") {
+      navigate("/client", { replace: true });
+      return;
+    }
+
+    if (user.lender_id !== null) {
+      navigate(defaultPathForRole("admin"), { replace: true });
+    }
+  }, [isLoading, user, navigate]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -41,13 +41,17 @@ export default function OnboardingPage() {
 
     try {
       await onboardLender({ name: trimmed });
-      await getCurrentUser();
+      await refreshUser();
       navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create lender");
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (isLoading) {
+    return <div>Loading account...</div>;
   }
 
   return (
