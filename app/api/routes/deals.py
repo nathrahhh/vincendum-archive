@@ -18,7 +18,9 @@ from app.services.deal_service import approve_deal as approve_deal_service
 from app.services.deal_service import reject_deal as reject_deal_service
 from app.services.concentration_risk_engine import RiskEngine
 
-router = APIRouter(prefix="/deals", tags=["deals"])
+router = APIRouter()
+deals_router = APIRouter(prefix="/deals", tags=["deals"])
+client_me_router = APIRouter(prefix="/client", tags=["client"])
 
 
 def _deal_for_lender(
@@ -36,7 +38,7 @@ def _deal_for_lender(
     ).scalar_one_or_none()
 
 
-@router.get("", response_model=list[DealRecord])
+@deals_router.get("", response_model=list[DealRecord])
 def list_deals(
     db: Session = Depends(get_db),
     current_user: UserORM = Depends(require_admin),
@@ -63,7 +65,7 @@ def list_deals(
     ]
 
 
-@router.post("/evaluate", response_model=RiskEvaluation)
+@deals_router.post("/evaluate", response_model=RiskEvaluation)
 def evaluate_deal(
     deal: DealRequest,
     db: Session = Depends(get_db),
@@ -131,7 +133,7 @@ def evaluate_deal(
     return result
 
 
-@router.post("/{deal_id}/approve", response_model=DealRecord)
+@deals_router.post("/{deal_id}/approve", response_model=DealRecord)
 def approve_deal(
     deal_id: int,
     db: Session = Depends(get_db),
@@ -146,7 +148,7 @@ def approve_deal(
     return approve_deal_service(db, deal_id)
 
 
-@router.post("/{deal_id}/reject", response_model=DealRecord)
+@deals_router.post("/{deal_id}/reject", response_model=DealRecord)
 def reject_deal(
     deal_id: int,
     db: Session = Depends(get_db),
@@ -159,3 +161,30 @@ def reject_deal(
     if deal is None:
         raise HTTPException(status_code=404, detail=f"Deal {deal_id} not found")
     return reject_deal_service(db, deal_id)
+
+
+@client_me_router.get("/me/deals", response_model=list[DealRecord])
+def list_my_client_deals(
+    db: Session = Depends(get_db),
+    current_client: ClientORM = Depends(get_current_client),
+) -> list[DealRecord]:
+    rows = db.execute(
+        select(DealORM)
+        .where(DealORM.client_id == current_client.id)
+        .order_by(DealORM.id.desc())
+    ).scalars().all()
+    return [
+        DealRecord(
+            id=row.id,
+            client_id=row.client_id,
+            name=row.name,
+            value=row.value,
+            industry=row.industry,
+            status=row.status,
+        )
+        for row in rows
+    ]
+
+
+router.include_router(deals_router)
+router.include_router(client_me_router)

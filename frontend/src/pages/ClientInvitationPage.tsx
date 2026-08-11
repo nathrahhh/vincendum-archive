@@ -74,7 +74,7 @@ export default function ClientInvitationPage() {
 
         if (result.role === "client") {
           localStorage.setItem(DEV_ROLE_STORAGE_KEY, "client");
-          navigate("/deal", { replace: true });
+          navigate("/client-dashboard", { replace: true });
           return;
         }
 

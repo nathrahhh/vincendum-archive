@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.auth.client import get_current_client
 from app.auth.permissions import require_admin
 from app.auth.tenant import get_user_lender_id, require_lender_user
 from app.db import get_db
@@ -14,7 +15,9 @@ from app.services.client_invitation_service import (
     create_client_invitation,
 )
 
-router = APIRouter(prefix="/clients", tags=["clients"])
+router = APIRouter()
+clients_router = APIRouter(prefix="/clients", tags=["clients"])
+client_me_router = APIRouter(prefix="/client", tags=["client"])
 
 
 def _client_to_dict(client: ClientORM) -> dict:
@@ -26,7 +29,7 @@ def _client_to_dict(client: ClientORM) -> dict:
     }
 
 
-@router.get("")
+@clients_router.get("")
 def list_clients(
     db: Session = Depends(get_db),
     current_user: UserORM = Depends(require_admin),
@@ -41,7 +44,7 @@ def list_clients(
     return [_client_to_dict(row) for row in rows]
 
 
-@router.get("/{client_id}")
+@clients_router.get("/{client_id}")
 def get_client(
     client_id: int,
     db: Session = Depends(get_db),
@@ -61,7 +64,7 @@ def get_client(
     return {**_client_to_dict(row), **exposure}
 
 
-@router.put("/{client_id}/credit-limit")
+@clients_router.put("/{client_id}/credit-limit")
 def update_client_credit_limit(
     client_id: int,
     payload: ClientCreditLimitUpdate,
@@ -85,7 +88,7 @@ def update_client_credit_limit(
     return _client_to_dict(row)
 
 
-@router.post("/{client_id}/invite", response_model=ClientInviteResponse)
+@clients_router.post("/{client_id}/invite", response_model=ClientInviteResponse)
 def invite_client_user(
     client_id: int,
     payload: ClientInviteRequest,
@@ -109,3 +112,16 @@ def invite_client_user(
         token=raw_token,
         invitation_url=build_invitation_url(raw_token),
     )
+
+
+@client_me_router.get("/me")
+def get_my_client(
+    db: Session = Depends(get_db),
+    current_client: ClientORM = Depends(get_current_client),
+) -> dict:
+    exposure = get_client_exposure(db, current_client.id)
+    return {**_client_to_dict(current_client), **exposure}
+
+
+router.include_router(clients_router)
+router.include_router(client_me_router)

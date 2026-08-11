@@ -142,6 +142,7 @@ class CurrentUserResponse(BaseModel):
     email: str
     role: str
     lender_id: int | None
+    client_id: int | None
 
 
 class ForecastRevenuePoint(BaseModel):

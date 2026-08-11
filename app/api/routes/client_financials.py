@@ -86,3 +86,20 @@ def list_client_financials(
         client_id=client_id,
         historical=[_to_record(row) for row in rows],
     )
+
+
+@router.get("/client/me/financials", response_model=ClientFinancialResponse)
+def list_my_client_financials(
+    db: Session = Depends(get_db),
+    current_client: ClientORM = Depends(get_current_client),
+) -> ClientFinancialResponse:
+    rows = db.execute(
+        select(ClientFinancialORM)
+        .where(ClientFinancialORM.client_id == current_client.id)
+        .order_by(ClientFinancialORM.month.asc())
+    ).scalars().all()
+
+    return ClientFinancialResponse(
+        client_id=current_client.id,
+        historical=[_to_record(row) for row in rows],
+    )

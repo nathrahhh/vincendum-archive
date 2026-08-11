@@ -39,5 +39,5 @@ export function useDevRole(): DevRoleContextValue {
 }
 
 export function defaultPathForRole(role: DevRole): string {
-  return role === "client" ? "/deal" : "/dashboard";
+  return role === "client" ? "/client-dashboard" : "/dashboard";
 }

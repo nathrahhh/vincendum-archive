@@ -17,4 +17,5 @@ def get_me(
         email=current_user.email,
         role=current_user.role,
         lender_id=current_user.lender_id,
+        client_id=current_user.client_id,
     )
