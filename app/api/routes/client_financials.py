@@ -114,7 +114,12 @@ def approve_client_financial(
     row = _financial_for_lender(db, id, lender_id)
     if row is None:
         raise HTTPException(status_code=404, detail=f"Client financial {id} not found")
-    return approve_client_financial_service(db, id)
+    return approve_client_financial_service(
+        db,
+        id,
+        lender_id=lender_id,
+        user_id=current_user.id,
+    )
 
 
 @router.post(

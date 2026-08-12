@@ -151,7 +151,12 @@ def approve_deal(
     deal = _deal_for_lender(db, deal_id, lender_id)
     if deal is None:
         raise HTTPException(status_code=404, detail=f"Deal {deal_id} not found")
-    return approve_deal_service(db, deal_id)
+    return approve_deal_service(
+        db,
+        deal_id,
+        lender_id=lender_id,
+        user_id=current_user.id,
+    )
 
 
 @deals_router.post("/{deal_id}/reject", response_model=DealRecord)

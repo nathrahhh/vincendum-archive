@@ -4,7 +4,7 @@ import {
   defaultPathForRole,
   useCurrentUser,
 } from "../auth/CurrentUserProvider";
-import ApplyPage from "../pages/ApplyPage";
+import AuditLogsPage from "../pages/AuditLogsPage";
 import ClientApplicationsPage from "../pages/ClientApplicationsPage";
 import ClientDashboardPage from "../pages/ClientDashboardPage";
 import ClientsPage from "../pages/ClientsPage";
@@ -36,7 +36,6 @@ export default function AppRouter() {
               element={<Navigate to="/client" replace />}
             />
             <Route path="/deal" element={<DealPage />} />
-            <Route path="/apply" element={<ApplyPage />} />
             <Route path="/client-financials" element={<ClientFinancialsPage />} />
             <Route path="*" element={<Navigate to="/client" replace />} />
           </>
@@ -49,6 +48,7 @@ export default function AppRouter() {
               element={<FinancialEvaluationsPage />}
             />
             <Route path="/breaches" element={<BreachesPage />} />
+            <Route path="/audit-logs" element={<AuditLogsPage />} />
             <Route path="/clients" element={<ClientsPage />} />
             <Route path="/client-applications" element={<ClientApplicationsPage />} />
             <Route path="/deal" element={<Navigate to="/dashboard" replace />} />

@@ -6,6 +6,7 @@ from app.models.client import ClientORM
 from app.models.deal import DealORM
 from app.models.position import PositionORM
 from app.models.schemas import DealRecord, DealRequest
+from app.services.audit_service import record_audit_event
 
 
 def _get_deal_or_404(db: Session, deal_id: int) -> DealORM:
@@ -57,7 +58,13 @@ def create_deal(
     return _to_deal_record(deal)
 
 
-def approve_deal(db: Session, deal_id: int) -> DealRecord:
+def approve_deal(
+    db: Session,
+    deal_id: int,
+    *,
+    lender_id: int,
+    user_id: int,
+) -> DealRecord:
     deal = _get_deal_or_404(db, deal_id)
     if deal.status != "PENDING":
         raise HTTPException(status_code=400, detail=f"Deal {deal_id} is not pending")
@@ -66,6 +73,14 @@ def approve_deal(db: Session, deal_id: int) -> DealRecord:
     deal.status = "APPROVED"
     position = PositionORM(name=deal.name, value=deal.value, industry=industry)
     db.add(position)
+    record_audit_event(
+        db,
+        lender_id=lender_id,
+        user_id=user_id,
+        action="deal.approved",
+        resource_type="deal",
+        resource_id=deal.id,
+    )
     db.commit()
     db.refresh(deal)
 

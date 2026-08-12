@@ -15,6 +15,7 @@ from sqlalchemy import engine_from_config, pool
 from app.db import DATABASE_URL, Base
 
 # Import all ORM models so they register on Base.metadata.
+from app.models.audit_log import AuditLogORM  # noqa: F401
 from app.models.breach import BreachORM  # noqa: F401
 from app.models.client import ClientORM  # noqa: F401
 from app.models.client_application import ClientApplicationORM  # noqa: F401

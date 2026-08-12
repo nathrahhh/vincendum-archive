@@ -31,6 +31,7 @@ def get_db() -> Generator[Session, None, None]:
 def init_db() -> None:
     # Import ORM models so they register on Base.metadata before create_all.
     # Prefer Alembic migrations for schema changes; create_all is a local fallback.
+    from app.models.audit_log import AuditLogORM  # noqa: F401
     from app.models.breach import BreachORM  # noqa: F401
     from app.models.client import ClientORM  # noqa: F401
     from app.models.client_application import ClientApplicationORM  # noqa: F401

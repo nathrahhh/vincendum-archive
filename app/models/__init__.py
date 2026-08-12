@@ -1,3 +1,4 @@
+from app.models.audit_log import AuditLogORM
 from app.models.breach import BreachORM
 from app.models.client import ClientORM
 from app.models.client_application import ClientApplicationORM

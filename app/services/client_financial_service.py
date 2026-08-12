@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.models.client_financial import ClientFinancialORM
 from app.models.schemas import ClientFinancialRecord
+from app.services.audit_service import record_audit_event
 
 
 def _get_financial_or_404(db: Session, financial_id: int) -> ClientFinancialORM:
@@ -32,7 +33,13 @@ def _to_record(row: ClientFinancialORM) -> ClientFinancialRecord:
     )
 
 
-def approve_client_financial(db: Session, financial_id: int) -> ClientFinancialRecord:
+def approve_client_financial(
+    db: Session,
+    financial_id: int,
+    *,
+    lender_id: int,
+    user_id: int,
+) -> ClientFinancialRecord:
     row = _get_financial_or_404(db, financial_id)
     if row.status != "PENDING":
         raise HTTPException(
@@ -41,6 +48,14 @@ def approve_client_financial(db: Session, financial_id: int) -> ClientFinancialR
         )
 
     row.status = "APPROVED"
+    record_audit_event(
+        db,
+        lender_id=lender_id,
+        user_id=user_id,
+        action="client_financial.approved",
+        resource_type="client_financial",
+        resource_id=row.id,
+    )
     db.commit()
     db.refresh(row)
     return _to_record(row)

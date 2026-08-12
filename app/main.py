@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app import models
 from app.api.routes import (
+    audit_logs,
     breaches,
     client_applications,
     client_financials,
@@ -43,6 +44,7 @@ app.add_middleware(
 app.include_router(portfolio.router)
 app.include_router(deals.router)
 app.include_router(breaches.router)
+app.include_router(audit_logs.router)
 app.include_router(forecast.router)
 app.include_router(clients.router)
 app.include_router(client_financials.router)

@@ -1,8 +1,8 @@
 from datetime import date, datetime
 from enum import Enum
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class DecisionStatus(str, Enum):
@@ -87,6 +87,25 @@ class ClientFinancialRecord(BaseModel):
 class ClientFinancialResponse(BaseModel):
     client_id: int
     historical: list[ClientFinancialRecord]
+
+
+class AuditLogRecord(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    lender_id: int
+    user_id: int
+    action: str
+    resource_type: str
+    resource_id: int
+    created_at: datetime
+    changes: dict[str, Any] | None = None
+    # ORM attribute is `metadata_` (DB column name is `metadata`).
+    metadata: dict[str, Any] | None = Field(
+        default=None,
+        validation_alias="metadata_",
+    )
+
 
 class ClientApplicationCreate(BaseModel):
     name: str = Field(..., min_length=1)
