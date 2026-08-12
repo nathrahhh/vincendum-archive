@@ -8,6 +8,11 @@ const allLinks = [
   { to: "/apply", label: "Apply", roles: ["client"] as const },
   { to: "/client-financials", label: "Client Financials", roles: ["client"] as const },
   { to: "/evaluations", label: "Evaluations", roles: ["admin"] as const },
+  {
+    to: "/financial-evaluations",
+    label: "Financial Evaluations",
+    roles: ["admin"] as const,
+  },
   { to: "/breaches", label: "Breaches", roles: ["admin"] as const },
   { to: "/clients", label: "Clients", roles: ["admin"] as const },
   { to: "/client-applications", label: "Client Applications", roles: ["admin"] as const },

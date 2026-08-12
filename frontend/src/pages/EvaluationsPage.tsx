@@ -81,7 +81,6 @@ export default function EvaluationsPage() {
                 <tr>
                   <th>Name</th>
                   <th>Value</th>
-                  <th>Industry</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -91,7 +90,6 @@ export default function EvaluationsPage() {
                   <tr key={deal.id}>
                     <td>{deal.name}</td>
                     <td className="dashboard-table__num">{formatValue(deal.value)}</td>
-                    <td>{deal.industry}</td>
                     <td>
                       <span className={statusClass[deal.status ?? ""] ?? "dashboard-badge"}>
                         {deal.status ?? "—"}

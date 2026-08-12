@@ -1,5 +1,5 @@
 import { request } from "./client";
-import type { DealPayload, DealRecord, RiskEvaluation } from "../types";
+import type { DealPayload, DealRecord } from "../types";
 
 /** GET /deals */
 export function fetchDeals(): Promise<DealRecord[]> {
@@ -16,9 +16,9 @@ export function postRejectDeal(id: number): Promise<DealRecord> {
   return request<DealRecord>(`/deals/${id}/reject`, { method: "POST" });
 }
 
-/** POST /deals/evaluate */
-export function postEvaluateDeal(deal: DealPayload): Promise<RiskEvaluation> {
-  return request<RiskEvaluation>("/deals/evaluate", {
+/** POST /client/me/deals */
+export function postMyClientDeal(deal: DealPayload): Promise<DealRecord> {
+  return request<DealRecord>("/client/me/deals", {
     method: "POST",
     body: JSON.stringify(deal),
   });

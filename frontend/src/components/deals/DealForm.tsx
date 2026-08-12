@@ -37,8 +37,6 @@ export default function DealForm({
     onSubmit({
       name: dealName.trim(),
       value: Number(dealValue),
-      industry: industry.trim(),
-      client_id: clientId,
     });
   }
 

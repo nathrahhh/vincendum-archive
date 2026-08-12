@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import Date, Float, Integer
+from sqlalchemy import Date, Float, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -17,3 +17,8 @@ class ClientFinancialORM(Base):
     gross_profit: Mapped[float] = mapped_column(Float, nullable=False)
     opex: Mapped[float] = mapped_column(Float, nullable=False)
     cash_balance: Mapped[float] = mapped_column(Float, nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        default="PENDING",
+    )

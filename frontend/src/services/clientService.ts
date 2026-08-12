@@ -12,6 +12,10 @@ import {
   postClientInvite,
   updateClientCreditLimit as putClientCreditLimit,
 } from "../api";
+import {
+  postApproveClientFinancial,
+  postRejectClientFinancial,
+} from "../api/clients";
 import type {
   Client,
   ClientApplicationCreate,
@@ -19,6 +23,7 @@ import type {
   ClientDeal,
   ClientFinancialCreate,
   ClientFinancialCreateResponse,
+  ClientFinancialRecord,
   ClientFinancials,
   ClientForecast,
   ClientForecastScenarios,
@@ -46,11 +51,12 @@ export async function getClient(clientId: number): Promise<Client> {
   }
 }
 
+/** GET /clients/{client_id}/financials — admin review list for a client */
 export async function getClientFinancials(clientId: number): Promise<ClientFinancials> {
   try {
     return await fetchClientFinancials(clientId);
   } catch (error) {
-    throw toServiceError(error, "Failed to load client financials");
+    throw toServiceError(error, "Failed to load client financial submissions");
   }
 }
 
@@ -95,6 +101,28 @@ export async function submitClientFinancial(
     return await postClientFinancial(payload);
   } catch (error) {
     throw toServiceError(error, "Failed to submit client financials");
+  }
+}
+
+/** POST /client-financials/{id}/approve */
+export async function approveClientFinancial(
+  id: number,
+): Promise<ClientFinancialRecord> {
+  try {
+    return await postApproveClientFinancial(id);
+  } catch (error) {
+    throw toServiceError(error, "Failed to approve client financial submission");
+  }
+}
+
+/** POST /client-financials/{id}/reject */
+export async function rejectClientFinancial(
+  id: number,
+): Promise<ClientFinancialRecord> {
+  try {
+    return await postRejectClientFinancial(id);
+  } catch (error) {
+    throw toServiceError(error, "Failed to reject client financial submission");
   }
 }
 

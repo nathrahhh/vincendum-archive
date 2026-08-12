@@ -1,38 +1,15 @@
-import { useEffect, useState } from "react";
-import { evaluateDeal } from "../services/dealService";
-import { getClients } from "../services/clientService";
-import type { Client, DealPayload } from "../types";
+import { useState } from "react";
+import { createMyDeal } from "../services/dealService";
+import type { DealPayload } from "../types";
 
 export default function DealPage() {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [clientId, setClientId] = useState("");
   const [dealName, setDealName] = useState("");
   const [loanAmount, setLoanAmount] = useState("");
 
-  const [isLoadingClients, setIsLoadingClients] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function loadClients() {
-      setIsLoadingClients(true);
-
-      try {
-        const data = await getClients();
-        setClients(data);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load clients",
-        );
-      } finally {
-        setIsLoadingClients(false);
-      }
-    }
-
-    loadClients();
-  }, []);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -41,25 +18,13 @@ export default function DealPage() {
     setError(null);
     setMessage(null);
 
-    const selectedClient = clients.find(
-      (client) => client.id === Number(clientId),
-    );
-
-    if (!selectedClient) {
-      setError("Please select a valid client");
-      setIsSubmitting(false);
-      return;
-    }
-
     const payload: DealPayload = {
-      client_id: selectedClient.id,
       name: dealName.trim(),
-      industry: selectedClient.industry,
       value: Number(loanAmount),
     };
 
     try {
-      await evaluateDeal(payload);
+      await createMyDeal(payload);
 
       setMessage(
         "Deal submitted successfully. It is pending approval.",
@@ -67,7 +32,6 @@ export default function DealPage() {
 
       setDealName("");
       setLoanAmount("");
-      setClientId("");
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to submit deal",
@@ -93,43 +57,13 @@ export default function DealPage() {
         </h2>
 
         <p className="deal-form__subtitle">
-          Submit a loan request for an existing client
+          Submit a loan request
         </p>
 
         <fieldset
           className="deal-form__section"
           disabled={isSubmitting}
         >
-          <label className="deal-form__field">
-            <span className="deal-form__label">
-              Client
-            </span>
-
-            <select
-              className="deal-form__input"
-              value={clientId}
-              onChange={(e) => setClientId(e.target.value)}
-              required
-              disabled={isLoadingClients}
-            >
-              <option value="">
-                {isLoadingClients
-                  ? "Loading clients..."
-                  : "Select client"}
-              </option>
-
-              {clients.map((client) => (
-                <option
-                  key={client.id}
-                  value={client.id}
-                >
-                  {client.name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-
           <label className="deal-form__field">
             <span className="deal-form__label">
               Deal Name

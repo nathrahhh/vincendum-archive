@@ -8,8 +8,10 @@ const titles: Record<string, string> = {
   "/apply": "Apply",
   "/client-financials": "Client Financials",
   "/evaluations": "Evaluations",
+  "/financial-evaluations": "Financial Evaluations",
   "/breaches": "Breaches",
   "/clients": "Clients",
+  "/client-applications": "Client Applications",
 };
 
 export default function Header() {

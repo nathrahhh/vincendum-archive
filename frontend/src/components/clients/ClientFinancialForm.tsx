@@ -1,18 +1,14 @@
 import type { FormEvent } from "react";
-import type { Client, ClientFinancialCreate } from "../../types";
+import type { ClientFinancialCreate } from "../../types";
 
 type ClientFinancialFormProps = {
-  clients: Client[];
-  clientId: string;
   month: string;
   revenue: string;
   cogs: string;
   grossProfit: string;
   opex: string;
   cashBalance: string;
-  isLoadingClients: boolean;
   isSubmitting: boolean;
-  onClientIdChange: (value: string) => void;
   onMonthChange: (value: string) => void;
   onRevenueChange: (value: string) => void;
   onCogsChange: (value: string) => void;
@@ -34,17 +30,13 @@ export function monthToApiDate(monthValue: string): string {
 }
 
 export default function ClientFinancialForm({
-  clients,
-  clientId,
   month,
   revenue,
   cogs,
   grossProfit,
   opex,
   cashBalance,
-  isLoadingClients,
   isSubmitting,
-  onClientIdChange,
   onMonthChange,
   onRevenueChange,
   onCogsChange,
@@ -56,7 +48,6 @@ export default function ClientFinancialForm({
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     onSubmit({
-      client_id: Number(clientId),
       month: monthToApiDate(month),
       revenue: Number(revenue),
       cogs: Number(cogs),
@@ -70,24 +61,6 @@ export default function ClientFinancialForm({
     <form className="deal-form" onSubmit={handleSubmit}>
       <h2 className="deal-form__title">Client Financials</h2>
       <p className="deal-form__subtitle">Submit monthly financial data for a client</p>
-
-      <label className="deal-form__field">
-        <span className="deal-form__label">Client</span>
-        <select
-          className="deal-form__input"
-          value={clientId}
-          onChange={(e) => onClientIdChange(e.target.value)}
-          required
-          disabled={isLoadingClients || isSubmitting}
-        >
-          <option value="">Select a client</option>
-          {clients.map((client) => (
-            <option key={client.id} value={client.id}>
-              {client.name}
-            </option>
-          ))}
-        </select>
-      </label>
 
       <label className="deal-form__field">
         <span className="deal-form__label">Month</span>
@@ -171,7 +144,7 @@ export default function ClientFinancialForm({
         />
       </label>
 
-      <button className="deal-form__submit" type="submit" disabled={isSubmitting || isLoadingClients}>
+      <button className="deal-form__submit" type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Submitting…" : "Submit"}
       </button>
     </form>

@@ -64,7 +64,6 @@ export default function RecentDeals() {
             <thead>
               <tr>
                 <th>Deal</th>
-                <th>Industry</th>
                 <th>Value</th>
                 <th>Status</th>
               </tr>
@@ -73,7 +72,6 @@ export default function RecentDeals() {
               {deals.map((deal) => (
                 <tr key={deal.id}>
                   <td>{deal.name}</td>
-                  <td>{deal.industry}</td>
                   <td className="dashboard-table__num">{formatValue(deal.value)}</td>
                   <td>
                     <span className={statusClass[deal.status ?? ""] ?? "dashboard-badge"}>

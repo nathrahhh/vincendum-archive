@@ -27,6 +27,7 @@ export type ClientFinancialRecord = {
   gross_profit: number;
   opex: number;
   cash_balance: number;
+  status: "PENDING" | "APPROVED" | "REJECTED";
 };
 
 export type ClientFinancials = {
@@ -99,13 +100,12 @@ export type ClientForecastScenarios = {
 };
 
 export type ClientFinancialCreate = {
-  client_id: number;
   month: string;
   revenue: number;
   cogs: number;
+  gross_profit: number;
   opex: number;
   cash_balance: number;
-  gross_profit: number;
 };
 
 export type ClientFinancialCreateResponse = {
@@ -116,9 +116,10 @@ export type ClientFinancialCreateResponse = {
     month: string;
     revenue: number;
     cogs: number;
+    gross_profit: number;
     opex: number;
     cash_balance: number;
-    gross_profit: number;
+    status: "PENDING" | "APPROVED" | "REJECTED";
   };
 };
 

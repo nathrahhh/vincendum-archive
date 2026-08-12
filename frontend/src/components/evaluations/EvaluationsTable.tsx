@@ -46,7 +46,6 @@ export default function EvaluationsTable({
               <tr>
                 <th>Name</th>
                 <th>Value</th>
-                <th>Industry</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -56,7 +55,6 @@ export default function EvaluationsTable({
                 <tr key={row.id}>
                   <td>{row.name}</td>
                   <td className="dashboard-table__num">{formatValue(row.value)}</td>
-                  <td>{row.industry}</td>
                   <td>
                     <span className={statusClass[row.status ?? ""] ?? "dashboard-badge"}>
                       {row.status ?? "—"}

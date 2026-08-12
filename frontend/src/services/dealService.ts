@@ -1,5 +1,5 @@
-import { fetchDeals, postApproveDeal, postEvaluateDeal, postRejectDeal } from "../api";
-import type { DealPayload, DealRecord, RiskEvaluation } from "../types";
+import { fetchDeals, postApproveDeal, postMyClientDeal, postRejectDeal } from "../api";
+import type { DealPayload, DealRecord } from "../types";
 import { toServiceError } from "./errors";
 
 /** GET /deals */
@@ -29,11 +29,11 @@ export async function rejectDeal(id: number): Promise<DealRecord> {
   }
 }
 
-/** POST /deals/evaluate */
-export async function evaluateDeal(deal: DealPayload): Promise<RiskEvaluation> {
+/** POST /client/me/deals */
+export async function createMyDeal(deal: DealPayload): Promise<DealRecord> {
   try {
-    return await postEvaluateDeal(deal);
+    return await postMyClientDeal(deal);
   } catch (error) {
-    throw toServiceError(error, "Failed to evaluate deal");
+    throw toServiceError(error, "Failed to submit deal");
   }
 }

@@ -64,7 +64,6 @@ class HealthResponse(BaseModel):
 
 
 class ClientFinancialCreate(BaseModel):
-    client_id: int
     month: date
     revenue: float
     cogs: float
@@ -82,6 +81,7 @@ class ClientFinancialRecord(BaseModel):
     gross_profit: float
     opex: float
     cash_balance: float
+    status: str | None = None
 
 
 class ClientFinancialResponse(BaseModel):
