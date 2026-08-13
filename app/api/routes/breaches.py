@@ -5,15 +5,38 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.permissions import require_admin
-from app.auth.tenant import require_lender_user
+from app.auth.tenant import get_user_lender_id, require_lender_user
 from app.db import get_db
 from app.models.breach import BreachORM
 from app.models.user import UserORM
-from app.services.breach_helpers import resolve_breach_industry, resolve_breach_reason
+from app.services.breach_helpers import industry_for_rule, reason_for_rule
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["breaches"])
+
+BreachPayload = dict[str, float | int | str | None]
+
+
+def _serialize_breach(breach: BreachORM) -> BreachPayload:
+    return {
+        "id": breach.id,
+        "client_id": breach.client_id,
+        "reason": breach.reason or reason_for_rule(breach.rule, breach.detail),
+        "rule": breach.rule,
+        "threshold": breach.threshold,
+        "actual_value": breach.actual_value,
+        "detail": breach.detail,
+        "status": breach.status,
+    }
+
+
+def _industry_key(breach: BreachORM) -> str:
+    return (
+        breach.industry
+        or industry_for_rule(breach.rule, breach.industry)
+        or "Unknown"
+    )
 
 
 @router.get("/breaches")
@@ -21,39 +44,32 @@ def list_breaches(
     db: Session = Depends(get_db),
     current_user: UserORM = Depends(require_admin),
     _: UserORM = Depends(require_lender_user),
-) -> dict[str, list[dict[str, float | int | str]]]:
+) -> dict[str, list[BreachPayload]]:
     """
-    List breaches for lender staff.
+    List breaches for lender staff, grouped by industry.
 
-    Tenant isolation is not applied in the query yet: BreachORM has no deal_id
-    or client_id, so Breach → Deal → Client → Lender cannot be joined.
+    Tenant isolation: only breaches for the authenticated admin's lender.
     """
-    rows = db.execute(select(BreachORM).order_by(BreachORM.id.desc())).scalars().all()
-    logger.info("list_breaches fetched row_count=%d", len(rows))
+    lender_id = get_user_lender_id(current_user)
+    rows = db.execute(
+        select(BreachORM)
+        .where(BreachORM.lender_id == lender_id)
+        .order_by(BreachORM.id.desc())
+    ).scalars().all()
+    logger.info("list_breaches fetched row_count=%d lender_id=%s", len(rows), lender_id)
 
-    grouped: dict[str, list[dict[str, float | int | str]]] = {}
+    grouped: dict[str, list[BreachPayload]] = {}
     for breach in rows:
-        industry_key = resolve_breach_industry(breach)
-        reason = resolve_breach_reason(breach)
+        industry_key = _industry_key(breach)
         logger.debug(
-            "list_breaches parsing id=%s raw_industry=%r raw_reason=%r resolved_industry=%s resolved_reason=%s rule=%s",
+            "list_breaches id=%s industry=%r reason=%r rule=%s status=%s",
             breach.id,
-            breach.industry,
-            breach.reason,
             industry_key,
-            reason,
+            breach.reason or reason_for_rule(breach.rule, breach.detail),
             breach.rule,
+            breach.status,
         )
-        grouped.setdefault(industry_key, []).append(
-            {
-                "id": breach.id,
-                "reason": reason,
-                "rule": breach.rule,
-                "limit_pct": breach.limit_pct,
-                "actual_pct": breach.actual_pct,
-                "detail": breach.detail,
-            }
-        )
+        grouped.setdefault(industry_key, []).append(_serialize_breach(breach))
 
     logger.info("list_breaches grouped_industries=%s", list(grouped.keys()))
     return grouped

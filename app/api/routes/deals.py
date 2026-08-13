@@ -8,13 +8,11 @@ from app.auth.client import get_current_client
 from app.auth.permissions import require_admin
 from app.auth.tenant import get_user_lender_id, require_lender_user
 from app.db import get_db
-from app.models.breach import BreachORM
 from app.models.client import ClientORM
 from app.models.deal import DealORM
 from app.models.position import PositionORM
 from app.models.schemas import DealRecord, DealRequest, Position, RiskEvaluation
 from app.models.user import UserORM
-from app.services.breach_helpers import industry_for_new_breach, reason_for_new_breach
 from app.services.client_credit_engine import ClientCreditEngine
 from app.services.deal_service import approve_deal as approve_deal_service
 from app.services.deal_service import create_deal as create_deal_service
@@ -105,36 +103,6 @@ def evaluate_deal(
     db.add(logged_deal)
     db.commit()
     db.refresh(logged_deal)
-
-    if result.breaches:
-        # Breaches are stored separately to preserve a normalized risk-event log.
-        for breach in result.breaches:
-            breach_row = BreachORM(
-                reason=reason_for_new_breach(breach),
-                industry=industry_for_new_breach(breach, current_client.industry),
-                rule=breach.rule,
-                limit_pct=breach.limit_pct,
-                actual_pct=breach.actual_pct,
-                detail=breach.detail,
-            )
-            db.add(breach_row)
-        db.commit()
-
-    if credit_rejected:
-        breach_row = BreachORM(
-            reason="CLIENT_CREDIT_LIMIT_EXCEEDED",
-            industry=current_client.industry,
-            rule="client_credit_limit",
-            limit_pct=credit_result["credit_limit"],
-            actual_pct=credit_result["current_exposure"] + deal.value,
-            detail=(
-                f"Current exposure: {credit_result['current_exposure']:,.2f}, "
-                f"requested loan amount: {deal.value:,.2f}, "
-                f"credit limit: {credit_result['credit_limit']:,.2f}."
-            ),
-        )
-        db.add(breach_row)
-        db.commit()
 
     return result
 

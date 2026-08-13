@@ -5,6 +5,9 @@ from sqlalchemy.orm import Session
 from app.models.client_financial import ClientFinancialORM
 from app.models.schemas import ClientFinancialRecord
 from app.services.audit_service import record_audit_event
+from app.services.breaches.financial_breach_service import (
+    evaluate_and_persist_financial_breach,
+)
 
 
 def _get_financial_or_404(db: Session, financial_id: int) -> ClientFinancialORM:
@@ -48,6 +51,11 @@ def approve_client_financial(
         )
 
     row.status = "APPROVED"
+    evaluate_and_persist_financial_breach(
+        db,
+        lender_id=lender_id,
+        client_id=row.client_id,
+    )
     record_audit_event(
         db,
         lender_id=lender_id,
