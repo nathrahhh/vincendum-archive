@@ -48,7 +48,6 @@ def _require_bearer_claims(
 
     try:
         claims = verify_auth0_token(credentials.credentials)
-        print("AUTH0 CLAIMS:", claims)
     except Auth0TokenError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

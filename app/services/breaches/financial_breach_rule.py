@@ -10,6 +10,7 @@ Does not query the database or create BreachORM rows.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 
 from app.services.breaches.financial_inputs import FinancialBreachInputs
@@ -17,6 +18,8 @@ from app.services.breaches.financial_inputs import FinancialBreachInputs
 FINANCIAL_GROSS_PROFIT_RATIO = "financial_gross_profit_ratio"
 FINANCIAL_GROSS_PROFIT_RATE = 0.01
 FINANCIAL_GROSS_PROFIT_RATIO_THRESHOLD = 1.2
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -37,6 +40,23 @@ class FinancialBreachRuleResult:
     reason: str | None = None
 
 
+def _log_rule_result(result: FinancialBreachRuleResult) -> FinancialBreachRuleResult:
+    logger.info(
+        "evaluate_financial_gross_profit_ratio result "
+        "lender_id=%s client_id=%s rule=%s evaluated=%s breached=%s "
+        "actual_value=%s threshold=%s reason=%r",
+        result.lender_id,
+        result.client_id,
+        result.rule,
+        result.evaluated,
+        result.breached,
+        result.actual_value,
+        result.threshold,
+        result.reason,
+    )
+    return result
+
+
 def evaluate_financial_gross_profit_ratio(
     inputs: FinancialBreachInputs,
 ) -> FinancialBreachRuleResult:
@@ -48,52 +68,60 @@ def evaluate_financial_gross_profit_ratio(
     before comparing to the threshold.
     """
     if not inputs.has_approved_deals:
-        return FinancialBreachRuleResult(
-            lender_id=inputs.lender_id,
-            client_id=inputs.client_id,
-            rule=FINANCIAL_GROSS_PROFIT_RATIO,
-            threshold=FINANCIAL_GROSS_PROFIT_RATIO_THRESHOLD,
-            actual_value=None,
-            evaluated=False,
-            breached=False,
-            reason="No approved deals",
+        return _log_rule_result(
+            FinancialBreachRuleResult(
+                lender_id=inputs.lender_id,
+                client_id=inputs.client_id,
+                rule=FINANCIAL_GROSS_PROFIT_RATIO,
+                threshold=FINANCIAL_GROSS_PROFIT_RATIO_THRESHOLD,
+                actual_value=None,
+                evaluated=False,
+                breached=False,
+                reason="No approved deals",
+            )
         )
 
     if inputs.total_deal_value <= 0:
-        return FinancialBreachRuleResult(
-            lender_id=inputs.lender_id,
-            client_id=inputs.client_id,
-            rule=FINANCIAL_GROSS_PROFIT_RATIO,
-            threshold=FINANCIAL_GROSS_PROFIT_RATIO_THRESHOLD,
-            actual_value=None,
-            evaluated=False,
-            breached=False,
-            reason="Approved deal value is zero or negative",
+        return _log_rule_result(
+            FinancialBreachRuleResult(
+                lender_id=inputs.lender_id,
+                client_id=inputs.client_id,
+                rule=FINANCIAL_GROSS_PROFIT_RATIO,
+                threshold=FINANCIAL_GROSS_PROFIT_RATIO_THRESHOLD,
+                actual_value=None,
+                evaluated=False,
+                breached=False,
+                reason="Approved deal value is zero or negative",
+            )
         )
 
     if not inputs.has_approved_financial or inputs.gross_profit is None:
-        return FinancialBreachRuleResult(
-            lender_id=inputs.lender_id,
-            client_id=inputs.client_id,
-            rule=FINANCIAL_GROSS_PROFIT_RATIO,
-            threshold=FINANCIAL_GROSS_PROFIT_RATIO_THRESHOLD,
-            actual_value=None,
-            evaluated=False,
-            breached=False,
-            reason="No approved financial",
+        return _log_rule_result(
+            FinancialBreachRuleResult(
+                lender_id=inputs.lender_id,
+                client_id=inputs.client_id,
+                rule=FINANCIAL_GROSS_PROFIT_RATIO,
+                threshold=FINANCIAL_GROSS_PROFIT_RATIO_THRESHOLD,
+                actual_value=None,
+                evaluated=False,
+                breached=False,
+                reason="No approved financial",
+            )
         )
 
     denominator = inputs.total_deal_value * FINANCIAL_GROSS_PROFIT_RATE
     ratio = inputs.gross_profit / denominator
     breached = ratio < FINANCIAL_GROSS_PROFIT_RATIO_THRESHOLD
 
-    return FinancialBreachRuleResult(
-        lender_id=inputs.lender_id,
-        client_id=inputs.client_id,
-        rule=FINANCIAL_GROSS_PROFIT_RATIO,
-        threshold=FINANCIAL_GROSS_PROFIT_RATIO_THRESHOLD,
-        actual_value=ratio,
-        evaluated=True,
-        breached=breached,
-        reason=None,
+    return _log_rule_result(
+        FinancialBreachRuleResult(
+            lender_id=inputs.lender_id,
+            client_id=inputs.client_id,
+            rule=FINANCIAL_GROSS_PROFIT_RATIO,
+            threshold=FINANCIAL_GROSS_PROFIT_RATIO_THRESHOLD,
+            actual_value=ratio,
+            evaluated=True,
+            breached=breached,
+            reason=None,
+        )
     )

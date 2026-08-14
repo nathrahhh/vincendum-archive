@@ -1,3 +1,4 @@
+import { useAuth0 } from "@auth0/auth0-react";
 import { NavLink } from "react-router-dom";
 import { useCurrentUser } from "../../auth/CurrentUserProvider";
 
@@ -19,10 +20,19 @@ const allLinks = [
 ] as const;
 
 export default function Sidebar() {
+  const { logout } = useAuth0();
   const { role } = useCurrentUser();
   const links = allLinks.filter((link) =>
     (link.roles as readonly string[]).includes(role),
   );
+
+  function handleLogout() {
+    logout({
+      logoutParams: {
+        returnTo: window.location.origin,
+      },
+    });
+  }
 
   return (
     <aside className="app-sidebar">
@@ -42,6 +52,15 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
+      <div className="app-sidebar__footer">
+        <button
+          type="button"
+          className="app-sidebar__logout"
+          onClick={handleLogout}
+        >
+          Logout
+        </button>
+      </div>
     </aside>
   );
 }

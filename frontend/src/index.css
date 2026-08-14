@@ -50,6 +50,7 @@ a {
 
 .app-sidebar__nav {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 0.25rem;
 }
@@ -70,6 +71,30 @@ a {
   background: #eef2ff;
   color: #1e3a8a;
   font-weight: 600;
+}
+
+.app-sidebar__footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e5ea;
+}
+
+.app-sidebar__logout {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  font-size: 0.875rem;
+  color: #6b7280;
+  text-align: left;
+  cursor: pointer;
+}
+
+.app-sidebar__logout:hover {
+  background: #f3f4f6;
+  color: #374151;
 }
 
 .role-switcher {

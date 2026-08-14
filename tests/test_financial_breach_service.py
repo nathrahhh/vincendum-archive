@@ -61,9 +61,14 @@ def test_breached_result_flows_through_and_returns_persisted_row():
             db,
             lender_id=10,
             client_id=20,
+            financial_id=301,
         )
 
-    get_inputs.assert_called_once_with(db, lender_id=10, client_id=20)
+    get_inputs.assert_called_once_with(
+        db,
+        lender_id=10,
+        client_id=20,
+    )
     evaluate.assert_called_once_with(inputs)
     persist.assert_called_once()
     assert persist.call_args.args[0] is db
@@ -104,6 +109,7 @@ def test_unevaluated_result_is_passed_to_persistence_and_returns_none():
             db,
             lender_id=10,
             client_id=20,
+            financial_id=302,
         )
 
     persist.assert_called_once()
@@ -141,6 +147,7 @@ def test_passing_result_is_passed_to_persistence_and_returns_none():
             db,
             lender_id=10,
             client_id=20,
+            financial_id=302,
         )
 
     persist.assert_called_once()
