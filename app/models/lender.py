@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from app.models.client import ClientORM
     from app.models.client_application import ClientApplicationORM
     from app.models.client_invitation import ClientInvitationORM
+    from app.models.document import DocumentORM
     from app.models.user import UserORM
 
 
@@ -32,5 +33,8 @@ class LenderORM(Base):
         back_populates="lender",
     )
     client_invitations: Mapped[list[ClientInvitationORM]] = relationship(
+        back_populates="lender",
+    )
+    documents: Mapped[list[DocumentORM]] = relationship(
         back_populates="lender",
     )
