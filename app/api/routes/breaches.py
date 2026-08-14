@@ -1,6 +1,7 @@
 import logging
+from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -73,3 +74,35 @@ def list_breaches(
 
     logger.info("list_breaches grouped_industries=%s", list(grouped.keys()))
     return grouped
+
+
+@router.post("/breaches/{breach_id}/resolve")
+def resolve_breach(
+    breach_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserORM = Depends(require_admin),
+    _: UserORM = Depends(require_lender_user),
+) -> BreachPayload:
+    """Resolve an OPEN breach for the authenticated admin's lender."""
+    lender_id = get_user_lender_id(current_user)
+    breach = db.execute(
+        select(BreachORM).where(
+            BreachORM.id == breach_id,
+            BreachORM.lender_id == lender_id,
+        )
+    ).scalar_one_or_none()
+    if breach is None:
+        raise HTTPException(status_code=404, detail=f"Breach {breach_id} not found")
+
+    if breach.status != "OPEN":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Breach {breach_id} is not open",
+        )
+
+    breach.status = "RESOLVED"
+    breach.resolved_by = current_user.id
+    breach.resolved_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(breach)
+    return _serialize_breach(breach)

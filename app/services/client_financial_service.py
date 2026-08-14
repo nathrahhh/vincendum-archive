@@ -56,38 +56,15 @@ def approve_client_financial(
 
     previous_status = row.status
     row.status = "APPROVED"
-    logger.info(
-        "approve_client_financial financial_id=%s client_id=%s lender_id=%s "
-        "previous_status=%s new_status=%s",
-        row.id,
-        row.client_id,
-        lender_id,
-        previous_status,
-        row.status,
-    )
     db.flush()
-    print("pls work")
-    logger.info(
-        "approve_client_financial starting breach evaluation "
-        "financial_id=%s client_id=%s lender_id=%s",
-        row.id,
-        row.client_id,
-        lender_id,
-    )
+
     breach = evaluate_and_persist_financial_breach(
         db,
         lender_id=lender_id,
         client_id=row.client_id,
         financial_id=row.id,
     )
-    logger.info(
-        "approve_client_financial breach evaluation complete "
-        "financial_id=%s client_id=%s breach_created=%s breach_id=%s",
-        row.id,
-        row.client_id,
-        breach is not None,
-        getattr(breach, "id", None),
-    )
+
     record_audit_event(
         db,
         lender_id=lender_id,
@@ -96,7 +73,6 @@ def approve_client_financial(
         resource_type="client_financial",
         resource_id=row.id,
     )
-    print("yeay")
     db.commit()
     db.refresh(row)
     return _to_record(row)

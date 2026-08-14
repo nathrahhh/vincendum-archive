@@ -607,6 +607,33 @@ a {
   font-size: 0.875rem;
 }
 
+.breaches-item__status {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.breaches-item__resolve {
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.8125rem;
+  color: #374151;
+  cursor: pointer;
+}
+
+.breaches-item__resolve:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.breaches-item__resolve:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Evaluations page */
 .evaluations-page {
   max-width: 960px;
