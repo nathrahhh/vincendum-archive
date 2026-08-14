@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ClientDetailPanel } from "../components/clients";
+import { fetchClientDeals } from "../api/deals";
 import {
   getClient,
   getClientFinancials,
@@ -8,6 +9,7 @@ import {
 } from "../services/clientService";
 import type {
   Client,
+  ClientDeal,
   ClientFinancials,
   ClientForecast,
 } from "../types";
@@ -24,6 +26,7 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [financials, setFinancials] = useState<ClientFinancials | null>(null);
+  const [deals, setDeals] = useState<ClientDeal[]>([]);
   const [baseForecast, setBaseForecast] = useState<ClientForecast | null>(null);
   const [bestForecast, setBestForecast] = useState<ClientForecast | null>(null);
   const [worstForecast, setWorstForecast] = useState<ClientForecast | null>(null);
@@ -59,6 +62,7 @@ export default function ClientsPage() {
   async function handleClientSelect(client: Client) {
     setSelectedClient(client);
     setFinancials(null);
+    setDeals([]);
     setBaseForecast(null);
     setBestForecast(null);
     setWorstForecast(null);
@@ -66,11 +70,22 @@ export default function ClientsPage() {
     setIsLoadingDetail(true);
 
     try {
-      const clientData = await getClient(client.id);
+      const [clientData, financialData, dealsData] = await Promise.all([
+        getClient(client.id),
+        getClientFinancials(client.id),
+        fetchClientDeals(client.id),
+      ]);
       setSelectedClient(clientData);
-
-      const financialData = await getClientFinancials(client.id);
       setFinancials(financialData);
+      setDeals(
+        dealsData.map((deal) => ({
+          id: deal.id,
+          name: deal.name,
+          value: deal.value,
+          industry: clientData.industry,
+          status: deal.status ?? "",
+        })),
+      );
     } catch (err) {
       setError(
         err instanceof Error
@@ -220,6 +235,7 @@ export default function ClientsPage() {
       <ClientDetailPanel
         client={selectedClient}
         financials={financials}
+        deals={deals}
         baseForecast={baseForecast}
         bestForecast={bestForecast}
         worstForecast={worstForecast}

@@ -2,7 +2,6 @@ export type ClientDeal = {
   id: number;
   name: string;
   value: number;
-  industry: string;
   status: string;
 };
 

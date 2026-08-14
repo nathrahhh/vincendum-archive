@@ -1,5 +1,6 @@
 import {
   fetchClient,
+  fetchClientDeals,
   fetchClientFinancials,
   fetchClientForecast,
   fetchClients,
@@ -57,6 +58,21 @@ export async function getClientFinancials(clientId: number): Promise<ClientFinan
     return await fetchClientFinancials(clientId);
   } catch (error) {
     throw toServiceError(error, "Failed to load client financial submissions");
+  }
+}
+
+export async function getClientDeals(clientId: number): Promise<ClientDeal[]> {
+  try {
+    const deals = await fetchClientDeals(clientId);
+
+    return deals.map((deal) => ({
+      id: deal.id,
+      name: deal.name,
+      value: deal.value,
+      status: deal.status ?? "PENDING",
+    }));
+  } catch (error) {
+    throw toServiceError(error, "Failed to load client deals");
   }
 }
 
@@ -213,7 +229,6 @@ export async function getMyClientDeals(): Promise<ClientDeal[]> {
       id: deal.id,
       name: deal.name,
       value: deal.value,
-      industry: deal.industry,
       status: deal.status ?? "PENDING",
     }));
   } catch (error) {

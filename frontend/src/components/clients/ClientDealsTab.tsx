@@ -32,7 +32,6 @@ export default function ClientDealsTab({ deals }: ClientDealsTabProps) {
               <tr>
                 <th>Name</th>
                 <th>Value</th>
-                <th>Industry</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -45,8 +44,6 @@ export default function ClientDealsTab({ deals }: ClientDealsTabProps) {
                   <td className="dashboard-table__num">
                     {formatCurrency(deal.value)}
                   </td>
-
-                  <td>{deal.industry}</td>
 
                   <td>
                     <span className={statusClass[deal.status] ?? "dashboard-badge"}>

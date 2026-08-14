@@ -21,6 +21,7 @@ from app.services.concentration_risk_engine import RiskEngine
 
 router = APIRouter()
 deals_router = APIRouter(prefix="/deals", tags=["deals"])
+clients_deals_router = APIRouter(prefix="/clients", tags=["deals"])
 client_me_router = APIRouter(prefix="/client", tags=["client"])
 
 
@@ -51,6 +52,41 @@ def list_deals(
         select(DealORM)
         .join(ClientORM, DealORM.client_id == ClientORM.id)
         .where(ClientORM.lender_id == lender_id)
+        .order_by(DealORM.id.desc())
+    ).scalars().all()
+    return [
+        DealRecord(
+            id=deal.id,
+            client_id=deal.client_id,
+            name=deal.name,
+            value=deal.value,
+            status=deal.status,
+        )
+        for deal in rows
+    ]
+
+
+@clients_deals_router.get("/{client_id}/deals", response_model=list[DealRecord])
+def list_client_deals(
+    client_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserORM = Depends(require_admin),
+    _: UserORM = Depends(require_lender_user),
+) -> list[DealRecord]:
+    """Return deals for a client owned by the authenticated admin's lender."""
+    lender_id = get_user_lender_id(current_user)
+    client = db.execute(
+        select(ClientORM).where(
+            ClientORM.id == client_id,
+            ClientORM.lender_id == lender_id,
+        )
+    ).scalar_one_or_none()
+    if client is None:
+        raise HTTPException(status_code=404, detail=f"Client {client_id} not found")
+
+    rows = db.execute(
+        select(DealORM)
+        .where(DealORM.client_id == client_id)
         .order_by(DealORM.id.desc())
     ).scalars().all()
     return [
@@ -183,4 +219,5 @@ def create_my_client_deal(
 
 
 router.include_router(deals_router)
+router.include_router(clients_deals_router)
 router.include_router(client_me_router)

@@ -1,6 +1,6 @@
 export { request } from "./client";
 export { fetchPortfolio } from "./portfolio";
-export { fetchDeals, postApproveDeal, postMyClientDeal, postRejectDeal } from "./deals";
+export { fetchDeals, fetchClientDeals, postApproveDeal, postMyClientDeal, postRejectDeal } from "./deals";
 export { fetchBreaches, postResolveBreach } from "./risk";
 export {
   fetchClients,

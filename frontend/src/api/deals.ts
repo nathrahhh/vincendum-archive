@@ -6,6 +6,11 @@ export function fetchDeals(): Promise<DealRecord[]> {
   return request<DealRecord[]>("/deals");
 }
 
+/** GET /clients/{clientId}/deals */
+export function fetchClientDeals(clientId: number): Promise<DealRecord[]> {
+  return request<DealRecord[]>(`/clients/${clientId}/deals`);
+}
+
 /** POST /deals/{id}/approve */
 export function postApproveDeal(id: number): Promise<DealRecord> {
   return request<DealRecord>(`/deals/${id}/approve`, { method: "POST" });
