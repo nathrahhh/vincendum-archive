@@ -84,6 +84,25 @@ class ClientFinancialRecord(BaseModel):
     status: str | None = None
 
 
+class DocumentCreate(BaseModel):
+    name: str = Field(..., min_length=1)
+    storage_type: str = Field(default="s3", min_length=1)
+    storage_key: str | None = None
+    external_url: str | None = None
+
+
+class DocumentRecord(BaseModel):
+    id: int
+    lender_id: int
+    client_id: int | None
+    application_id: int | None
+    name: str
+    storage_type: str
+    storage_key: str | None
+    external_url: str | None
+    created_at: datetime
+
+
 class ClientFinancialResponse(BaseModel):
     client_id: int
     historical: list[ClientFinancialRecord]
