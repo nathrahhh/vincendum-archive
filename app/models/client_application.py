@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Float, ForeignKey, String, func
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -39,6 +39,31 @@ class ClientApplicationORM(Base):
     credit_limit: Mapped[float] = mapped_column(
         Float,
         nullable=False,
+    )
+
+    registered_business_name: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    companies_house_number: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+
+    incorporation_year: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    headcount: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    revenue_last_fy: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
     )
 
     status: Mapped[str] = mapped_column(

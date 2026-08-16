@@ -130,6 +130,11 @@ class ClientApplicationCreate(BaseModel):
     name: str = Field(..., min_length=1)
     industry: str = Field(..., min_length=1)
     credit_limit: float = Field(..., gt=0)
+    registered_business_name: str | None = None
+    companies_house_number: str | None = None
+    incorporation_year: int | None = None
+    headcount: int | None = None
+    revenue_last_fy: float | None = None
 
 
 class ClientCreditLimitUpdate(BaseModel):

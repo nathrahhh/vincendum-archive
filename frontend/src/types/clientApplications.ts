@@ -1,8 +1,14 @@
 export type ClientApplicationRecord = {
   id: number;
+  lender_id: number;
   name: string;
   industry: string;
   credit_limit: number;
+  registered_business_name: string | null;
+  companies_house_number: string | null;
+  incorporation_year: number | null;
+  headcount: number | null;
+  revenue_last_fy: number | null;
   status: string;
   created_at?: string;
 };
@@ -11,12 +17,16 @@ export type ClientApplicationCreate = {
   name: string;
   industry: string;
   credit_limit: number;
+  registered_business_name?: string;
+  companies_house_number?: string;
+  incorporation_year?: number;
+  headcount?: number;
+  revenue_last_fy?: number;
 };
 
 export type ClientApplicationCreateResponse = {
   message: string;
   application?: ClientApplicationRecord;
-  reasons?: string[];
 };
 
 export type ClientApplicationApproveResponse = {
@@ -27,6 +37,7 @@ export type ClientApplicationApproveResponse = {
     industry: string;
     credit_limit: number;
   };
+  application?: ClientApplicationRecord;
 };
 
 export type ClientApplicationRejectResponse = {
