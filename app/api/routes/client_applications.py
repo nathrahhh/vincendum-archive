@@ -3,12 +3,14 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.permissions import require_admin
 from app.auth.tenant import get_user_lender_id, require_lender_user
 from app.db import get_db
 from app.models.client_application import ClientApplicationORM
+from app.models.lender import LenderORM
 from app.models.schemas import ClientApplicationCreate
 from app.models.user import UserORM
 from app.services.client_application_service import (
@@ -96,6 +98,37 @@ def create_client_application(
     application = create_client_application_service(
         db,
         lender_id=lender_id,
+        payload=payload,
+    )
+    return {
+        "message": "Application submitted for admin review",
+        "application": _application_to_dict(application),
+    }
+
+
+@router.post("/client-applications/public/{slug}")
+def create_public_client_application(
+    slug: str,
+    payload: ClientApplicationCreate,
+    db: Session = Depends(get_db),
+) -> dict:
+    """
+    Public application submission for a lender identified by slug.
+
+    ``lender_id`` comes from the URL slug, not the request body.
+    """
+    lender = db.execute(
+        select(LenderORM).where(LenderORM.slug == slug)
+    ).scalar_one_or_none()
+    if lender is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Lender with slug '{slug}' not found",
+        )
+
+    application = create_client_application_service(
+        db,
+        lender_id=lender.id,
         payload=payload,
     )
     return {

@@ -9,13 +9,17 @@ import type {
 import { toServiceError } from "./errors";
 
 export async function postClientApplication(
+  lenderSlug: string,
   payload: ClientApplicationCreate,
 ): Promise<ClientApplicationCreateResponse> {
   try {
-    return await request<ClientApplicationCreateResponse>("/client-applications", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    return await request<ClientApplicationCreateResponse>(
+      `/client-applications/public/${encodeURIComponent(lenderSlug)}`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+    );
   } catch (error) {
     throw toServiceError(error, "Failed to submit application");
   }

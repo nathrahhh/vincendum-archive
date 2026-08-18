@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import ClientApplicationForm from "../components/clients/ClientApplicationForm";
-import { submitClientApplication } from "../services/clientService";
+import { postClientApplication } from "../services/clientApplicationService";
 import { fetchPublicLender } from "../services/lenderService";
 import type { Lender } from "../types/auth";
 import type { ClientApplicationCreate } from "../types";
@@ -108,6 +108,11 @@ export default function ApplyPage() {
       revenue_last_fy: optionalNumber(revenueLastFy),
     };
 
+    if (!lenderSlug) {
+      setError("Lender context is missing. Please use a valid application link.");
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
     setMessage(null);
@@ -115,7 +120,7 @@ export default function ApplyPage() {
     setIsRejection(false);
 
     try {
-      const response = await submitClientApplication(payload);
+      const response = await postClientApplication(lenderSlug, payload);
 
       const rejected = response.application?.status === "rejected";
 
