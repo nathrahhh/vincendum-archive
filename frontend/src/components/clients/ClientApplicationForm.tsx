@@ -1,5 +1,4 @@
 import type { FormEvent } from "react";
-import type { ClientApplicationCreate } from "../../types";
 
 const INDUSTRIES = [
   "Manufacturing",
@@ -11,32 +10,48 @@ const INDUSTRIES = [
 
 type ClientApplicationFormProps = {
   businessName: string;
+  registeredBusinessName: string;
   industry: string;
+  companiesHouseNumber: string;
+  incorporationYear: string;
+  headcount: string;
+  revenueLastFy: string;
   creditLimit: string;
   isSubmitting: boolean;
   onBusinessNameChange: (value: string) => void;
+  onRegisteredBusinessNameChange: (value: string) => void;
   onIndustryChange: (value: string) => void;
+  onCompaniesHouseNumberChange: (value: string) => void;
+  onIncorporationYearChange: (value: string) => void;
+  onHeadcountChange: (value: string) => void;
+  onRevenueLastFyChange: (value: string) => void;
   onCreditLimitChange: (value: string) => void;
-  onSubmit: (payload: ClientApplicationCreate) => void;
+  onSubmit: () => void;
 };
 
 export default function ClientApplicationForm({
   businessName,
+  registeredBusinessName,
   industry,
+  companiesHouseNumber,
+  incorporationYear,
+  headcount,
+  revenueLastFy,
   creditLimit,
   isSubmitting,
   onBusinessNameChange,
+  onRegisteredBusinessNameChange,
   onIndustryChange,
+  onCompaniesHouseNumberChange,
+  onIncorporationYearChange,
+  onHeadcountChange,
+  onRevenueLastFyChange,
   onCreditLimitChange,
   onSubmit,
 }: ClientApplicationFormProps) {
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    onSubmit({
-      name: businessName.trim(),
-      industry: industry.trim(),
-      credit_limit: Number(creditLimit),
-    });
+    onSubmit();
   }
 
   return (
@@ -54,8 +69,17 @@ export default function ClientApplicationForm({
             type="text"
             value={businessName}
             onChange={(e) => onBusinessNameChange(e.target.value)}
-            placeholder="e.g. Acme Healthcare Ltd"
             required
+          />
+        </label>
+
+        <label className="deal-form__field">
+          <span className="deal-form__label">Registered Business Name</span>
+          <input
+            className="deal-form__input"
+            type="text"
+            value={registeredBusinessName}
+            onChange={(e) => onRegisteredBusinessNameChange(e.target.value)}
           />
         </label>
 
@@ -77,6 +101,52 @@ export default function ClientApplicationForm({
         </label>
 
         <label className="deal-form__field">
+          <span className="deal-form__label">Companies House Number</span>
+          <input
+            className="deal-form__input"
+            type="text"
+            value={companiesHouseNumber}
+            onChange={(e) => onCompaniesHouseNumberChange(e.target.value)}
+          />
+        </label>
+
+        <label className="deal-form__field">
+          <span className="deal-form__label">Incorporation Year</span>
+          <input
+            className="deal-form__input"
+            type="number"
+            min="1800"
+            step="1"
+            value={incorporationYear}
+            onChange={(e) => onIncorporationYearChange(e.target.value)}
+          />
+        </label>
+
+        <label className="deal-form__field">
+          <span className="deal-form__label">Headcount</span>
+          <input
+            className="deal-form__input"
+            type="number"
+            min="0"
+            step="1"
+            value={headcount}
+            onChange={(e) => onHeadcountChange(e.target.value)}
+          />
+        </label>
+
+        <label className="deal-form__field">
+          <span className="deal-form__label">Revenue Last FY</span>
+          <input
+            className="deal-form__input"
+            type="number"
+            min="0"
+            step="any"
+            value={revenueLastFy}
+            onChange={(e) => onRevenueLastFyChange(e.target.value)}
+          />
+        </label>
+
+        <label className="deal-form__field">
           <span className="deal-form__label">Requested Credit Limit (USD)</span>
           <input
             className="deal-form__input"
@@ -85,7 +155,6 @@ export default function ClientApplicationForm({
             step="any"
             value={creditLimit}
             onChange={(e) => onCreditLimitChange(e.target.value)}
-            placeholder="e.g. 1500000"
             required
           />
         </label>

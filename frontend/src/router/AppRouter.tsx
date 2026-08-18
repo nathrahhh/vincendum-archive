@@ -5,6 +5,7 @@ import {
   useCurrentUser,
 } from "../auth/CurrentUserProvider";
 import AuditLogsPage from "../pages/AuditLogsPage";
+import ApplyPage from "../pages/ApplyPage";
 import ClientApplicationsPage from "../pages/ClientApplicationsPage";
 import ClientDashboardPage from "../pages/ClientDashboardPage";
 import ClientsPage from "../pages/ClientsPage";
@@ -25,6 +26,8 @@ export default function AppRouter() {
 
   return (
     <Routes>
+      <Route path="/apply/:lenderSlug" element={<ApplyPage />} />
+
       <Route element={<AppLayout />}>
         <Route path="/" element={<Navigate to={defaultPath} replace />} />
 

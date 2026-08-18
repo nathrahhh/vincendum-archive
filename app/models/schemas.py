@@ -175,6 +175,7 @@ class LenderOnboardRequest(BaseModel):
 class LenderResponse(BaseModel):
     id: int
     name: str
+    slug: str
 
 
 class CurrentUserResponse(BaseModel):

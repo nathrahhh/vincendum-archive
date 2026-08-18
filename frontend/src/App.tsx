@@ -3,6 +3,7 @@ import AuthAccessTokenBridge from "./auth/AuthAccessTokenBridge";
 import { CurrentUserProvider } from "./auth/CurrentUserProvider";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import RequireLenderOnboarded from "./auth/RequireLenderOnboarded";
+import ApplyPage from "./pages/ApplyPage";
 import ClientInvitationPage from "./pages/ClientInvitationPage";
 import LoginPage from "./pages/LoginPage";
 import OnboardingPage from "./pages/OnboardingPage";
@@ -15,6 +16,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/invite/:token" element={<ClientInvitationPage />} />
+        <Route path="/apply/:lenderSlug" element={<ApplyPage />} />
         <Route
           path="/onboarding"
           element={

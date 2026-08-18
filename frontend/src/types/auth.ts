@@ -9,6 +9,7 @@ export type CurrentUser = {
 export type Lender = {
   id: number;
   name: string;
+  slug: string;
 };
 
 export type LenderOnboardRequest = {

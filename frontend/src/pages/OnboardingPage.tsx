@@ -4,7 +4,7 @@ import {
   defaultPathForRole,
   useCurrentUser,
 } from "../auth/CurrentUserProvider";
-import { onboardLender } from "../services/authService";
+import { onboardLender } from "../services/lenderService";
 
 export default function OnboardingPage() {
   const navigate = useNavigate();

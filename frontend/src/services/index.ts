@@ -4,4 +4,5 @@ export { getBreaches, resolveBreach } from "./riskService";
 export { getClients, getClientFinancials, getClientForecast, getClientForecastScenarios, updateClientCreditLimit, submitClientFinancial, submitClientApplication } from "./clientService";
 export { extractFinancialStatement } from "./parsingService";
 export { checkHealth } from "./healthService";
-export { getCurrentUser, onboardLender } from "./authService";
+export { getCurrentUser } from "./authService";
+export { onboardLender, fetchMyLender, fetchPublicLender } from "./lenderService";
