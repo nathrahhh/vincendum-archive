@@ -15,6 +15,7 @@ import ClientFinancialsPage from "../pages/ClientFinancialsPage";
 import DealPage from "../pages/DealPage";
 import EvaluationsPage from "../pages/EvaluationsPage";
 import FinancialEvaluationsPage from "../pages/FinancialEvaluationsPage";
+import ProfilePage from "../pages/ProfilePage";
 
 export default function AppRouter() {
   const { role, isLoading } = useCurrentUser();
@@ -54,6 +55,7 @@ export default function AppRouter() {
             <Route path="/audit-logs" element={<AuditLogsPage />} />
             <Route path="/clients" element={<ClientsPage />} />
             <Route path="/client-applications" element={<ClientApplicationsPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="/deal" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </>

@@ -53,6 +53,18 @@ export default function Sidebar() {
         ))}
       </nav>
       <div className="app-sidebar__footer">
+        {role === "admin" ? (
+          <NavLink
+            to="/profile"
+            className={({ isActive }) =>
+              isActive
+                ? "app-sidebar__link app-sidebar__link--active"
+                : "app-sidebar__link"
+            }
+          >
+            Profile
+          </NavLink>
+        ) : null}
         <button
           type="button"
           className="app-sidebar__logout"
