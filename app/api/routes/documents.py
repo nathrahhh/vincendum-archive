@@ -166,7 +166,6 @@ def create_client_document_for_lender(
 
 @clients_documents_router.get(
     "/{client_id}/documents/{document_id}",
-    response_model=DocumentRecord,
 )
 def get_client_document_for_lender(
     client_id: int,
@@ -174,15 +173,22 @@ def get_client_document_for_lender(
     db: Session = Depends(get_db),
     current_user: UserORM = Depends(require_admin),
     _: UserORM = Depends(require_lender_user),
-) -> DocumentRecord:
-    """Return one document for a client owned by the authenticated admin's lender."""
+) -> dict:
+    """Return one client document plus a temporary download URL."""
     lender_id = get_user_lender_id(current_user)
-    return get_document(
+    document = get_document(
         db,
         document_id,
         lender_id=lender_id,
         client_id=client_id,
     )
+    download_url = None
+    if document.storage_type == "s3" and document.storage_key:
+        download_url = generate_download_url(document.storage_key)
+    return {
+        "document": document.model_dump(mode="json"),
+        "download_url": download_url,
+    }
 
 
 @apply_documents_router.post(

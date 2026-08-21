@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Client, ClientDeal, ClientFinancials, ClientForecast } from "../../types";
 import ClientDealsTab from "./ClientDealsTab";
+import ClientDocumentsTab from "./ClientDocumentsTab";
 import ClientFinancialsTab from "./ClientFinancialsTab";
 import ClientForecastTab from "./ClientForecastTab";
 import ClientOverviewTab from "./ClientOverviewTab";
@@ -26,9 +27,15 @@ type ClientDetailPanelProps = {
   deals?: ClientDeal[];
 };
 
-type ClientDetailTab = "Overview" | "Deals" | "Financials" | "Forecast";
+type ClientDetailTab = "Overview" | "Deals" | "Financials" | "Forecast" | "Documents";
 
-const TABS: ClientDetailTab[] = ["Overview", "Deals", "Financials", "Forecast"];
+const TABS: ClientDetailTab[] = [
+  "Overview",
+  "Deals",
+  "Financials",
+  "Forecast",
+  "Documents",
+];
 
 export default function ClientDetailPanel({
   client,
@@ -123,6 +130,10 @@ export default function ClientDetailPanel({
           isLoading={isLoading}
           forecastApi={mode === "client" ? "me" : "admin"}
         />
+      ) : null}
+
+      {activeTab === "Documents" ? (
+        <ClientDocumentsTab clientId={client.id} />
       ) : null}
     </aside>
   );

@@ -16,9 +16,12 @@ export type {
   ProphetForecastResponse,
 } from "./clients";
 export type {
+  ApplicationDocumentUploadResponse,
   ClientApplicationCreate,
   ClientApplicationCreateResponse,
   ClientApplicationRecord,
+  ClientDocumentDownloadResponse,
+  DocumentRecord,
 } from "./clientApplications";
 export type { Position, IndustryExposure, PortfolioResponse } from "./portfolio";
 export type { DealPayload } from "./deal";

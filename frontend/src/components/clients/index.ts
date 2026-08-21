@@ -2,6 +2,7 @@ export { default as CashBalanceChart } from "./CashBalanceChart";
 export { default as ClientApplicationForm } from "./ClientApplicationForm";
 export { default as ClientDealsTab } from "./ClientDealsTab";
 export { default as ClientDetailPanel } from "./ClientDetailPanel";
+export { default as ClientDocumentsTab } from "./ClientDocumentsTab";
 export { default as ClientFinancialForm } from "./ClientFinancialForm";
 export { default as ClientFinancialsTab } from "./ClientFinancialsTab";
 export { default as ClientForecastTab } from "./ClientForecastTab";

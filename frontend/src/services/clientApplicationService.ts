@@ -1,10 +1,12 @@
 import { request } from "../api/client";
 import type {
+  ApplicationDocumentUploadResponse,
   ClientApplicationApproveResponse,
   ClientApplicationCreate,
   ClientApplicationCreateResponse,
   ClientApplicationRecord,
   ClientApplicationRejectResponse,
+  DocumentRecord,
 } from "../types/clientApplications";
 import { toServiceError } from "./errors";
 
@@ -22,6 +24,37 @@ export async function postClientApplication(
     );
   } catch (error) {
     throw toServiceError(error, "Failed to submit application");
+  }
+}
+
+export async function requestApplicationDocumentUploadUrl(
+  lenderSlug: string,
+  applicationId: number,
+  payload: { name: string; content_type: string },
+): Promise<ApplicationDocumentUploadResponse> {
+  try {
+    return await request<ApplicationDocumentUploadResponse>(
+      `/apply/${encodeURIComponent(lenderSlug)}/applications/${applicationId}/documents/upload-url`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+    );
+  } catch (error) {
+    throw toServiceError(error, "Failed to prepare document upload");
+  }
+}
+
+export async function fetchApplicationDocuments(
+  lenderSlug: string,
+  applicationId: number,
+): Promise<DocumentRecord[]> {
+  try {
+    return await request<DocumentRecord[]>(
+      `/apply/${encodeURIComponent(lenderSlug)}/applications/${applicationId}/documents`,
+    );
+  } catch (error) {
+    throw toServiceError(error, "Failed to load application documents");
   }
 }
 

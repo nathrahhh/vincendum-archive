@@ -1,10 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { useParams } from "react-router-dom";
 import ClientApplicationForm from "../components/clients/ClientApplicationForm";
-import { postClientApplication } from "../services/clientApplicationService";
+import {
+  postClientApplication,
+  requestApplicationDocumentUploadUrl,
+} from "../services/clientApplicationService";
 import { fetchPublicLender } from "../services/lenderService";
 import type { Lender } from "../types/auth";
 import type { ClientApplicationCreate } from "../types";
+
+type UploadStatus = "idle" | "uploading" | "uploaded" | "error";
+
+type StatementKey = "profitAndLoss" | "balanceSheet" | "cashFlow";
+
+const STATEMENT_LABELS: Record<StatementKey, string> = {
+  profitAndLoss: "Profit & Loss Statement",
+  balanceSheet: "Balance Sheet",
+  cashFlow: "Cash Flow Statement",
+};
 
 function optionalTrimmed(value: string): string | undefined {
   const trimmed = value.trim();
@@ -18,6 +31,22 @@ function optionalNumber(value: string): number | undefined {
   }
   const parsed = Number(trimmed);
   return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function emptyUploadStatus(): Record<StatementKey, UploadStatus> {
+  return {
+    profitAndLoss: "idle",
+    balanceSheet: "idle",
+    cashFlow: "idle",
+  };
+}
+
+function emptyUploadErrors(): Record<StatementKey, string | null> {
+  return {
+    profitAndLoss: null,
+    balanceSheet: null,
+    cashFlow: null,
+  };
 }
 
 export default function ApplyPage() {
@@ -41,6 +70,19 @@ export default function ApplyPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [reasons, setReasons] = useState<string[]>([]);
   const [isRejection, setIsRejection] = useState(false);
+  const [createdApplicationId, setCreatedApplicationId] = useState<number | null>(
+    null,
+  );
+
+  const [selectedFiles, setSelectedFiles] = useState<
+    Record<StatementKey, File | null>
+  >({
+    profitAndLoss: null,
+    balanceSheet: null,
+    cashFlow: null,
+  });
+  const [uploadStatus, setUploadStatus] = useState(emptyUploadStatus);
+  const [uploadErrors, setUploadErrors] = useState(emptyUploadErrors);
 
   useEffect(() => {
     if (!lenderSlug) {
@@ -128,9 +170,27 @@ export default function ApplyPage() {
 
       if (rejected) {
         setMessage(response.message);
+        setCreatedApplicationId(null);
       } else {
-        setMessage("Application received. It is pending review.");
+        const applicationId = response.application?.id ?? null;
+        if (applicationId == null) {
+          setError("Application was created but no application ID was returned.");
+          setCreatedApplicationId(null);
+          return;
+        }
+
+        setCreatedApplicationId(applicationId);
+        setMessage(
+          "Application received. It is pending review. You can upload supporting PDFs below.",
+        );
         resetFormFields();
+        setSelectedFiles({
+          profitAndLoss: null,
+          balanceSheet: null,
+          cashFlow: null,
+        });
+        setUploadStatus(emptyUploadStatus());
+        setUploadErrors(emptyUploadErrors());
       }
     } catch (err) {
       setError(
@@ -141,6 +201,106 @@ export default function ApplyPage() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  function handleFileChange(
+    key: StatementKey,
+    event: ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = event.target.files?.[0] ?? null;
+    if (file && file.type !== "application/pdf") {
+      setSelectedFiles((current) => ({ ...current, [key]: null }));
+      setUploadStatus((current) => ({ ...current, [key]: "error" }));
+      setUploadErrors((current) => ({
+        ...current,
+        [key]: "Only PDF files are allowed.",
+      }));
+      event.target.value = "";
+      return;
+    }
+
+    setSelectedFiles((current) => ({ ...current, [key]: file }));
+    setUploadStatus((current) => ({
+      ...current,
+      [key]: file ? "idle" : "idle",
+    }));
+    setUploadErrors((current) => ({ ...current, [key]: null }));
+  }
+
+  async function handleUpload(key: StatementKey) {
+    if (!lenderSlug || createdApplicationId == null) {
+      setUploadErrors((current) => ({
+        ...current,
+        [key]: "Application must be created before uploading documents.",
+      }));
+      return;
+    }
+
+    const file = selectedFiles[key];
+    if (!file) {
+      setUploadErrors((current) => ({
+        ...current,
+        [key]: "Select a PDF file first.",
+      }));
+      return;
+    }
+
+    if (file.type !== "application/pdf") {
+      setUploadStatus((current) => ({ ...current, [key]: "error" }));
+      setUploadErrors((current) => ({
+        ...current,
+        [key]: "Only PDF files are allowed.",
+      }));
+      return;
+    }
+
+    setUploadStatus((current) => ({ ...current, [key]: "uploading" }));
+    setUploadErrors((current) => ({ ...current, [key]: null }));
+
+    try {
+      const contentType = file.type || "application/pdf";
+      const prepared = await requestApplicationDocumentUploadUrl(
+        lenderSlug,
+        createdApplicationId,
+        {
+          name: STATEMENT_LABELS[key],
+          content_type: contentType,
+        },
+      );
+
+      const uploadResponse = await fetch(prepared.upload_url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": contentType,
+        },
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(
+          `S3 upload failed (${uploadResponse.status} ${uploadResponse.statusText})`,
+        );
+      }
+
+      setUploadStatus((current) => ({ ...current, [key]: "uploaded" }));
+    } catch (err) {
+      setUploadStatus((current) => ({ ...current, [key]: "error" }));
+      setUploadErrors((current) => ({
+        ...current,
+        [key]:
+          err instanceof Error ? err.message : "Failed to upload document",
+      }));
+    }
+  }
+
+  function uploadStatusLabel(status: UploadStatus): string {
+    if (status === "uploading") {
+      return "Uploading…";
+    }
+    if (status === "uploaded") {
+      return "Uploaded";
+    }
+    return "";
   }
 
   if (isLoadingLender) {
@@ -215,6 +375,61 @@ export default function ApplyPage() {
         onCreditLimitChange={setCreditLimit}
         onSubmit={handleSubmit}
       />
+
+      {createdApplicationId != null ? (
+        <section className="deal-form" style={{ marginTop: "1.5rem" }}>
+          <h2 className="deal-form__title">Supporting documents</h2>
+          <p className="deal-form__subtitle">
+            Upload PDF statements for this application. Documents are optional
+            and are sent directly to secure storage.
+          </p>
+
+          <fieldset className="deal-form__section">
+            <legend className="deal-form__section-title">
+              Financial statements
+            </legend>
+
+            {(Object.keys(STATEMENT_LABELS) as StatementKey[]).map((key) => (
+              <label key={key} className="deal-form__field">
+                <span className="deal-form__label">{STATEMENT_LABELS[key]}</span>
+                <input
+                  className="deal-form__input"
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  disabled={uploadStatus[key] === "uploading"}
+                  onChange={(event) => handleFileChange(key, event)}
+                />
+                <button
+                  className="deal-form__submit"
+                  type="button"
+                  disabled={
+                    !selectedFiles[key] ||
+                    uploadStatus[key] === "uploading" ||
+                    uploadStatus[key] === "uploaded"
+                  }
+                  onClick={() => {
+                    void handleUpload(key);
+                  }}
+                >
+                  {uploadStatus[key] === "uploading"
+                    ? "Uploading…"
+                    : uploadStatus[key] === "uploaded"
+                      ? "Uploaded"
+                      : "Upload PDF"}
+                </button>
+                {uploadStatusLabel(uploadStatus[key]) ? (
+                  <p className="dashboard-panel__subtitle">
+                    {uploadStatusLabel(uploadStatus[key])}
+                  </p>
+                ) : null}
+                {uploadErrors[key] ? (
+                  <p className="dashboard-error">{uploadErrors[key]}</p>
+                ) : null}
+              </label>
+            ))}
+          </fieldset>
+        </section>
+      ) : null}
     </div>
   );
 }

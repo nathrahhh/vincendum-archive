@@ -17,11 +17,13 @@ import {
   postApproveClientFinancial,
   postRejectClientFinancial,
 } from "../api/clients";
+import { request } from "../api/client";
 import type {
   Client,
   ClientApplicationCreate,
   ClientApplicationCreateResponse,
   ClientDeal,
+  ClientDocumentDownloadResponse,
   ClientFinancialCreate,
   ClientFinancialCreateResponse,
   ClientFinancialRecord,
@@ -29,6 +31,7 @@ import type {
   ClientForecast,
   ClientForecastScenarios,
   ClientInvitation,
+  DocumentRecord,
   ForecastModel,
   ProphetForecastResponse,
 } from "../types";
@@ -73,6 +76,31 @@ export async function getClientDeals(clientId: number): Promise<ClientDeal[]> {
     }));
   } catch (error) {
     throw toServiceError(error, "Failed to load client deals");
+  }
+}
+
+/** GET /clients/{client_id}/documents */
+export async function fetchClientDocuments(
+  clientId: number,
+): Promise<DocumentRecord[]> {
+  try {
+    return await request<DocumentRecord[]>(`/clients/${clientId}/documents`);
+  } catch (error) {
+    throw toServiceError(error, "Failed to load client documents");
+  }
+}
+
+/** GET /clients/{client_id}/documents/{document_id} */
+export async function getClientDocument(
+  clientId: number,
+  documentId: number,
+): Promise<ClientDocumentDownloadResponse> {
+  try {
+    return await request<ClientDocumentDownloadResponse>(
+      `/clients/${clientId}/documents/${documentId}`,
+    );
+  } catch (error) {
+    throw toServiceError(error, "Failed to load client document");
   }
 }
 
