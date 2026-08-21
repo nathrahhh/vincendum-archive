@@ -1,5 +1,10 @@
 import { useState } from "react";
-import type { Client, ClientDeal, ClientFinancials, ClientForecast } from "../../types";
+import type {
+  Client,
+  ClientDeal,
+  ClientFinancials,
+  ClientForecast,
+} from "../../types";
 import ClientDealsTab from "./ClientDealsTab";
 import ClientDocumentsTab from "./ClientDocumentsTab";
 import ClientFinancialsTab from "./ClientFinancialsTab";
@@ -27,13 +32,25 @@ type ClientDetailPanelProps = {
   deals?: ClientDeal[];
 };
 
-type ClientDetailTab = "Overview" | "Deals" | "Financials" | "Forecast" | "Documents";
+type ClientDetailTab =
+  | "Overview"
+  | "Deals"
+  | "Financials"
+  | "Forecast"
+  | "Documents";
 
-const TABS: ClientDetailTab[] = [
+const ADMIN_TABS: ClientDetailTab[] = [
   "Overview",
   "Deals",
   "Financials",
   "Forecast",
+  "Documents",
+];
+
+const CLIENT_TABS: ClientDetailTab[] = [
+  "Overview",
+  "Deals",
+  "Financials",
   "Documents",
 ];
 
@@ -55,7 +72,8 @@ export default function ClientDetailPanel({
   mode = "admin",
   deals,
 }: ClientDetailPanelProps) {
-  const [activeTab, setActiveTab] = useState<ClientDetailTab>("Overview");
+  const [activeTab, setActiveTab] =
+    useState<ClientDetailTab>("Overview");
 
   if (!client) {
     return (
@@ -70,15 +88,18 @@ export default function ClientDetailPanel({
   }
 
   const resolvedDeals = deals ?? client.deals ?? [];
+  const tabs = mode === "client" ? CLIENT_TABS : ADMIN_TABS;
 
   return (
     <aside className="clients-panel">
       <h2 className="clients-panel__title">{client.name}</h2>
 
-      <p className="clients-panel__meta">Industry: {client.industry}</p>
+      <p className="clients-panel__meta">
+        Industry: {client.industry}
+      </p>
 
       <nav className="clients-panel__tabs">
-        {TABS.map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab}
             type="button"
@@ -97,7 +118,9 @@ export default function ClientDetailPanel({
       {error && <p className="dashboard-error">{error}</p>}
 
       {isLoading && (
-        <p className="clients-panel__hint">Loading client data…</p>
+        <p className="clients-panel__hint">
+          Loading client data…
+        </p>
       )}
 
       {activeTab === "Overview" ? (
@@ -108,13 +131,15 @@ export default function ClientDetailPanel({
         />
       ) : null}
 
-      {activeTab === "Deals" ? <ClientDealsTab deals={resolvedDeals} /> : null}
+      {activeTab === "Deals" ? (
+        <ClientDealsTab deals={resolvedDeals} />
+      ) : null}
 
       {activeTab === "Financials" ? (
         <ClientFinancialsTab financials={financials} />
       ) : null}
 
-      {activeTab === "Forecast" ? (
+      {activeTab === "Forecast" && mode === "admin" ? (
         <ClientForecastTab
           clientId={client.id}
           financials={financials}
@@ -128,12 +153,16 @@ export default function ClientDetailPanel({
           onBestGrowthRateChange={onBestGrowthRateChange}
           onWorstGrowthRateChange={onWorstGrowthRateChange}
           isLoading={isLoading}
-          forecastApi={mode === "client" ? "me" : "admin"}
+          forecastApi="admin"
         />
       ) : null}
 
       {activeTab === "Documents" ? (
-        <ClientDocumentsTab clientId={client.id} />
+        mode === "admin" ? (
+          <ClientDocumentsTab clientId={client.id} />
+        ) : (
+          <ClientDocumentsTab />
+        )
       ) : null}
     </aside>
   );

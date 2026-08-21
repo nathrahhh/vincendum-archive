@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
 import {
   fetchClientDocuments,
+  fetchMyClientDocuments,
   getClientDocument,
+  getMyClientDocument,
 } from "../../services/clientService";
 import type { DocumentRecord } from "../../types";
 
 type ClientDocumentsTabProps = {
-  clientId: number;
+  /**
+   * Admin POV only. When omitted, the authenticated-client
+   * ``/client/me/documents`` endpoints are used.
+   */
+  clientId?: number;
 };
 
 function formatDateTime(value: string | undefined): string {
@@ -43,7 +49,10 @@ export default function ClientDocumentsTab({ clientId }: ClientDocumentsTabProps
       setDocuments([]);
 
       try {
-        const data = await fetchClientDocuments(clientId);
+        const data =
+          clientId == null
+            ? await fetchMyClientDocuments()
+            : await fetchClientDocuments(clientId);
         if (!cancelled) {
           setDocuments(data);
         }
@@ -72,7 +81,10 @@ export default function ClientDocumentsTab({ clientId }: ClientDocumentsTabProps
     setDownloadingId(documentId);
 
     try {
-      const response = await getClientDocument(clientId, documentId);
+      const response =
+        clientId == null
+          ? await getMyClientDocument(documentId)
+          : await getClientDocument(clientId, documentId);
       if (!response.download_url) {
         throw new Error("No download URL was returned for this document");
       }

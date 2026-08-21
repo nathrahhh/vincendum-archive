@@ -104,6 +104,28 @@ export async function getClientDocument(
   }
 }
 
+/** GET /client/me/documents */
+export async function fetchMyClientDocuments(): Promise<DocumentRecord[]> {
+  try {
+    return await request<DocumentRecord[]>("/client/me/documents");
+  } catch (error) {
+    throw toServiceError(error, "Failed to load your documents");
+  }
+}
+
+/** GET /client/me/documents/{document_id} */
+export async function getMyClientDocument(
+  documentId: number,
+): Promise<ClientDocumentDownloadResponse> {
+  try {
+    return await request<ClientDocumentDownloadResponse>(
+      `/client/me/documents/${documentId}`,
+    );
+  } catch (error) {
+    throw toServiceError(error, "Failed to load your document");
+  }
+}
+
 export async function getClientForecast(
   clientId: number,
   revenueGrowthRate: number,
