@@ -14,8 +14,10 @@ from sqlalchemy.orm import Session
 
 from app.models.client import ClientORM
 from app.models.client_application import ClientApplicationORM
-from app.models.document import DocumentORM
 from app.models.schemas import ClientApplicationCreate
+from app.services.documents.document_service import (
+    assign_application_documents_to_client,
+)
 
 
 def _get_application_or_404(
@@ -117,15 +119,12 @@ def accept_client_application(
 
     application.status = "approved"
 
-    documents = db.execute(
-        select(DocumentORM).where(
-            DocumentORM.application_id == application.id,
-            DocumentORM.lender_id == lender_id,
-        )
-    ).scalars().all()
-    for document in documents:
-        document.application_id = None
-        document.client_id = client.id
+    assign_application_documents_to_client(
+        db,
+        lender_id=lender_id,
+        application_id=application.id,
+        client_id=client.id,
+    )
 
     db.commit()
     db.refresh(client)
