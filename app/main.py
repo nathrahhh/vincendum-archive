@@ -46,6 +46,7 @@ app.add_middleware(
 app.include_router(portfolio.router)
 app.include_router(deals.router)
 app.include_router(documents.router)
+app.include_router(open_banking.router)
 app.include_router(breaches.router)
 app.include_router(audit_logs.router)
 app.include_router(forecast.router)
