@@ -1,4 +1,6 @@
 from app.models.audit_log import AuditLogORM
+from app.models.bank_account import BankAccountORM
+from app.models.bank_connection import BankConnectionORM
 from app.models.breach import BreachORM
 from app.models.client import ClientORM
 from app.models.client_application import ClientApplicationORM

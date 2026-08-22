@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 
 if TYPE_CHECKING:
+    from app.models.bank_connection import BankConnectionORM
     from app.models.client_invitation import ClientInvitationORM
     from app.models.document import DocumentORM
     from app.models.lender import LenderORM
@@ -61,5 +62,8 @@ class ClientORM(Base):
         back_populates="client",
     )
     documents: Mapped[list[DocumentORM]] = relationship(
+        back_populates="client",
+    )
+    bank_connections: Mapped[list[BankConnectionORM]] = relationship(
         back_populates="client",
     )

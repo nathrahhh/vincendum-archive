@@ -12,6 +12,7 @@ from app.api.routes import (
     documents,
     forecast,
     lenders,
+    open_banking,
     parsing,
     portfolio,
     users,
