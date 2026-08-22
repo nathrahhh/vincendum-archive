@@ -7,6 +7,7 @@ from app.models.deal import DealORM
 from app.models.position import PositionORM
 from app.models.schemas import DealRecord, DealRequest
 from app.services.audit_service import record_audit_event
+from app.services.repayment_service import generate_and_store_schedule
 
 
 def _get_deal_or_404(db: Session, deal_id: int) -> DealORM:
@@ -69,10 +70,14 @@ def approve_deal(
     if deal.status != "PENDING":
         raise HTTPException(status_code=400, detail=f"Deal {deal_id} is not pending")
 
+    # Validate terms and stage repayments in this transaction (no commit yet).
+    # Failures raise HTTPException before status/position changes.
+    generate_and_store_schedule(db, deal.id, commit=False)
+
     industry = _client_industry(db, deal.client_id)
-    deal.status = "APPROVED"
     position = PositionORM(name=deal.name, value=deal.value, industry=industry)
     db.add(position)
+    deal.status = "APPROVED"
     record_audit_event(
         db,
         lender_id=lender_id,

@@ -41,6 +41,7 @@ def init_db() -> None:
     from app.models.document import DocumentORM  # noqa: F401
     from app.models.lender import LenderORM  # noqa: F401
     from app.models.position import PositionORM  # noqa: F401
+    from app.models.repayment import RepaymentORM  # noqa: F401
     from app.models.user import UserORM  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
