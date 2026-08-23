@@ -566,10 +566,11 @@ class TrueLayerClient:
             if isinstance(payload, Mapping) and payload.get("title"):
                 title = _redact_text(str(payload["title"]))
             logger.warning(
-                "TrueLayer API error status=%s trace_id=%s title=%s",
+                "TrueLayer API error status=%s trace_id=%s title=%s detail=%s",
                 response.status_code,
                 trace_id,
                 title,
+                detail,
             )
             raise TrueLayerAPIError(
                 detail,

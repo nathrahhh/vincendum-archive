@@ -34,6 +34,7 @@ def init_db() -> None:
     from app.models.audit_log import AuditLogORM  # noqa: F401
     from app.models.bank_account import BankAccountORM  # noqa: F401
     from app.models.bank_connection import BankConnectionORM  # noqa: F401
+    from app.models.bank_transaction import BankTransactionORM  # noqa: F401
     from app.models.breach import BreachORM  # noqa: F401
     from app.models.client import ClientORM  # noqa: F401
     from app.models.client_application import ClientApplicationORM  # noqa: F401

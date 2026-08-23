@@ -13,12 +13,10 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: always
 
-
   redis:
     image: redis:7-alpine
     container_name: credit-risk-redis
     restart: always
-
 
   backend:
     build:
@@ -35,31 +33,46 @@ services:
       DATABASE_URL: postgresql://postgres:Re:Dialed@host.docker.internal:5432/credit_risk_engine
       REDIS_URL: redis://redis:6379
 
+      # Auth0
       AUTH0_DOMAIN: ${AUTH0_DOMAIN}
       AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
       AUTH0_ISSUER: ${AUTH0_ISSUER}
 
+      # AWS S3
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_REGION: ${AWS_REGION}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET}
 
+      # TrueLayer / Open Banking
+      TRUELAYER_ENVIRONMENT: ${TRUELAYER_ENVIRONMENT}
+      TRUELAYER_CLIENT_ID: ${TRUELAYER_CLIENT_ID}
+      TRUELAYER_CLIENT_SECRET: ${TRUELAYER_CLIENT_SECRET}
+      TRUELAYER_REDIRECT_URI: ${TRUELAYER_REDIRECT_URI}
+      OPEN_BANKING_FRONTEND_CALLBACK_URL: ${OPEN_BANKING_FRONTEND_CALLBACK_URL}
+
     depends_on:
       - postgres
       - redis
+
     ports:
       - "8000:8000"
+
     restart: always
 
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.dev.frontend
+
     container_name: credit-risk-frontend
+
     depends_on:
       - backend
+
     ports:
       - "5173:4173"
+
     restart: always
 
 

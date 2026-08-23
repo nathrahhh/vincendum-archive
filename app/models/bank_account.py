@@ -10,13 +10,14 @@ from app.db import Base
 
 if TYPE_CHECKING:
     from app.models.bank_connection import BankConnectionORM
+    from app.models.bank_transaction import BankTransactionORM
 
 
 class BankAccountORM(Base):
     """A bank account linked to a client's TrueLayer connection.
 
     Stores only the minimum account metadata needed by Vincendum.
-    Does not store credentials, tokens, account numbers, or transactions.
+    Does not store credentials, tokens, or account numbers.
     """
 
     __tablename__ = "bank_accounts"
@@ -67,4 +68,7 @@ class BankAccountORM(Base):
 
     bank_connection: Mapped[BankConnectionORM] = relationship(
         back_populates="bank_accounts",
+    )
+    bank_transactions: Mapped[list[BankTransactionORM]] = relationship(
+        back_populates="bank_account",
     )

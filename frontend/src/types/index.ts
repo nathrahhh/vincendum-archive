@@ -30,3 +30,8 @@ export type { HealthResponse } from "./health";
 export type { Breach, BreachRecord, BreachesByIndustry, RiskEvaluation } from "./risk";
 export type { CurrentUser, Lender, LenderOnboardRequest } from "./auth";
 export type { FinancialStatementExtraction } from "./parsing";
+export type {
+  BankAccount,
+  BankTransaction,
+  OpenBankingConnectionStart,
+} from "./openBanking";

@@ -7,6 +7,11 @@ const allLinks = [
   { to: "/client", label: "My Client", roles: ["client"] as const },
   { to: "/deal", label: "Deal", roles: ["client"] as const },
   { to: "/client-financials", label: "Client Financials", roles: ["client"] as const },
+  {
+    to: "/client/bank-transactions",
+    label: "Bank Transactions",
+    roles: ["client"] as const,
+  },
   { to: "/evaluations", label: "Evaluations", roles: ["admin"] as const },
   {
     to: "/financial-evaluations",
@@ -42,6 +47,7 @@ export default function Sidebar() {
           <NavLink
             key={to}
             to={to}
+            end={to === "/client"}
             className={({ isActive }) =>
               isActive
                 ? "app-sidebar__link app-sidebar__link--active"

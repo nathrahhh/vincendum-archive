@@ -792,3 +792,42 @@ a {
   color: #b91c1c;
   border-color: #fecaca;
 }
+
+.bank-transactions-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bank-tx__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.bank-tx__header .dashboard-panel__subtitle {
+  margin-bottom: 0;
+}
+
+.bank-tx__account-row {
+  cursor: pointer;
+}
+
+.bank-tx__account-row--active {
+  background: #f8fafc;
+}
+
+.bank-tx__transactions {
+  margin-top: 0;
+}
+
+.bank-tx__amount--credit {
+  color: #047857;
+}
+
+.bank-tx__amount--debit {
+  color: #b91c1c;
+}

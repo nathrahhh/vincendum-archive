@@ -156,6 +156,10 @@ def _env_redirect(monkeypatch: pytest.MonkeyPatch) -> None:
         "TRUELAYER_REDIRECT_URI",
         "https://example.com/open-banking/callback",
     )
+    monkeypatch.setenv(
+        "OPEN_BANKING_FRONTEND_CALLBACK_URL",
+        "https://app.example.com/open-banking/complete",
+    )
 
 
 def test_authenticated_client_can_start_connection(seeded_db: Session) -> None:
@@ -183,7 +187,10 @@ def test_authenticated_client_can_start_connection(seeded_db: Session) -> None:
     kwargs = mock_service.start_connection.call_args.kwargs
     assert kwargs["user_name"] == "Client Two"
     assert kwargs["user_email"] == "client@example.com"
-    assert kwargs["return_uri"] == "https://example.com/open-banking/callback"
+    assert kwargs["return_uri"].startswith(
+        "https://example.com/open-banking/callback?"
+    )
+    assert "state=" in kwargs["return_uri"]
 
     row = seeded_db.execute(
         select(BankConnectionORM).where(
@@ -193,6 +200,8 @@ def test_authenticated_client_can_start_connection(seeded_db: Session) -> None:
     assert row.client_id == 2
     assert row.status == "authorization_required"
     assert row.id == body["bank_connection_id"]
+    assert row.callback_state is not None
+    assert row.callback_state in kwargs["return_uri"]
 
 
 def test_unauthenticated_returns_401(seeded_db: Session) -> None:

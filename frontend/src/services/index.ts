@@ -6,3 +6,8 @@ export { extractFinancialStatement } from "./parsingService";
 export { checkHealth } from "./healthService";
 export { getCurrentUser } from "./authService";
 export { onboardLender, fetchMyLender, fetchPublicLender } from "./lenderService";
+export {
+  getOpenBankingAccounts,
+  getOpenBankingTransactions,
+  startOpenBankingConnect,
+} from "./openBankingService";

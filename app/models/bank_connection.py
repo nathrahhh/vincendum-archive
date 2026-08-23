@@ -38,6 +38,16 @@ class BankConnectionORM(Base):
         index=True,
     )
 
+    # Unguessable correlator placed on our return_uri so the public callback
+    # can locate this row without trusting a browser-supplied client_id.
+    # TrueLayer Data V3 does not document return_uri query parameters.
+    callback_state: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+        unique=True,
+        index=True,
+    )
+
     status: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
