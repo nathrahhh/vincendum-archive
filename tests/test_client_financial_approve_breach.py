@@ -15,6 +15,7 @@ from app.models.client import ClientORM
 from app.models.client_financial import ClientFinancialORM
 from app.models.deal import DealORM
 from app.models.lender import LenderORM
+from app.models.repayment import RepaymentORM
 from app.services.client_financial_service import approve_client_financial
 
 
@@ -40,6 +41,7 @@ def db_session() -> Generator[Session, None, None]:
             ClientORM.__table__,
             UserORM.__table__,
             DealORM.__table__,
+            RepaymentORM.__table__,
             ClientFinancialORM.__table__,
             BreachORM.__table__,
             AuditLogORM.__table__,
@@ -62,6 +64,7 @@ def db_session() -> Generator[Session, None, None]:
                 AuditLogORM.__table__,
                 BreachORM.__table__,
                 ClientFinancialORM.__table__,
+                RepaymentORM.__table__,
                 DealORM.__table__,
                 UserORM.__table__,
                 ClientORM.__table__,
@@ -114,6 +117,16 @@ def _seed(db: Session) -> None:
                 cash_balance=0.0,
                 status="PENDING",
             ),
+            # May 2027 contractual debt service for the May financial (DSCR = 0.5).
+            RepaymentORM(
+                id=1,
+                deal_id=10,
+                due_date=date(2027, 5, 15),
+                principal_due=800.0,
+                interest_due=200.0,
+                total_due=1_000.0,
+                status="SCHEDULED",
+            ),
         ]
     )
     db.commit()
@@ -140,10 +153,13 @@ def test_approving_breaching_financial_uses_that_financial_not_newer_approved(
     assert breach.status == "OPEN"
     assert breach.lender_id == 1
     assert breach.client_id == 2
-    assert breach.rule == "financial_gross_profit_ratio"
+    assert breach.rule == "financial_dscr"
     assert breach.threshold == 1.2
-    assert breach.actual_value == pytest.approx(500.0 / (10_000_000 * 0.01))
+    assert breach.actual_value == pytest.approx(0.5)
     assert "Gross profit: 500.0" in breach.detail
+    assert "Scheduled debt service: 1000.0" in breach.detail
+    assert "DSCR: 0.5" in breach.detail
+    assert "Threshold: 1.2" in breach.detail
 
 
 def test_approving_passing_financial_does_not_create_breach(db_session: Session):
@@ -159,7 +175,19 @@ def test_approving_passing_financial_does_not_create_breach(db_session: Session)
         cash_balance=0.0,
         status="PENDING",
     )
+    # June 2027 debt service: 120_000 / 100_000 = DSCR 1.2 (exactly at threshold).
     db_session.add(passing)
+    db_session.add(
+        RepaymentORM(
+            id=2,
+            deal_id=10,
+            due_date=date(2027, 6, 15),
+            principal_due=80_000.0,
+            interest_due=20_000.0,
+            total_due=100_000.0,
+            status="SCHEDULED",
+        )
+    )
     db_session.commit()
 
     approve_client_financial(

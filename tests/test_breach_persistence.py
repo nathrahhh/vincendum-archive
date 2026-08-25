@@ -2,8 +2,8 @@ from unittest.mock import MagicMock
 
 from app.services.breaches.breach_persistence import persist_financial_breach_result
 from app.services.breaches.financial_breach_rule import (
-    FINANCIAL_GROSS_PROFIT_RATIO,
-    FINANCIAL_GROSS_PROFIT_RATIO_THRESHOLD,
+    FINANCIAL_DSCR,
+    FINANCIAL_DSCR_THRESHOLD,
     FinancialBreachRuleResult,
 )
 
@@ -18,8 +18,8 @@ def _result(
     return FinancialBreachRuleResult(
         lender_id=10,
         client_id=20,
-        rule=FINANCIAL_GROSS_PROFIT_RATIO,
-        threshold=FINANCIAL_GROSS_PROFIT_RATIO_THRESHOLD,
+        rule=FINANCIAL_DSCR,
+        threshold=FINANCIAL_DSCR_THRESHOLD,
         actual_value=actual_value,
         evaluated=evaluated,
         breached=breached,
@@ -33,7 +33,7 @@ def test_unevaluated_result_returns_none_and_creates_no_row():
         evaluated=False,
         breached=False,
         actual_value=None,
-        reason="No approved deals",
+        reason="No scheduled debt service",
     )
 
     persisted = persist_financial_breach_result(
@@ -70,12 +70,16 @@ def test_evaluated_passing_result_returns_none_and_creates_no_row():
 
 def test_evaluated_breached_result_creates_breach_orm():
     db = MagicMock()
-    detail = "Gross profit ratio below threshold"
+    # gross profit 100_000 / scheduled debt service 100_000 = DSCR 1.0
+    detail = (
+        "Gross profit: 100000, Scheduled debt service: 100000, "
+        "DSCR: 1.0, Threshold: 1.2."
+    )
     result = _result(
         evaluated=True,
         breached=True,
         actual_value=1.0,
-        reason="Financial gross profit ratio breached",
+        reason="Financial DSCR breached",
     )
 
     persisted = persist_financial_breach_result(db, result, detail=detail)
@@ -87,11 +91,11 @@ def test_evaluated_breached_result_creates_breach_orm():
 
     assert persisted.lender_id == 10
     assert persisted.client_id == 20
-    assert persisted.rule == FINANCIAL_GROSS_PROFIT_RATIO
-    assert persisted.threshold == FINANCIAL_GROSS_PROFIT_RATIO_THRESHOLD
+    assert persisted.rule == FINANCIAL_DSCR
+    assert persisted.threshold == FINANCIAL_DSCR_THRESHOLD
     assert persisted.actual_value == 1.0
     assert persisted.status == "OPEN"
     assert persisted.detail == detail
-    assert persisted.reason == "Financial gross profit ratio breached"
+    assert persisted.reason == "Financial DSCR breached"
     assert persisted.resolved_by is None
     assert persisted.resolved_at is None

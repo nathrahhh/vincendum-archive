@@ -252,7 +252,6 @@ class TrueLayerClient:
                 access_token=self._cached_token,
                 token_type="Bearer",
                 expires_in=max(0, int(self._token_expires_at - now)),
-                scope="data",
             )
 
         url = f"{self.settings.auth_base_url}/connect/token"
