@@ -167,52 +167,5 @@ Database passwords
 Use .env.example to document required environment variables without including secret values.
 
 
-### But there's one more thing I'd change
 
-Your `.env.example` currently has **duplicate PostgreSQL variables**:
-
-```env
-POSTGRES_USER=credit_user
-POSTGRES_PASSWORD=replace_me
-POSTGRES_DB=credit_risk_db
-
-DATABASE_URL=
-
-...
-
-POSTGRES_USER=
-POSTGRES_PASSWORD=
-POSTGRES_DB=
-
-Don't do that. Keep one set.
-
-And because your Compose file currently has a mismatch between:
-
-POSTGRES_DB=credit_risk_db
-
-and:
-
-DATABASE_URL: .../credit_risk_engine
-
-I'd fix that before anyone else clones the project.
-
-What your friend actually needs
-
-Once you fix those pieces, the onboarding becomes beautifully simple:
-
-GitHub access
-      ↓
-git clone
-      ↓
-copy .env.example → .env
-      ↓
-fill in credentials
-      ↓
-docker compose -f docker-compose.dev.yml up --build
-      ↓
-Alembic creates/updates DB
-      ↓
-backend :8000
-frontend :5173
-Postgres + Redis running in Docker
 
