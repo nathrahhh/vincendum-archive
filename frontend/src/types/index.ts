@@ -9,11 +9,14 @@ export type {
   ClientFinancialCreateResponse,
   ClientInvitation,
   ForecastAssumptions,
+  ForecastBacktestResponse,
+  ForecastBacktestResult,
   ForecastHistoricalRecord,
   ForecastModel,
   ForecastRecord,
   ProphetForecastPoint,
   ProphetForecastResponse,
+  StatisticalForecastModelName,
 } from "./clients";
 export type {
   ApplicationDocumentUploadResponse,

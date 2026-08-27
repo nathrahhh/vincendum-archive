@@ -3,11 +3,13 @@ import {
   fetchClientDeals,
   fetchClientFinancials,
   fetchClientForecast,
+  fetchClientForecastBacktest,
   fetchClients,
   fetchMyClient,
   fetchMyClientDeals,
   fetchMyClientFinancials,
   fetchMyClientForecast,
+  fetchMyClientForecastBacktest,
   postClientApplication,
   postClientFinancial,
   postClientInvite,
@@ -32,6 +34,7 @@ import type {
   ClientForecastScenarios,
   ClientInvitation,
   DocumentRecord,
+  ForecastBacktestResponse,
   ForecastModel,
   ProphetForecastResponse,
 } from "../types";
@@ -135,6 +138,16 @@ export async function getClientForecast(
     return await fetchClientForecast(clientId, revenueGrowthRate, model);
   } catch (error) {
     throw toServiceError(error, "Failed to load client forecast");
+  }
+}
+
+export async function getClientForecastBacktest(
+  clientId: number,
+): Promise<ForecastBacktestResponse> {
+  try {
+    return await fetchClientForecastBacktest(clientId);
+  } catch (error) {
+    throw toServiceError(error, "Failed to load forecast backtest");
   }
 }
 
@@ -248,6 +261,14 @@ export async function getMyClientForecast(
     return await fetchMyClientForecast(revenueGrowthRate, model);
   } catch (error) {
     throw toServiceError(error, "Failed to load your forecast");
+  }
+}
+
+export async function getMyClientForecastBacktest(): Promise<ForecastBacktestResponse> {
+  try {
+    return await fetchMyClientForecastBacktest();
+  } catch (error) {
+    throw toServiceError(error, "Failed to load your forecast backtest");
   }
 }
 

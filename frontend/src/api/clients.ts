@@ -8,6 +8,7 @@ import type {
   ClientForecast,
   ClientInvitation,
   ForecastModel,
+  ForecastBacktestResponse,
   ProphetForecastResponse,
 } from "../types";
 
@@ -39,6 +40,15 @@ export function fetchClientForecast(
 
   return request<ClientForecast | ProphetForecastResponse>(
     `/clients/${clientId}/forecast?${params.toString()}`,
+  );
+}
+
+/** GET /clients/{client_id}/forecast/backtest */
+export function fetchClientForecastBacktest(
+  clientId: number,
+): Promise<ForecastBacktestResponse> {
+  return request<ForecastBacktestResponse>(
+    `/clients/${clientId}/forecast/backtest`,
   );
 }
 
@@ -113,6 +123,11 @@ export function fetchMyClientForecast(
   return request<ClientForecast | ProphetForecastResponse>(
     `/client/me/forecast?${params.toString()}`,
   );
+}
+
+/** GET /client/me/forecast/backtest */
+export function fetchMyClientForecastBacktest(): Promise<ForecastBacktestResponse> {
+  return request<ForecastBacktestResponse>("/client/me/forecast/backtest");
 }
 
 export function fetchMyClientDeals(): Promise<

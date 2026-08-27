@@ -92,6 +92,28 @@ export type ProphetForecastResponse = {
 
 export type ForecastModel = "deterministic" | "prophet";
 
+export type StatisticalForecastModelName =
+  | "naive"
+  | "seasonal_naive"
+  | "ets"
+  | "holt_winters"
+  | "prophet";
+
+export type ForecastBacktestResult = {
+  model: StatisticalForecastModelName | string;
+  mae: number | null;
+  available: boolean;
+  unavailable_reason: string | null;
+};
+
+export type ForecastBacktestResponse = {
+  client_id: number;
+  metric: "mae";
+  holdout_months: number;
+  best_model: StatisticalForecastModelName | null;
+  results: ForecastBacktestResult[];
+};
+
 export type ClientForecastScenarios = {
   base: ClientForecast;
   best: ClientForecast;

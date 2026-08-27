@@ -1,27 +1,26 @@
-from typing import Any
-from datetime import date
+"""Naive statistical forecast: every future month equals latest revenue."""
 
-import pandas as pd
-from prophet import Prophet
+from __future__ import annotations
+
+from datetime import date
+from typing import Any
+
 from sqlalchemy.orm import Session
 
 from app.services.cache.redis_client import DEFAULT_TTL_SECONDS, cache_get_json, cache_set_json
-from app.services.forecasting.cache_keys import prophet_forecast_cache_key
+from app.services.forecasting.cache_keys import naive_forecast_cache_key
 from app.services.forecasting.deterministic import (
     FORECAST_MONTHS,
+    _add_months,
     _fetch_client_financials,
     _format_month,
     _parse_month,
 )
 
-# Prophet needs at least two chronological points to fit a usable series.
-MIN_OBSERVATIONS = 2
-
 UNAVAILABLE_INSUFFICIENT_HISTORY = "insufficient_history"
-UNAVAILABLE_MODEL_FIT_FAILED = "model_fit_failed"
 
 
-def forecast_prophet_from_history(
+def forecast_naive_from_history(
     history: list[tuple[date, float]],
     *,
     horizon: int,
@@ -30,60 +29,31 @@ def forecast_prophet_from_history(
     Forecast from chronological (month, revenue) observations.
 
     Returns (forecast_points, unavailable_reason).
-    Does not change Prophet configuration; only adapts output to revenue-only points.
     """
-    if len(history) < MIN_OBSERVATIONS:
+    if not history:
         return [], UNAVAILABLE_INSUFFICIENT_HISTORY
 
-    history_df = pd.DataFrame(
-        {
-            "ds": pd.to_datetime([month for month, _ in history]),
-            "y": [revenue for _, revenue in history],
-        }
-    )
-
-    try:
-        model = Prophet(
-            yearly_seasonality=True,
-            weekly_seasonality=False,
-            daily_seasonality=False,
-        )
-        model.fit(history_df)
-        future = model.make_future_dataframe(
-            periods=horizon,
-            freq="MS",
-        )
-        prediction = model.predict(future)
-    except Exception:
-        return [], UNAVAILABLE_MODEL_FIT_FAILED
-
-    last_historical_month = history_df["ds"].max()
-    future_rows = prediction[prediction["ds"] > last_historical_month]
-
+    latest_month, latest_revenue = history[-1]
     forecast = [
         {
-            "month": _format_month(row.ds),
-            "revenue": round(float(row.yhat), 2),
+            "month": _format_month(_add_months(latest_month, offset)),
+            "revenue": latest_revenue,
         }
-        for row in future_rows.itertuples(index=False)
+        for offset in range(1, horizon + 1)
     ]
-
-    if len(forecast) != horizon:
-        return [], UNAVAILABLE_MODEL_FIT_FAILED
-
     return forecast, None
 
 
-def build_prophet_forecast(
+def build_naive_forecast(
     db: Session,
     client_id: int,
 ) -> dict[str, Any]:
-    cache_key = prophet_forecast_cache_key(client_id)
+    cache_key = naive_forecast_cache_key(client_id)
     cached = cache_get_json(cache_key)
     if cached is not None:
         return cached
 
-    result = _compute_prophet_forecast(db=db, client_id=client_id)
+    result = _compute_naive_forecast(db=db, client_id=client_id)
 
     # Do not cache empty / missing-history responses.
     forecast = result.get("forecast")
@@ -93,7 +63,7 @@ def build_prophet_forecast(
     return result
 
 
-def _compute_prophet_forecast(
+def _compute_naive_forecast(
     db: Session,
     client_id: int,
 ) -> dict[str, Any]:
@@ -102,12 +72,13 @@ def _compute_prophet_forecast(
     if not financial_history:
         return {
             "client_id": client_id,
-            "model": "prophet",
+            "model": "naive",
             "historical": [],
             "forecast": [],
             "unavailable_reason": None,
         }
 
+    # History is ordered ASC by month from _fetch_client_financials.
     parsed: list[tuple[date, float]] = [
         (_parse_month(row["month"]), float(row["revenue"]))
         for row in financial_history
@@ -120,14 +91,14 @@ def _compute_prophet_forecast(
         for month, revenue in parsed
     ]
 
-    forecast, reason = forecast_prophet_from_history(
+    forecast, reason = forecast_naive_from_history(
         parsed,
         horizon=FORECAST_MONTHS,
     )
 
     return {
         "client_id": client_id,
-        "model": "prophet",
+        "model": "naive",
         "historical": historical,
         "forecast": forecast,
         "unavailable_reason": reason,

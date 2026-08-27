@@ -205,18 +205,40 @@ class DeterministicForecastPoint(BaseModel):
     net_cash_flow: float
 
 
-class ProphetForecastPoint(BaseModel):
-    month: str
-    revenue: float
-    lower_bound: float
-    upper_bound: float
+StatisticalForecastModelName = Literal[
+    "naive",
+    "seasonal_naive",
+    "ets",
+    "holt_winters",
+    "prophet",
+]
 
 
-class ProphetForecastResponse(BaseModel):
+class StatisticalForecastResponse(BaseModel):
+    """Shared revenue-only response for all statistical forecasting models."""
+
     client_id: int
-    model: Literal["prophet"]
+    model: StatisticalForecastModelName
     historical: list[ForecastRevenuePoint]
-    forecast: list[ProphetForecastPoint]
+    forecast: list[ForecastRevenuePoint]
+    unavailable_reason: str | None = None
+
+
+class ForecastBacktestModelResult(BaseModel):
+    model: StatisticalForecastModelName
+    mae: float | None = None
+    available: bool
+    unavailable_reason: str | None = None
+
+
+class ForecastBacktestResponse(BaseModel):
+    """Historical MAE comparison across statistical revenue forecasting models."""
+
+    client_id: int
+    metric: Literal["mae"] = "mae"
+    holdout_months: int
+    best_model: StatisticalForecastModelName | None = None
+    results: list[ForecastBacktestModelResult]
 
 
 class DeterministicForecastResponse(BaseModel):
