@@ -31,12 +31,11 @@ import type {
   ClientFinancialRecord,
   ClientFinancials,
   ClientForecast,
-  ClientForecastScenarios,
   ClientInvitation,
   DocumentRecord,
   ForecastBacktestResponse,
   ForecastModel,
-  ProphetForecastResponse,
+  StatisticalForecastResponse,
 } from "../types";
 import { toServiceError } from "./errors";
 
@@ -133,7 +132,7 @@ export async function getClientForecast(
   clientId: number,
   revenueGrowthRate: number,
   model: ForecastModel = "deterministic",
-): Promise<ClientForecast | ProphetForecastResponse> {
+): Promise<ClientForecast | StatisticalForecastResponse> {
   try {
     return await fetchClientForecast(clientId, revenueGrowthRate, model);
   } catch (error) {
@@ -148,28 +147,6 @@ export async function getClientForecastBacktest(
     return await fetchClientForecastBacktest(clientId);
   } catch (error) {
     throw toServiceError(error, "Failed to load forecast backtest");
-  }
-}
-
-export async function getClientForecastScenarios(
-  clientId: number,
-  baseGrowthRate: number,
-  bestGrowthRate: number,
-  worstGrowthRate: number,
-): Promise<ClientForecastScenarios> {
-  try {
-    const [base, best, worst] = await Promise.all([
-      fetchClientForecast(clientId, baseGrowthRate, "deterministic"),
-      fetchClientForecast(clientId, bestGrowthRate, "deterministic"),
-      fetchClientForecast(clientId, worstGrowthRate, "deterministic"),
-    ]);
-    return {
-      base: base as ClientForecast,
-      best: best as ClientForecast,
-      worst: worst as ClientForecast,
-    };
-  } catch (error) {
-    throw toServiceError(error, "Failed to load forecast scenarios");
   }
 }
 
@@ -256,7 +233,7 @@ export async function getMyClientFinancials(): Promise<ClientFinancials> {
 export async function getMyClientForecast(
   revenueGrowthRate: number,
   model: ForecastModel = "deterministic",
-): Promise<ClientForecast | ProphetForecastResponse> {
+): Promise<ClientForecast | StatisticalForecastResponse> {
   try {
     return await fetchMyClientForecast(revenueGrowthRate, model);
   } catch (error) {
@@ -269,27 +246,6 @@ export async function getMyClientForecastBacktest(): Promise<ForecastBacktestRes
     return await fetchMyClientForecastBacktest();
   } catch (error) {
     throw toServiceError(error, "Failed to load your forecast backtest");
-  }
-}
-
-export async function getMyClientForecastScenarios(
-  baseGrowthRate: number,
-  bestGrowthRate: number,
-  worstGrowthRate: number,
-): Promise<ClientForecastScenarios> {
-  try {
-    const [base, best, worst] = await Promise.all([
-      fetchMyClientForecast(baseGrowthRate, "deterministic"),
-      fetchMyClientForecast(bestGrowthRate, "deterministic"),
-      fetchMyClientForecast(worstGrowthRate, "deterministic"),
-    ]);
-    return {
-      base: base as ClientForecast,
-      best: best as ClientForecast,
-      worst: worst as ClientForecast,
-    };
-  } catch (error) {
-    throw toServiceError(error, "Failed to load your forecast scenarios");
   }
 }
 

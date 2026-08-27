@@ -4,7 +4,6 @@ export type {
   ClientFinancialRecord,
   ClientFinancials,
   ClientForecast,
-  ClientForecastScenarios,
   ClientFinancialCreate,
   ClientFinancialCreateResponse,
   ClientInvitation,
@@ -14,9 +13,11 @@ export type {
   ForecastHistoricalRecord,
   ForecastModel,
   ForecastRecord,
+  ForecastRevenuePoint,
   ProphetForecastPoint,
   ProphetForecastResponse,
   StatisticalForecastModelName,
+  StatisticalForecastResponse,
 } from "./clients";
 export type {
   ApplicationDocumentUploadResponse,

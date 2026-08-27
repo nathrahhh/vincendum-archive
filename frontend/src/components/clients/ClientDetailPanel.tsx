@@ -3,7 +3,6 @@ import type {
   Client,
   ClientDeal,
   ClientFinancials,
-  ClientForecast,
 } from "../../types";
 import ClientDealsTab from "./ClientDealsTab";
 import ClientDocumentsTab from "./ClientDocumentsTab";
@@ -14,15 +13,6 @@ import ClientOverviewTab from "./ClientOverviewTab";
 type ClientDetailPanelProps = {
   client: Client | null;
   financials: ClientFinancials | null;
-  baseForecast: ClientForecast | null;
-  bestForecast: ClientForecast | null;
-  worstForecast: ClientForecast | null;
-  baseGrowthRate: number;
-  bestGrowthRate: number;
-  worstGrowthRate: number;
-  onBaseGrowthRateChange: (value: number) => void;
-  onBestGrowthRateChange: (value: number) => void;
-  onWorstGrowthRateChange: (value: number) => void;
   onClientUpdated: () => Promise<void> | void;
   isLoading: boolean;
   error: string | null;
@@ -57,15 +47,6 @@ const CLIENT_TABS: ClientDetailTab[] = [
 export default function ClientDetailPanel({
   client,
   financials,
-  baseForecast,
-  bestForecast,
-  worstForecast,
-  baseGrowthRate,
-  bestGrowthRate,
-  worstGrowthRate,
-  onBaseGrowthRateChange,
-  onBestGrowthRateChange,
-  onWorstGrowthRateChange,
   onClientUpdated,
   isLoading,
   error,
@@ -142,17 +123,6 @@ export default function ClientDetailPanel({
       {activeTab === "Forecast" && mode === "admin" ? (
         <ClientForecastTab
           clientId={client.id}
-          financials={financials}
-          baseForecast={baseForecast}
-          bestForecast={bestForecast}
-          worstForecast={worstForecast}
-          baseGrowthRate={baseGrowthRate}
-          bestGrowthRate={bestGrowthRate}
-          worstGrowthRate={worstGrowthRate}
-          onBaseGrowthRateChange={onBaseGrowthRateChange}
-          onBestGrowthRateChange={onBestGrowthRateChange}
-          onWorstGrowthRateChange={onWorstGrowthRateChange}
-          isLoading={isLoading}
           forecastApi="admin"
         />
       ) : null}

@@ -8,7 +8,5 @@ export { default as ClientFinancialsTab } from "./ClientFinancialsTab";
 export { default as ClientForecastTab } from "./ClientForecastTab";
 export { default as ClientOverviewTab } from "./ClientOverviewTab";
 export { default as FinancialStatementUpload } from "./FinancialStatementUpload";
-export { default as ProphetForecastChart } from "./ProphetForecastChart";
-export { default as RevenueGrossProfitChart } from "./RevenueGrossProfitChart";
-export { default as RevenueScenarioChart } from "./RevenueScenarioChart";
-
+export { default as ForecastBacktestChart } from "./ForecastBacktestChart";
+export { default as RecommendedForecastChart } from "./RecommendedForecastChart";

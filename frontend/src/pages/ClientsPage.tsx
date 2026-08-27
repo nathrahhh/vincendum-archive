@@ -4,14 +4,12 @@ import { fetchClientDeals } from "../api/deals";
 import {
   getClient,
   getClientFinancials,
-  getClientForecastScenarios,
   getClients,
 } from "../services/clientService";
 import type {
   Client,
   ClientDeal,
   ClientFinancials,
-  ClientForecast,
 } from "../types";
 
 function formatCurrency(value: number): string {
@@ -27,13 +25,6 @@ export default function ClientsPage() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [financials, setFinancials] = useState<ClientFinancials | null>(null);
   const [deals, setDeals] = useState<ClientDeal[]>([]);
-  const [baseForecast, setBaseForecast] = useState<ClientForecast | null>(null);
-  const [bestForecast, setBestForecast] = useState<ClientForecast | null>(null);
-  const [worstForecast, setWorstForecast] = useState<ClientForecast | null>(null);
-
-  const [baseGrowthRate, setBaseGrowthRate] = useState(0.05);
-  const [bestGrowthRate, setBestGrowthRate] = useState(0.08);
-  const [worstGrowthRate, setWorstGrowthRate] = useState(0.02);
 
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
@@ -63,9 +54,6 @@ export default function ClientsPage() {
     setSelectedClient(client);
     setFinancials(null);
     setDeals([]);
-    setBaseForecast(null);
-    setBestForecast(null);
-    setWorstForecast(null);
     setError(null);
     setIsLoadingDetail(true);
 
@@ -92,56 +80,10 @@ export default function ClientsPage() {
           ? err.message
           : "Failed to load client data"
       );
+    } finally {
       setIsLoadingDetail(false);
     }
   }
-
-  useEffect(() => {
-    if (!selectedClient) {
-      return;
-    }
-
-    const clientId = selectedClient.id;
-    let cancelled = false;
-
-    async function loadScenarios() {
-      setIsLoadingDetail(true);
-      setError(null);
-      try {
-        const scenarios = await getClientForecastScenarios(
-          clientId,
-          baseGrowthRate,
-          bestGrowthRate,
-          worstGrowthRate,
-        );
-        if (!cancelled) {
-          setBaseForecast(scenarios.base);
-          setBestForecast(scenarios.best);
-          setWorstForecast(scenarios.worst);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Failed to load forecast scenarios"
-          );
-          setBaseForecast(null);
-          setBestForecast(null);
-          setWorstForecast(null);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoadingDetail(false);
-        }
-      }
-    }
-
-    loadScenarios();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedClient?.id, baseGrowthRate, bestGrowthRate, worstGrowthRate]);
 
   async function handleClientUpdated() {
     if (!selectedClient) {
@@ -236,15 +178,6 @@ export default function ClientsPage() {
         client={selectedClient}
         financials={financials}
         deals={deals}
-        baseForecast={baseForecast}
-        bestForecast={bestForecast}
-        worstForecast={worstForecast}
-        baseGrowthRate={baseGrowthRate}
-        bestGrowthRate={bestGrowthRate}
-        worstGrowthRate={worstGrowthRate}
-        onBaseGrowthRateChange={setBaseGrowthRate}
-        onBestGrowthRateChange={setBestGrowthRate}
-        onWorstGrowthRateChange={setWorstGrowthRate}
         onClientUpdated={handleClientUpdated}
         isLoading={isLoadingDetail}
         error={error}

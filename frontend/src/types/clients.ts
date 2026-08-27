@@ -70,11 +70,23 @@ export type ClientForecast = {
   forecast: ForecastRecord[];
 };
 
+export type StatisticalForecastModelName =
+  | "naive"
+  | "seasonal_naive"
+  | "ets"
+  | "holt_winters"
+  | "prophet";
+
+export type ForecastRevenuePoint = {
+  month: string;
+  revenue: number;
+};
+
 export type ProphetForecastPoint = {
   month: string;
   revenue: number;
-  lower_bound: number;
-  upper_bound: number;
+  lower_bound?: number;
+  upper_bound?: number;
 };
 
 export type ProphetHistoricalPoint = {
@@ -82,22 +94,23 @@ export type ProphetHistoricalPoint = {
   revenue: number;
 };
 
-
 export type ProphetForecastResponse = {
   client_id: number;
   model: "prophet";
   historical: ProphetHistoricalPoint[];
   forecast: ProphetForecastPoint[];
+  unavailable_reason?: string | null;
 };
 
-export type ForecastModel = "deterministic" | "prophet";
+export type StatisticalForecastResponse = {
+  client_id: number;
+  model: StatisticalForecastModelName;
+  historical: ForecastRevenuePoint[];
+  forecast: ForecastRevenuePoint[];
+  unavailable_reason: string | null;
+};
 
-export type StatisticalForecastModelName =
-  | "naive"
-  | "seasonal_naive"
-  | "ets"
-  | "holt_winters"
-  | "prophet";
+export type ForecastModel = "deterministic" | StatisticalForecastModelName;
 
 export type ForecastBacktestResult = {
   model: StatisticalForecastModelName | string;
@@ -112,12 +125,6 @@ export type ForecastBacktestResponse = {
   holdout_months: number;
   best_model: StatisticalForecastModelName | null;
   results: ForecastBacktestResult[];
-};
-
-export type ClientForecastScenarios = {
-  base: ClientForecast;
-  best: ClientForecast;
-  worst: ClientForecast;
 };
 
 export type ClientFinancialCreate = {

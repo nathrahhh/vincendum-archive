@@ -9,7 +9,7 @@ import type {
   ClientInvitation,
   ForecastModel,
   ForecastBacktestResponse,
-  ProphetForecastResponse,
+  StatisticalForecastResponse,
 } from "../types";
 
 export function fetchClients(): Promise<Client[]> {
@@ -29,7 +29,7 @@ export function fetchClientForecast(
   clientId: number,
   revenueGrowthRate: number,
   model: ForecastModel = "deterministic",
-): Promise<ClientForecast | ProphetForecastResponse> {
+): Promise<ClientForecast | StatisticalForecastResponse> {
   const params = new URLSearchParams({
     model,
   });
@@ -38,7 +38,7 @@ export function fetchClientForecast(
     params.set("revenue_growth_rate", String(revenueGrowthRate));
   }
 
-  return request<ClientForecast | ProphetForecastResponse>(
+  return request<ClientForecast | StatisticalForecastResponse>(
     `/clients/${clientId}/forecast?${params.toString()}`,
   );
 }
@@ -111,7 +111,7 @@ export function fetchMyClientFinancials(): Promise<ClientFinancials> {
 export function fetchMyClientForecast(
   revenueGrowthRate: number,
   model: ForecastModel = "deterministic",
-): Promise<ClientForecast | ProphetForecastResponse> {
+): Promise<ClientForecast | StatisticalForecastResponse> {
   const params = new URLSearchParams({
     model,
   });
@@ -120,7 +120,7 @@ export function fetchMyClientForecast(
     params.set("revenue_growth_rate", String(revenueGrowthRate));
   }
 
-  return request<ClientForecast | ProphetForecastResponse>(
+  return request<ClientForecast | StatisticalForecastResponse>(
     `/client/me/forecast?${params.toString()}`,
   );
 }

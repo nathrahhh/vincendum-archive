@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import type {
-  ClientFinancials,
-  ClientForecast,
   ForecastBacktestResponse,
-  ForecastModel,
-  ProphetForecastResponse,
+  StatisticalForecastResponse,
 } from "../../types/clients";
 import {
   getClientForecast,
@@ -15,34 +12,13 @@ import {
 import ForecastBacktestChart, {
   formatForecastModelName,
 } from "./ForecastBacktestChart";
-import ProphetForecastChart from "./ProphetForecastChart";
-import RevenueGrossProfitChart from "./RevenueGrossProfitChart";
-import RevenueScenarioChart from "./RevenueScenarioChart";
+import RecommendedForecastChart from "./RecommendedForecastChart";
 
 type ClientForecastTabProps = {
   clientId: number;
-  financials: ClientFinancials | null;
-  baseForecast: ClientForecast | null;
-  bestForecast: ClientForecast | null;
-  worstForecast: ClientForecast | null;
-  baseGrowthRate: number;
-  bestGrowthRate: number;
-  worstGrowthRate: number;
-  onBaseGrowthRateChange: (value: number) => void;
-  onBestGrowthRateChange: (value: number) => void;
-  onWorstGrowthRateChange: (value: number) => void;
-  isLoading: boolean;
   /** admin: /clients/{id}/forecast; me: /client/me/forecast */
   forecastApi?: "admin" | "me";
 };
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 function formatMae(value: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -84,44 +60,34 @@ function buildRecommendationExplanation(
   return `Based on the most recent ${backtest.holdout_months} months of historical holdout testing, ${displayName} produced the lowest mean absolute error (MAE) of ${maeText}, so it performed best among the tested models on this client's historical data. This reflects past holdout performance only and is not a guarantee of future accuracy.`;
 }
 
+function isStatisticalForecast(
+  value: unknown,
+): value is StatisticalForecastResponse {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.model === "string" &&
+    Array.isArray(record.historical) &&
+    Array.isArray(record.forecast) &&
+    !("assumptions" in record)
+  );
+}
+
 export default function ClientForecastTab({
   clientId,
-  financials,
-  baseForecast,
-  bestForecast,
-  worstForecast,
-  baseGrowthRate,
-  bestGrowthRate,
-  worstGrowthRate,
-  onBaseGrowthRateChange,
-  onBestGrowthRateChange,
-  onWorstGrowthRateChange,
-  isLoading,
   forecastApi = "admin",
 }: ClientForecastTabProps) {
-  const [forecastModel, setForecastModel] = useState<ForecastModel>("deterministic");
-  const [draftBaseGrowthRate, setDraftBaseGrowthRate] = useState(baseGrowthRate);
-  const [draftBestGrowthRate, setDraftBestGrowthRate] = useState(bestGrowthRate);
-  const [draftWorstGrowthRate, setDraftWorstGrowthRate] = useState(worstGrowthRate);
   const [forecastBacktest, setForecastBacktest] =
     useState<ForecastBacktestResponse | null>(null);
   const [isLoadingBacktest, setIsLoadingBacktest] = useState(false);
   const [backtestError, setBacktestError] = useState<string | null>(null);
-  const [prophetForecast, setProphetForecast] = useState<ProphetForecastResponse | null>(null);
-  const [isLoadingProphet, setIsLoadingProphet] = useState(false);
-  const [prophetError, setProphetError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setDraftBaseGrowthRate(baseGrowthRate);
-  }, [baseGrowthRate]);
-
-  useEffect(() => {
-    setDraftBestGrowthRate(bestGrowthRate);
-  }, [bestGrowthRate]);
-
-  useEffect(() => {
-    setDraftWorstGrowthRate(worstGrowthRate);
-  }, [worstGrowthRate]);
+  const [selectedForecast, setSelectedForecast] =
+    useState<StatisticalForecastResponse | null>(null);
+  const [isLoadingForecast, setIsLoadingForecast] = useState(false);
+  const [forecastError, setForecastError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -129,6 +95,8 @@ export default function ClientForecastTab({
     async function loadForecastBacktest() {
       setIsLoadingBacktest(true);
       setBacktestError(null);
+      setSelectedForecast(null);
+      setForecastError(null);
       try {
         const response =
           forecastApi === "me"
@@ -140,7 +108,9 @@ export default function ClientForecastTab({
       } catch (err) {
         if (!cancelled) {
           setBacktestError(
-            err instanceof Error ? err.message : "Failed to load forecast backtest",
+            err instanceof Error
+              ? err.message
+              : "Failed to load forecast backtest",
           );
           setForecastBacktest(null);
         }
@@ -158,42 +128,66 @@ export default function ClientForecastTab({
   }, [clientId, forecastApi]);
 
   useEffect(() => {
-    if (forecastModel !== "prophet") {
+    const bestModel = forecastBacktest?.best_model ?? null;
+    if (!bestModel) {
+      setSelectedForecast(null);
+      setForecastError(null);
+      setIsLoadingForecast(false);
       return;
     }
 
     let cancelled = false;
+    const model = bestModel;
 
-    async function loadProphetForecast() {
-      setIsLoadingProphet(true);
-      setProphetError(null);
+    async function loadRecommendedForecast() {
+      setIsLoadingForecast(true);
+      setForecastError(null);
       try {
         const response =
           forecastApi === "me"
-            ? await getMyClientForecast(0, "prophet")
-            : await getClientForecast(clientId, 0, "prophet");
+            ? await getMyClientForecast(0, model)
+            : await getClientForecast(clientId, 0, model);
+
         if (!cancelled) {
-          setProphetForecast(response as ProphetForecastResponse);
+          if (!isStatisticalForecast(response)) {
+            setSelectedForecast(null);
+            setForecastError(
+              `Unexpected forecast response for ${formatForecastModelName(model)}.`,
+            );
+            return;
+          }
+          if (response.unavailable_reason || response.forecast.length === 0) {
+            setSelectedForecast(response);
+            setForecastError(
+              response.unavailable_reason
+                ? `Forecast unavailable: ${formatUnavailableReason(response.unavailable_reason)}`
+                : `No forecast points returned for ${formatForecastModelName(model)}.`,
+            );
+            return;
+          }
+          setSelectedForecast(response);
         }
       } catch (err) {
         if (!cancelled) {
-          setProphetError(
-            err instanceof Error ? err.message : "Failed to load Prophet forecast",
+          setForecastError(
+            err instanceof Error
+              ? err.message
+              : `Failed to load ${formatForecastModelName(model)} forecast`,
           );
-          setProphetForecast(null);
+          setSelectedForecast(null);
         }
       } finally {
         if (!cancelled) {
-          setIsLoadingProphet(false);
+          setIsLoadingForecast(false);
         }
       }
     }
 
-    loadProphetForecast();
+    loadRecommendedForecast();
     return () => {
       cancelled = true;
     };
-  }, [clientId, forecastModel, forecastApi]);
+  }, [clientId, forecastApi, forecastBacktest?.best_model]);
 
   const availableResults =
     forecastBacktest?.results.filter((result) => result.available) ?? [];
@@ -207,10 +201,9 @@ export default function ClientForecastTab({
           result.model === forecastBacktest.best_model && result.available,
       )
     : null;
-
-  if (isLoading && forecastModel === "deterministic") {
-    return null;
-  }
+  const recommendedModelName = forecastBacktest?.best_model
+    ? formatForecastModelName(forecastBacktest.best_model)
+    : null;
 
   return (
     <>
@@ -227,8 +220,7 @@ export default function ClientForecastTab({
             {forecastBacktest.best_model && bestResult ? (
               <>
                 <p className="clients-panel__meta">
-                  <strong>Recommended model:</strong>{" "}
-                  {formatForecastModelName(forecastBacktest.best_model)}
+                  <strong>Recommended model:</strong> {recommendedModelName}
                 </p>
                 <p className="clients-panel__meta">
                   <strong>Historical MAE:</strong>{" "}
@@ -302,171 +294,30 @@ export default function ClientForecastTab({
         ) : null}
       </section>
 
-      <section>
-        <h3 className="deal-result-panel__breaches-title">Forecast Model</h3>
-
-        <label className="deal-form__field">
-          <span className="deal-form__label">Model</span>
-          <select
-            className="deal-form__input"
-            value={forecastModel}
-            onChange={(e) => setForecastModel(e.target.value as ForecastModel)}
-          >
-            <option value="deterministic">Deterministic Forecast</option>
-            <option value="prophet">Prophet Forecast</option>
-          </select>
-        </label>
-
-        <p className="clients-panel__meta">
-          {forecastModel === "deterministic"
-            ? "Uses user-defined assumptions such as revenue growth rate."
-            : "Uses historical data patterns to estimate future revenue."}
-        </p>
-      </section>
-
-      {forecastModel === "deterministic" ? (
-        <>
-          <section>
-            <h3 className="deal-result-panel__breaches-title">
-              Revenue & Gross Profit Forecast
-            </h3>
-
-            <label className="deal-form__field">
-              <span className="deal-form__label">Revenue Growth Rate (%)</span>
-
-              <input
-                className="deal-form__input"
-                type="number"
-                value={draftBaseGrowthRate * 100}
-                onChange={(e) =>
-                  setDraftBaseGrowthRate(Number(e.target.value) / 100)
-                }
-              />
-            </label>
-
-            <button
-              className="deal-form__submit"
-              type="button"
-              onClick={() => onBaseGrowthRateChange(draftBaseGrowthRate)}
-            >
-              Update
-            </button>
-
-            <RevenueGrossProfitChart
-              financials={financials}
-              baseForecast={baseForecast}
-            />
-          </section>
-
-          <section>
-            <h3 className="deal-result-panel__breaches-title">
-              Best / Worst Case Scenarios
-            </h3>
-
-            {[
-              {
-                label: "Base Case Growth Rate (%)",
-                value: draftBaseGrowthRate,
-                setValue: setDraftBaseGrowthRate,
-                update: onBaseGrowthRateChange,
-              },
-              {
-                label: "Best Case Growth Rate (%)",
-                value: draftBestGrowthRate,
-                setValue: setDraftBestGrowthRate,
-                update: onBestGrowthRateChange,
-              },
-              {
-                label: "Worst Case Growth Rate (%)",
-                value: draftWorstGrowthRate,
-                setValue: setDraftWorstGrowthRate,
-                update: onWorstGrowthRateChange,
-              },
-            ].map((item) => (
-              <div key={item.label}>
-                <label className="deal-form__field">
-                  <span className="deal-form__label">{item.label}</span>
-
-                  <input
-                    className="deal-form__input"
-                    type="number"
-                    value={item.value * 100}
-                    onChange={(e) => item.setValue(Number(e.target.value) / 100)}
-                  />
-                </label>
-
-                <button
-                  className="deal-form__submit"
-                  type="button"
-                  onClick={() => item.update(item.value)}
-                >
-                  Update
-                </button>
-              </div>
-            ))}
-
-            <RevenueScenarioChart
-              financials={financials}
-              baseForecast={baseForecast}
-              bestForecast={bestForecast}
-              worstForecast={worstForecast}
-            />
-          </section>
-        </>
-      ) : (
+      {forecastBacktest?.best_model ? (
         <section>
-          <h3 className="deal-result-panel__breaches-title">Prophet Forecast</h3>
+          <h3 className="deal-result-panel__breaches-title">Recommended Forecast</h3>
+          <p className="clients-panel__meta">
+            <strong>Selected model:</strong>{" "}
+            {formatForecastModelName(forecastBacktest.best_model)}
+          </p>
 
-          {prophetError ? <p className="dashboard-error">{prophetError}</p> : null}
-          {isLoadingProphet ? (
-            <p className="clients-panel__hint">Loading Prophet forecast…</p>
+          {forecastError ? <p className="dashboard-error">{forecastError}</p> : null}
+          {isLoadingForecast ? (
+            <p className="clients-panel__hint">
+              Loading {formatForecastModelName(forecastBacktest.best_model)}{" "}
+              forecast…
+            </p>
           ) : null}
 
-          {!isLoadingProphet && prophetForecast ? (
-            <>
-              <ProphetForecastChart
-                historical={
-                  financials?.historical.map((record) => ({
-                    month: record.month,
-                    revenue: record.revenue,
-                  })) ?? []
-                }
-                forecast={prophetForecast.forecast ?? []}
-              />
-              {(prophetForecast.forecast ?? []).length > 0 ? (
-                <div className="dashboard-table-wrap">
-                  <table className="dashboard-table">
-                    <thead>
-                      <tr>
-                        <th>Month</th>
-                        <th>Revenue</th>
-                        <th>Lower Bound</th>
-                        <th>Upper Bound</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(prophetForecast.forecast ?? []).map((row) => (
-                        <tr key={row.month}>
-                          <td>{row.month.slice(0, 7)}</td>
-                          <td className="dashboard-table__num">
-                            {formatCurrency(row.revenue)}
-                          </td>
-                          <td className="dashboard-table__num">
-                            {formatCurrency(row.lower_bound)}
-                          </td>
-                          <td className="dashboard-table__num">
-                            {formatCurrency(row.upper_bound)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : null}
-            </>
+          {!isLoadingForecast && selectedForecast ? (
+            <RecommendedForecastChart
+              historical={selectedForecast.historical}
+              forecast={selectedForecast.forecast}
+            />
           ) : null}
         </section>
-      )}
+      ) : null}
     </>
   );
 }
