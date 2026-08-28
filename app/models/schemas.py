@@ -31,8 +31,30 @@ class PortfolioResponse(BaseModel):
 
 
 class DealRequest(BaseModel):
+    """Client-submitted deal application fields.
+
+    The client requests the deal name, amount, and desired term.
+    Lender-controlled repayment terms such as interest rate and
+    repayment dates are set during approval.
+    """
+
     name: str = Field(..., min_length=1)
     value: float = Field(..., gt=0)
+    term_months: int = Field(..., gt=0)
+
+
+class DealApprovalRequest(BaseModel):
+    """Lender-confirmed repayment terms for approving a pending deal."""
+
+    principal_amount: float = Field(..., gt=0)
+    interest_rate: float = Field(..., ge=0)
+    interest_rate_type: str = Field(..., min_length=1)
+    repayment_method: str = Field(..., min_length=1)
+    term_months: int = Field(..., gt=0)
+    start_date: date
+    payment_frequency: str = Field(..., min_length=1)
+    first_payment_date: date
+    maturity_date: date | None = None
 
 
 class DealRecord(BaseModel):
@@ -41,7 +63,15 @@ class DealRecord(BaseModel):
     name: str
     value: float
     status: str | None = None
-
+    principal_amount: float | None = None
+    interest_rate: float | None = None
+    interest_rate_type: str | None = None
+    repayment_method: str | None = None
+    term_months: int | None = None
+    start_date: date | None = None
+    maturity_date: date | None = None
+    payment_frequency: str | None = None
+    first_payment_date: date | None = None
 
 class Breach(BaseModel):
     rule: Literal["industry_concentration_limit", "portfolio_capital_limit"]
@@ -191,20 +221,6 @@ class ForecastRevenuePoint(BaseModel):
     revenue: float
 
 
-class DeterministicForecastPoint(BaseModel):
-    month: str
-    revenue: float
-    cogs: float
-    opex: float
-    reported_gross_profit: float | None = None
-    calculated_gross_profit: float | None = None
-    cash_balance: float
-    gross_profit_margin_method: float | None = None
-    gross_profit_cogs_method: float
-    gross_profit_difference: float | None = None
-    net_cash_flow: float
-
-
 StatisticalForecastModelName = Literal[
     "naive",
     "seasonal_naive",
@@ -239,12 +255,3 @@ class ForecastBacktestResponse(BaseModel):
     holdout_months: int
     best_model: StatisticalForecastModelName | None = None
     results: list[ForecastBacktestModelResult]
-
-
-class DeterministicForecastResponse(BaseModel):
-    client_id: int
-    model: Literal["deterministic"] = "deterministic"
-    assumptions: dict
-    historical: list[dict]
-    forecast: list[DeterministicForecastPoint]
-    alerts: dict

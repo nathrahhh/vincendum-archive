@@ -11,7 +11,7 @@ from statsmodels.tsa.exponential_smoothing.ets import ETSModel
 
 from app.services.cache.redis_client import DEFAULT_TTL_SECONDS, cache_get_json, cache_set_json
 from app.services.forecasting.cache_keys import ets_forecast_cache_key
-from app.services.forecasting.deterministic import (
+from app.services.forecasting.shared import (
     FORECAST_MONTHS,
     _add_months,
     _fetch_client_financials,

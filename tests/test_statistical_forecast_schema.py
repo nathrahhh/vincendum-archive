@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 
 from app.models.schemas import ForecastRevenuePoint, StatisticalForecastResponse
-from app.services.forecasting.deterministic import FORECAST_MONTHS, _add_months
+from app.services.forecasting.shared import FORECAST_MONTHS, _add_months
 from app.services.forecasting.ets import build_ets_forecast
 from app.services.forecasting.holt_winters import build_holt_winters_forecast
 from app.services.forecasting.naive import build_naive_forecast

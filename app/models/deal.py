@@ -64,6 +64,7 @@ class DealORM(Base):
         server_default="amortizing",
     )
 
+
     term_months: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,

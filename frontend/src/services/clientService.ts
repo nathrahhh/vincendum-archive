@@ -30,11 +30,10 @@ import type {
   ClientFinancialCreateResponse,
   ClientFinancialRecord,
   ClientFinancials,
-  ClientForecast,
   ClientInvitation,
   DocumentRecord,
   ForecastBacktestResponse,
-  ForecastModel,
+  StatisticalForecastModelName,
   StatisticalForecastResponse,
 } from "../types";
 import { toServiceError } from "./errors";
@@ -130,11 +129,10 @@ export async function getMyClientDocument(
 
 export async function getClientForecast(
   clientId: number,
-  revenueGrowthRate: number,
-  model: ForecastModel = "deterministic",
-): Promise<ClientForecast | StatisticalForecastResponse> {
+  model: StatisticalForecastModelName,
+): Promise<StatisticalForecastResponse> {
   try {
-    return await fetchClientForecast(clientId, revenueGrowthRate, model);
+    return await fetchClientForecast(clientId, model);
   } catch (error) {
     throw toServiceError(error, "Failed to load client forecast");
   }
@@ -231,11 +229,10 @@ export async function getMyClientFinancials(): Promise<ClientFinancials> {
 }
 
 export async function getMyClientForecast(
-  revenueGrowthRate: number,
-  model: ForecastModel = "deterministic",
-): Promise<ClientForecast | StatisticalForecastResponse> {
+  model: StatisticalForecastModelName,
+): Promise<StatisticalForecastResponse> {
   try {
-    return await fetchMyClientForecast(revenueGrowthRate, model);
+    return await fetchMyClientForecast(model);
   } catch (error) {
     throw toServiceError(error, "Failed to load your forecast");
   }

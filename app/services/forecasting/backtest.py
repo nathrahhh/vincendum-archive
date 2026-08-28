@@ -7,7 +7,7 @@ from typing import Any, Callable
 
 from sqlalchemy.orm import Session
 
-from app.services.forecasting.deterministic import (
+from app.services.forecasting.shared import (
     FORECAST_MONTHS,
     _add_months,
     _fetch_client_financials,

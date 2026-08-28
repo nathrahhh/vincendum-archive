@@ -26,7 +26,7 @@ from app.services.forecasting.backtest import (
     UNAVAILABLE_INSUFFICIENT_HISTORY,
     build_forecast_backtest,
 )
-from app.services.forecasting.deterministic import _add_months
+from app.services.forecasting.shared import _add_months
 from app.services.forecasting.naive import forecast_naive_from_history
 
 

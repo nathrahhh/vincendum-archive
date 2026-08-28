@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.services.cache.redis_client import DEFAULT_TTL_SECONDS, cache_get_json, cache_set_json
 from app.services.forecasting.cache_keys import prophet_forecast_cache_key
-from app.services.forecasting.deterministic import (
+from app.services.forecasting.shared import (
     FORECAST_MONTHS,
     _fetch_client_financials,
     _format_month,

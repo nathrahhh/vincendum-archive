@@ -11,9 +11,10 @@ from app.db import get_db
 from app.models.client import ClientORM
 from app.models.deal import DealORM
 from app.models.position import PositionORM
-from app.models.schemas import DealRecord, DealRequest, Position, RiskEvaluation
+from app.models.schemas import DealApprovalRequest, DealRecord, DealRequest, Position, RiskEvaluation
 from app.models.user import UserORM
 from app.services.client_credit_engine import ClientCreditEngine
+from app.services.deal_service import _to_deal_record
 from app.services.deal_service import approve_deal as approve_deal_service
 from app.services.deal_service import create_deal as create_deal_service
 from app.services.deal_service import reject_deal as reject_deal_service
@@ -54,16 +55,7 @@ def list_deals(
         .where(ClientORM.lender_id == lender_id)
         .order_by(DealORM.id.desc())
     ).scalars().all()
-    return [
-        DealRecord(
-            id=deal.id,
-            client_id=deal.client_id,
-            name=deal.name,
-            value=deal.value,
-            status=deal.status,
-        )
-        for deal in rows
-    ]
+    return [_to_deal_record(deal) for deal in rows]
 
 
 @clients_deals_router.get("/{client_id}/deals", response_model=list[DealRecord])
@@ -89,16 +81,7 @@ def list_client_deals(
         .where(DealORM.client_id == client_id)
         .order_by(DealORM.id.desc())
     ).scalars().all()
-    return [
-        DealRecord(
-            id=deal.id,
-            client_id=deal.client_id,
-            name=deal.name,
-            value=deal.value,
-            status=deal.status,
-        )
-        for deal in rows
-    ]
+    return [_to_deal_record(deal) for deal in rows]
 
 
 @deals_router.post("/evaluate", response_model=RiskEvaluation)
@@ -134,6 +117,7 @@ def evaluate_deal(
         client_id=current_client.id,
         name=deal.name,
         value=deal.value,
+        term_months=deal.term_months,
         status=deal_status,
     )
     db.add(logged_deal)
@@ -146,6 +130,7 @@ def evaluate_deal(
 @deals_router.post("/{deal_id}/approve", response_model=DealRecord)
 def approve_deal(
     deal_id: int,
+    payload: DealApprovalRequest,
     db: Session = Depends(get_db),
     current_user: UserORM = Depends(require_admin),
     _: UserORM = Depends(require_lender_user),
@@ -158,6 +143,7 @@ def approve_deal(
     return approve_deal_service(
         db,
         deal_id,
+        payload=payload,
         lender_id=lender_id,
         user_id=current_user.id,
     )
@@ -188,16 +174,7 @@ def list_my_client_deals(
         .where(DealORM.client_id == current_client.id)
         .order_by(DealORM.id.desc())
     ).scalars().all()
-    return [
-        DealRecord(
-            id=row.id,
-            client_id=row.client_id,
-            name=row.name,
-            value=row.value,
-            status=row.status,
-        )
-        for row in rows
-    ]
+    return [_to_deal_record(row) for row in rows]
 
 
 @client_me_router.post("/me/deals", response_model=DealRecord)

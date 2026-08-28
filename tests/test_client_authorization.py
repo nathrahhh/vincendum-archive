@@ -16,7 +16,7 @@ from app.models.client_financial import ClientFinancialORM
 from app.models.deal import DealORM
 from app.models.lender import LenderORM
 from app.models.position import PositionORM
-from app.models.schemas import DeterministicForecastResponse
+from app.models.schemas import StatisticalForecastResponse
 from app.models.user import UserORM
 
 
@@ -214,21 +214,20 @@ def test_client_me_deals_only_own_records(seeded_db: Session):
 
 
 def test_client_me_forecast_uses_own_client_id(seeded_db: Session):
-    mock_response = DeterministicForecastResponse(
+    mock_response = StatisticalForecastResponse(
         client_id=2,
-        model="deterministic",
-        assumptions={},
+        model="naive",
         historical=[],
         forecast=[],
-        alerts={},
+        unavailable_reason=None,
     )
     client = _override(_client_user(), seeded_db)
     try:
         with patch(
-            "app.api.routes.forecast.build_deterministic_forecast",
+            "app.api.routes.forecast.build_naive_forecast",
             return_value=mock_response,
         ) as mock_forecast:
-            response = client.get("/client/me/forecast")
+            response = client.get("/client/me/forecast?model=naive")
     finally:
         _clear_overrides()
 

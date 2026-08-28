@@ -5,10 +5,9 @@ import type {
   ClientFinancialCreateResponse,
   ClientFinancialRecord,
   ClientFinancials,
-  ClientForecast,
   ClientInvitation,
-  ForecastModel,
   ForecastBacktestResponse,
+  StatisticalForecastModelName,
   StatisticalForecastResponse,
 } from "../types";
 
@@ -27,18 +26,13 @@ export function fetchClientFinancials(clientId: number): Promise<ClientFinancial
 
 export function fetchClientForecast(
   clientId: number,
-  revenueGrowthRate: number,
-  model: ForecastModel = "deterministic",
-): Promise<ClientForecast | StatisticalForecastResponse> {
+  model: StatisticalForecastModelName,
+): Promise<StatisticalForecastResponse> {
   const params = new URLSearchParams({
     model,
   });
 
-  if (model === "deterministic") {
-    params.set("revenue_growth_rate", String(revenueGrowthRate));
-  }
-
-  return request<ClientForecast | StatisticalForecastResponse>(
+  return request<StatisticalForecastResponse>(
     `/clients/${clientId}/forecast?${params.toString()}`,
   );
 }
@@ -109,18 +103,13 @@ export function fetchMyClientFinancials(): Promise<ClientFinancials> {
 }
 
 export function fetchMyClientForecast(
-  revenueGrowthRate: number,
-  model: ForecastModel = "deterministic",
-): Promise<ClientForecast | StatisticalForecastResponse> {
+  model: StatisticalForecastModelName,
+): Promise<StatisticalForecastResponse> {
   const params = new URLSearchParams({
     model,
   });
 
-  if (model === "deterministic") {
-    params.set("revenue_growth_rate", String(revenueGrowthRate));
-  }
-
-  return request<ClientForecast | StatisticalForecastResponse>(
+  return request<StatisticalForecastResponse>(
     `/client/me/forecast?${params.toString()}`,
   );
 }

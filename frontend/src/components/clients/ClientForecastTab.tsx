@@ -60,21 +60,6 @@ function buildRecommendationExplanation(
   return `Based on the most recent ${backtest.holdout_months} months of historical holdout testing, ${displayName} produced the lowest mean absolute error (MAE) of ${maeText}, so it performed best among the tested models on this client's historical data. This reflects past holdout performance only and is not a guarantee of future accuracy.`;
 }
 
-function isStatisticalForecast(
-  value: unknown,
-): value is StatisticalForecastResponse {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-  const record = value as Record<string, unknown>;
-  return (
-    typeof record.model === "string" &&
-    Array.isArray(record.historical) &&
-    Array.isArray(record.forecast) &&
-    !("assumptions" in record)
-  );
-}
-
 export default function ClientForecastTab({
   clientId,
   forecastApi = "admin",
@@ -145,17 +130,10 @@ export default function ClientForecastTab({
       try {
         const response =
           forecastApi === "me"
-            ? await getMyClientForecast(0, model)
-            : await getClientForecast(clientId, 0, model);
+            ? await getMyClientForecast(model)
+            : await getClientForecast(clientId, model);
 
         if (!cancelled) {
-          if (!isStatisticalForecast(response)) {
-            setSelectedForecast(null);
-            setForecastError(
-              `Unexpected forecast response for ${formatForecastModelName(model)}.`,
-            );
-            return;
-          }
           if (response.unavailable_reason || response.forecast.length === 0) {
             setSelectedForecast(response);
             setForecastError(

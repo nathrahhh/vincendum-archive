@@ -6,7 +6,7 @@ from datetime import date
 from unittest.mock import MagicMock, patch
 
 from app.services.forecasting.cache_keys import seasonal_naive_forecast_cache_key
-from app.services.forecasting.deterministic import _add_months
+from app.services.forecasting.shared import _add_months
 from app.services.forecasting.seasonal_naive import (
     UNAVAILABLE_INSUFFICIENT_HISTORY,
     UNAVAILABLE_NON_CONSECUTIVE_MONTHS,
