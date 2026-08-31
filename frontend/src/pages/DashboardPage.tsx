@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ExposureChart, KpiCard, PortfolioTable, RecentDeals } from "../components/dashboard";
+import { fetchIndustryExposure } from "../services/lenderService";
 import { getPortfolio } from "../services/portfolioService";
 import type { IndustryExposure, Position } from "../types";
 
@@ -21,6 +22,7 @@ export default function DashboardPage() {
   const [utilisationPct, setUtilisationPct] = useState(0);
   const [industryExposure, setIndustryExposure] = useState<IndustryExposure[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [industryExposureLoading, setIndustryExposureLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -35,7 +37,6 @@ export default function DashboardPage() {
           setPositions(data.positions);
           setPortfolioValue(data.total_portfolio_value);
           setUtilisationPct(data.capital_utilization_pct);
-          setIndustryExposure(data.industry_exposure);
         }
       } catch (err) {
         if (!cancelled) {
@@ -43,7 +44,6 @@ export default function DashboardPage() {
           setPositions([]);
           setPortfolioValue(0);
           setUtilisationPct(0);
-          setIndustryExposure([]);
         }
       } finally {
         if (!cancelled) {
@@ -53,6 +53,34 @@ export default function DashboardPage() {
     }
 
     loadPortfolio();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadIndustryExposure() {
+      setIndustryExposureLoading(true);
+      try {
+        const data = await fetchIndustryExposure();
+        if (!cancelled) {
+          setIndustryExposure(data);
+        }
+      } catch (err) {
+        console.error("Failed to load industry exposure", err);
+        if (!cancelled) {
+          setIndustryExposure([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setIndustryExposureLoading(false);
+        }
+      }
+    }
+
+    loadIndustryExposure();
     return () => {
       cancelled = true;
     };
@@ -76,7 +104,10 @@ export default function DashboardPage() {
 
       <div className="dashboard-grid">
         <PortfolioTable positions={positions} isLoading={isLoading} error={error} />
-        <ExposureChart exposure={industryExposure} isLoading={isLoading} />
+        <ExposureChart
+          exposure={industryExposure}
+          isLoading={industryExposureLoading}
+        />
       </div>
 
       <RecentDeals />

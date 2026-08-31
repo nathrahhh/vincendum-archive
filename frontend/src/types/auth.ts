@@ -10,8 +10,10 @@ export type Lender = {
   id: number;
   name: string;
   slug: string;
+  capital_base: number;
 };
 
 export type LenderOnboardRequest = {
   name: string;
+  capital_base: number;
 };

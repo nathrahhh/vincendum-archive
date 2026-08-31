@@ -10,6 +10,7 @@ from app.db import Base
 
 if TYPE_CHECKING:
     from app.models.client import ClientORM
+    from app.models.position import PositionORM
     from app.models.repayment import RepaymentORM
 
 
@@ -92,7 +93,13 @@ class DealORM(Base):
         nullable=True,
     )
 
-    client: Mapped[ClientORM] = relationship()
+    client: Mapped[ClientORM] = relationship(
+        back_populates="deals",
+    )
+    position: Mapped[PositionORM | None] = relationship(
+        back_populates="deal",
+        uselist=False,
+    )
     repayments: Mapped[list[RepaymentORM]] = relationship(
         back_populates="deal",
     )

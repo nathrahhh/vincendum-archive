@@ -10,6 +10,7 @@ from app.models.client_invitation import ClientInvitationORM
 from app.models.deal import DealORM
 from app.models.document import DocumentORM
 from app.models.lender import LenderORM
+from app.models.portfolio import PortfolioORM
 from app.models.position import PositionORM
 from app.models.repayment import RepaymentORM
 from app.models.user import UserORM

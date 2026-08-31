@@ -19,7 +19,6 @@ from app.api.routes import (
 )
 from app.db import SessionLocal, init_db
 from app.models.schemas import HealthResponse
-from app.services.portfolio_store import seed_portfolio_if_empty
 
 app = FastAPI(
     title="Credit Risk + Concentration Risk Engine",

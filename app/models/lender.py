@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, String, func
+from sqlalchemy import DateTime, Float, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from app.models.client_application import ClientApplicationORM
     from app.models.client_invitation import ClientInvitationORM
     from app.models.document import DocumentORM
+    from app.models.portfolio import PortfolioORM
     from app.models.user import UserORM
 
 
@@ -26,6 +27,10 @@ class LenderORM(Base):
         nullable=False,
         unique=True,
         index=True,
+    )
+    capital_base: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -42,5 +47,8 @@ class LenderORM(Base):
         back_populates="lender",
     )
     documents: Mapped[list[DocumentORM]] = relationship(
+        back_populates="lender",
+    )
+    portfolios: Mapped[list[PortfolioORM]] = relationship(
         back_populates="lender",
     )

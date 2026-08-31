@@ -10,10 +10,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
+from app.auth.permissions import require_admin
+from app.auth.tenant import get_user_lender_id, require_lender_user
 from app.db import get_db
 from app.models.lender import LenderORM
-from app.models.schemas import LenderOnboardRequest, LenderResponse
+from app.models.schemas import IndustryExposure, LenderOnboardRequest, LenderResponse
 from app.models.user import UserORM
+from app.services.industry_exposure_service import get_industry_exposure
 
 router = APIRouter(prefix="/lenders", tags=["lenders"])
 
@@ -45,7 +48,12 @@ def _allocate_unique_slug(db: Session, name: str) -> str:
 
 
 def _to_response(lender: LenderORM) -> LenderResponse:
-    return LenderResponse(id=lender.id, name=lender.name, slug=lender.slug)
+    return LenderResponse(
+        id=lender.id,
+        name=lender.name,
+        slug=lender.slug,
+        capital_base=float(lender.capital_base),
+    )
 
 
 @router.post("/onboard", response_model=LenderResponse)
@@ -67,8 +75,18 @@ def onboard_lender(
     if not name:
         raise HTTPException(status_code=400, detail="Lender name is required")
 
+    if payload.capital_base <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Capital base must be greater than zero",
+        )
+
     slug = _allocate_unique_slug(db, name)
-    lender = LenderORM(name=name, slug=slug)
+    lender = LenderORM(
+        name=name,
+        slug=slug,
+        capital_base=payload.capital_base,
+    )
     db.add(lender)
 
     try:
@@ -104,6 +122,17 @@ def get_my_lender(
     if lender is None:
         raise HTTPException(status_code=404, detail="Lender not found")
     return _to_response(lender)
+
+
+@router.get("/me/industry-exposure", response_model=list[IndustryExposure])
+def get_my_industry_exposure(
+    db: Session = Depends(get_db),
+    current_user: UserORM = Depends(require_admin),
+    _: UserORM = Depends(require_lender_user),
+) -> list[IndustryExposure]:
+    """Return industry exposure for the authenticated lender's portfolios."""
+    lender_id = get_user_lender_id(current_user)
+    return get_industry_exposure(db, lender_id)
 
 
 @router.get("/public/{slug}", response_model=LenderResponse)

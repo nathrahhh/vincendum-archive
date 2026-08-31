@@ -5,6 +5,7 @@ import type { DealPayload } from "../types";
 export default function DealPage() {
   const [dealName, setDealName] = useState("");
   const [loanAmount, setLoanAmount] = useState("");
+  const [termMonths, setTermMonths] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -21,6 +22,7 @@ export default function DealPage() {
     const payload: DealPayload = {
       name: dealName.trim(),
       value: Number(loanAmount),
+      term_months: Number(termMonths),
     };
 
     try {
@@ -32,6 +34,7 @@ export default function DealPage() {
 
       setDealName("");
       setLoanAmount("");
+      setTermMonths("");
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to submit deal",
@@ -96,6 +99,25 @@ export default function DealPage() {
                 setLoanAmount(e.target.value)
               }
               placeholder="e.g. 500000"
+              required
+            />
+          </label>
+
+          <label className="deal-form__field">
+            <span className="deal-form__label">
+              Requested Term (months)
+            </span>
+
+            <input
+              className="deal-form__input"
+              type="number"
+              min="1"
+              step="1"
+              value={termMonths}
+              onChange={(e) =>
+                setTermMonths(e.target.value)
+              }
+              placeholder="e.g. 12"
               required
             />
           </label>

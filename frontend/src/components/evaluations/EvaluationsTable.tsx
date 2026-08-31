@@ -4,7 +4,7 @@ type EvaluationsTableProps = {
   deals: DealRecord[];
   isLoading?: boolean;
   error?: string | null;
-  onApprove?: (id: number) => void;
+  onApprove?: (deal: DealRecord) => void;
   onReject?: (id: number) => void;
   actionLoadingId?: number | null;
 };
@@ -67,7 +67,7 @@ export default function EvaluationsTable({
                           type="button"
                           className="eval-actions__btn eval-actions__btn--approve"
                           disabled={actionLoadingId === row.id}
-                          onClick={() => onApprove?.(row.id)}
+                          onClick={() => onApprove?.(row)}
                         >
                           Approve
                         </button>

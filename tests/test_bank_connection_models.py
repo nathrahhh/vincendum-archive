@@ -17,6 +17,7 @@ from app.models.bank_account import BankAccountORM
 from app.models.bank_connection import BankConnectionORM
 from app.models.client import ClientORM
 from app.models.lender import LenderORM
+from app.models.portfolio import PortfolioORM
 
 
 @pytest.fixture()
@@ -37,6 +38,7 @@ def db_session() -> Generator[Session, None, None]:
         bind=engine,
         tables=[
             LenderORM.__table__,
+            PortfolioORM.__table__,
             ClientORM.__table__,
             BankConnectionORM.__table__,
             BankAccountORM.__table__,
@@ -61,13 +63,14 @@ def db_session() -> Generator[Session, None, None]:
                 BankAccountORM.__table__,
                 BankConnectionORM.__table__,
                 ClientORM.__table__,
+                PortfolioORM.__table__,
                 LenderORM.__table__,
             ],
         )
 
 
 def _seed_client(db: Session) -> ClientORM:
-    db.add(LenderORM(id=1, name="Lender A", slug="lender-a"))
+    db.add(LenderORM(id=1, name="Lender A", slug="lender-a", capital_base=10_000_000))
     client = ClientORM(
         id=2,
         name="Client Two",

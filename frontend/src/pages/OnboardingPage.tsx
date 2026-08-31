@@ -10,6 +10,7 @@ export default function OnboardingPage() {
   const navigate = useNavigate();
   const { user, isLoading, refreshUser } = useCurrentUser();
   const [name, setName] = useState("");
+  const [capitalBase, setCapitalBase] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,11 +37,17 @@ export default function OnboardingPage() {
       return;
     }
 
+    const capitalValue = Number(capitalBase);
+    if (!Number.isFinite(capitalValue) || capitalValue <= 0) {
+      setError("Total lending capital must be greater than zero");
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
     try {
-      await onboardLender({ name: trimmed });
+      await onboardLender({ name: trimmed, capital_base: capitalValue });
       await refreshUser();
       navigate("/dashboard", { replace: true });
     } catch (err) {
@@ -67,12 +74,33 @@ export default function OnboardingPage() {
       <form onSubmit={handleSubmit}>
         <label className="deal-form__field">
           <span className="deal-form__label">Lender name</span>
+          <span className="deal-form__hint">
+            Enter your lender or organisation name.
+          </span>
           <input
             className="deal-form__input"
             type="text"
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder="e.g. ABC Capital"
+            required
+            disabled={isSubmitting}
+          />
+        </label>
+
+        <label className="deal-form__field">
+          <span className="deal-form__label">Total lending capital</span>
+          <span className="deal-form__hint">
+            How much capital does your organisation have available for lending?
+          </span>
+          <input
+            className="deal-form__input"
+            type="number"
+            min={1}
+            step="any"
+            value={capitalBase}
+            onChange={(event) => setCapitalBase(event.target.value)}
+            placeholder="e.g. 10000000"
             required
             disabled={isSubmitting}
           />

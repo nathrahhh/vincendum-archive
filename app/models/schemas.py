@@ -40,7 +40,7 @@ class DealRequest(BaseModel):
 
     name: str = Field(..., min_length=1)
     value: float = Field(..., gt=0)
-    term_months: int = Field(..., gt=0)
+    term_months: int | None = Field(default=None, gt=0)
 
 
 class DealApprovalRequest(BaseModel):
@@ -200,12 +200,26 @@ class ClientInvitationAcceptResponse(BaseModel):
 
 class LenderOnboardRequest(BaseModel):
     name: str = Field(..., min_length=1)
+    capital_base: float = Field(..., gt=0)
 
 
 class LenderResponse(BaseModel):
     id: int
     name: str
     slug: str
+    capital_base: float
+
+
+class PortfolioCreateRequest(BaseModel):
+    name: str = Field(..., min_length=1)
+    capital_allocation: float = Field(..., ge=0)
+
+
+class PortfolioRecord(BaseModel):
+    id: int
+    name: str
+    lender_id: int
+    capital_allocation: float
 
 
 class CurrentUserResponse(BaseModel):

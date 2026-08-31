@@ -9,7 +9,6 @@ from app.db import get_db
 from app.models.client import ClientORM
 from app.models.schemas import ClientCreditLimitUpdate, ClientInviteRequest, ClientInviteResponse
 from app.models.user import UserORM
-from app.services.client_exposure_service import get_client_exposure
 from app.services.client_invitation_service import (
     build_invitation_url,
     create_client_invitation,
@@ -60,8 +59,7 @@ def get_client(
     ).scalar_one_or_none()
     if row is None:
         raise HTTPException(status_code=404, detail=f"Client {client_id} not found")
-    exposure = get_client_exposure(db, client_id)
-    return {**_client_to_dict(row), **exposure}
+    return _client_to_dict(row)
 
 
 @clients_router.put("/{client_id}/credit-limit")
@@ -119,8 +117,7 @@ def get_my_client(
     db: Session = Depends(get_db),
     current_client: ClientORM = Depends(get_current_client),
 ) -> dict:
-    exposure = get_client_exposure(db, current_client.id)
-    return {**_client_to_dict(current_client), **exposure}
+    return _client_to_dict(current_client)
 
 
 router.include_router(clients_router)

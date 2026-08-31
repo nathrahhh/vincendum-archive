@@ -56,7 +56,7 @@ def db_session() -> Generator[Session, None, None]:
 
 @pytest.fixture()
 def seeded_db(db_session: Session) -> Session:
-    lender = LenderORM(id=1, name="Lender A", slug="lender-a")
+    lender = LenderORM(id=1, name="Lender A", slug="lender-a", capital_base=10_000_000)
     client_2 = ClientORM(
         id=2,
         name="Client Two",

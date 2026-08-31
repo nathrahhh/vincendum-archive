@@ -1,4 +1,5 @@
 import { request } from "../api/client";
+import type { IndustryExposure } from "../types";
 import type { Lender, LenderOnboardRequest } from "../types/auth";
 import { toServiceError } from "./errors";
 
@@ -20,6 +21,15 @@ export async function fetchMyLender(): Promise<Lender> {
     return await request<Lender>("/lenders/me");
   } catch (error) {
     throw toServiceError(error, "Failed to load lender");
+  }
+}
+
+/** GET /lenders/me/industry-exposure */
+export async function fetchIndustryExposure(): Promise<IndustryExposure[]> {
+  try {
+    return await request<IndustryExposure[]>("/lenders/me/industry-exposure");
+  } catch (error) {
+    throw toServiceError(error, "Failed to load industry exposure");
   }
 }
 

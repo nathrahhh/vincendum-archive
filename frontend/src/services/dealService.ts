@@ -1,5 +1,5 @@
 import { fetchDeals, postApproveDeal, postMyClientDeal, postRejectDeal } from "../api";
-import type { DealPayload, DealRecord } from "../types";
+import type { DealApprovalPayload, DealPayload, DealRecord } from "../types";
 import { toServiceError } from "./errors";
 
 /** GET /deals */
@@ -12,9 +12,12 @@ export async function getDeals(): Promise<DealRecord[]> {
 }
 
 /** POST /deals/{id}/approve */
-export async function approveDeal(id: number): Promise<DealRecord> {
+export async function approveDeal(
+  id: number,
+  payload: DealApprovalPayload,
+): Promise<DealRecord> {
   try {
-    return await postApproveDeal(id);
+    return await postApproveDeal(id, payload);
   } catch (error) {
     throw toServiceError(error, "Failed to approve deal");
   }

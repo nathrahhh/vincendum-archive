@@ -71,7 +71,7 @@ def db_session() -> Generator[Session, None, None]:
 
 
 def _seed_account(db: Session) -> BankAccountORM:
-    db.add(LenderORM(id=1, name="Lender A", slug="lender-a"))
+    db.add(LenderORM(id=1, name="Lender A", slug="lender-a", capital_base=10_000_000))
     db.add(
         ClientORM(
             id=2,

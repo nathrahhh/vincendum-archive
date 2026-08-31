@@ -17,15 +17,6 @@ def _get_deal_or_404(db: Session, deal_id: int) -> DealORM:
     return deal
 
 
-def _client_industry(db: Session, client_id: int) -> str:
-    client = db.execute(
-        select(ClientORM).where(ClientORM.id == client_id)
-    ).scalar_one_or_none()
-    if client is None:
-        raise HTTPException(status_code=404, detail=f"Client {client_id} not found")
-    return client.industry
-
-
 def _to_deal_record(deal: DealORM) -> DealRecord:
     return DealRecord(
         id=deal.id,
@@ -98,8 +89,7 @@ def approve_deal(
     # Failures raise HTTPException before status/position changes.
     generate_and_store_schedule(db, deal.id, commit=False)
 
-    industry = _client_industry(db, deal.client_id)
-    position = PositionORM(name=deal.name, value=deal.value, industry=industry)
+    position = PositionORM(deal_id=deal.id, value=deal.value)
     db.add(position)
     deal.status = "APPROVED"
     record_audit_event(

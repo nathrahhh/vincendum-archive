@@ -1,7 +1,14 @@
-from sqlalchemy import Float, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Float, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
+
+if TYPE_CHECKING:
+    from app.models.deal import DealORM
 
 
 class PositionORM(Base):
@@ -9,25 +16,18 @@ class PositionORM(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
 
-    name: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-        unique=True,
-        index=True,
-    )
-
     value: Mapped[float] = mapped_column(
         Float,
         nullable=False,
     )
 
-    industry: Mapped[str] = mapped_column(
-        String(120),
+    deal_id: Mapped[int] = mapped_column(
+        ForeignKey("deals.id"),
         nullable=False,
+        unique=True,
         index=True,
     )
 
-    client_id: Mapped[int | None] = mapped_column(
-        Integer,
-        nullable=True,
+    deal: Mapped[DealORM] = relationship(
+        back_populates="position",
     )

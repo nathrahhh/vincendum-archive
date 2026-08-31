@@ -5,7 +5,7 @@ export { getClients, getClientFinancials, getClientForecast, updateClientCreditL
 export { extractFinancialStatement } from "./parsingService";
 export { checkHealth } from "./healthService";
 export { getCurrentUser } from "./authService";
-export { onboardLender, fetchMyLender, fetchPublicLender } from "./lenderService";
+export { onboardLender, fetchMyLender, fetchIndustryExposure, fetchPublicLender } from "./lenderService";
 export {
   getOpenBankingAccounts,
   getOpenBankingTransactions,

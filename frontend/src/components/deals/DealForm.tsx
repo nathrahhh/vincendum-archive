@@ -26,6 +26,7 @@ export default function DealForm({
   const [dealName, setDealName] = useState("");
   const [industry, setIndustry] = useState("");
   const [dealValue, setDealValue] = useState("");
+  const [termMonths, setTermMonths] = useState("");
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -37,6 +38,7 @@ export default function DealForm({
     onSubmit({
       name: dealName.trim(),
       value: Number(dealValue),
+      term_months: Number(termMonths),
     });
   }
 
@@ -126,6 +128,23 @@ export default function DealForm({
             value={dealValue}
             onChange={(e) => setDealValue(e.target.value)}
             placeholder="e.g. 1500000"
+            required
+          />
+        </label>
+
+        <label className="deal-form__field">
+          <span className="deal-form__label">
+            Term (months)
+          </span>
+
+          <input
+            className="deal-form__input"
+            type="number"
+            min="1"
+            step="1"
+            value={termMonths}
+            onChange={(e) => setTermMonths(e.target.value)}
+            placeholder="e.g. 12"
             required
           />
         </label>

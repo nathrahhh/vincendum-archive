@@ -21,8 +21,7 @@ export type {
   DocumentRecord,
 } from "./clientApplications";
 export type { Position, IndustryExposure, PortfolioResponse } from "./portfolio";
-export type { DealPayload } from "./deal";
-export type { DealRecord } from "./deals";
+export type { DealApprovalPayload, DealPayload, DealRecord } from "./deal";
 export type { HealthResponse } from "./health";
 export type { Breach, BreachRecord, BreachesByIndustry, RiskEvaluation } from "./risk";
 export type { CurrentUser, Lender, LenderOnboardRequest } from "./auth";

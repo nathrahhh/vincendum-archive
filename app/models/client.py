@@ -11,8 +11,10 @@ from app.db import Base
 if TYPE_CHECKING:
     from app.models.bank_connection import BankConnectionORM
     from app.models.client_invitation import ClientInvitationORM
+    from app.models.deal import DealORM
     from app.models.document import DocumentORM
     from app.models.lender import LenderORM
+    from app.models.portfolio import PortfolioORM
     from app.models.user import UserORM
 
 
@@ -49,7 +51,17 @@ class ClientORM(Base):
         index=True,
     )
 
+    portfolio_id: Mapped[int | None] = mapped_column(
+        ForeignKey("portfolios.id"),
+        nullable=True,
+        index=True,
+    )
+
     lender: Mapped[LenderORM | None] = relationship(
+        back_populates="clients",
+    )
+
+    portfolio: Mapped[PortfolioORM | None] = relationship(
         back_populates="clients",
     )
 
@@ -65,5 +77,8 @@ class ClientORM(Base):
         back_populates="client",
     )
     bank_connections: Mapped[list[BankConnectionORM]] = relationship(
+        back_populates="client",
+    )
+    deals: Mapped[list[DealORM]] = relationship(
         back_populates="client",
     )

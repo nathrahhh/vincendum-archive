@@ -57,7 +57,7 @@ def db_session() -> Generator[Session, None, None]:
 
 
 def _seed_client_and_deal(db: Session) -> None:
-    db.add(LenderORM(id=1, name="Lender A", slug="lender-a"))
+    db.add(LenderORM(id=1, name="Lender A", slug="lender-a", capital_base=10_000_000))
     db.add(
         ClientORM(
             id=2,
@@ -192,7 +192,7 @@ def test_pending_financial_is_not_used(db_session: Session):
 def test_no_in_period_repayments_preserves_missing_debt_service(
     db_session: Session,
 ) -> None:
-    db_session.add(LenderORM(id=1, name="Lender A", slug="lender-a"))
+    db_session.add(LenderORM(id=1, name="Lender A", slug="lender-a", capital_base=10_000_000))
     db_session.add(
         ClientORM(
             id=2,
