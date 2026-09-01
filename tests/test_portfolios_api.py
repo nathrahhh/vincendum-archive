@@ -218,13 +218,6 @@ def test_get_portfolio_summary_success(seeded_db: Session) -> None:
     assert payload["position_count"] == 1
     assert payload["client_count"] == 1
     assert payload["utilization_pct"] == 10.0
-    assert payload["industry_exposure"] == [
-        {
-            "industry": "Technology",
-            "value": 500_000,
-            "percentage": 100.0,
-        }
-    ]
 
 
 def test_get_portfolio_not_found(seeded_db: Session) -> None:
@@ -255,6 +248,20 @@ def test_get_portfolio_cross_lender_access_returns_not_found(
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Portfolio 2 not found"
+
+
+def test_lender_b_cannot_access_lender_a_portfolio(seeded_db: Session) -> None:
+    client = _override(
+        _user(user_id=10, role="admin", lender_id=2),
+        seeded_db,
+    )
+    try:
+        response = client.get("/portfolios/1")
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Portfolio 1 not found"
 
 
 def test_client_cannot_access_portfolio_summary(seeded_db: Session) -> None:
@@ -352,3 +359,216 @@ def test_create_portfolio_rejects_negative_capital_allocation(
         _clear_overrides()
 
     assert response.status_code == 422
+
+
+@pytest.fixture()
+def capital_limited_db(db_session: Session) -> Session:
+    db_session.add_all(
+        [
+            LenderORM(
+                id=1,
+                name="Lender A",
+                slug="lender-a",
+                capital_base=1_000_000,
+            ),
+            LenderORM(
+                id=2,
+                name="Lender B",
+                slug="lender-b",
+                capital_base=5_000_000,
+            ),
+        ]
+    )
+    db_session.add_all(
+        [
+            PortfolioORM(
+                id=1,
+                name="Portfolio A",
+                lender_id=1,
+                capital_allocation=400_000,
+            ),
+            PortfolioORM(
+                id=2,
+                name="Portfolio B",
+                lender_id=1,
+                capital_allocation=300_000,
+            ),
+            PortfolioORM(
+                id=3,
+                name="Lender B Portfolio",
+                lender_id=2,
+                capital_allocation=4_000_000,
+            ),
+        ]
+    )
+    db_session.add_all(
+        [
+            UserORM(
+                id=8,
+                email="admin@example.com",
+                auth0_user_id="auth0|admin-a",
+                role="admin",
+                lender_id=1,
+                client_id=None,
+            ),
+            UserORM(
+                id=10,
+                email="admin-b@example.com",
+                auth0_user_id="auth0|admin-b",
+                role="admin",
+                lender_id=2,
+                client_id=None,
+            ),
+        ]
+    )
+    db_session.commit()
+    return db_session
+
+
+def test_create_portfolio_succeeds_when_allocation_fits_remaining_capital(
+    capital_limited_db: Session,
+) -> None:
+    client = _override(
+        _user(user_id=8, role="admin", lender_id=1),
+        capital_limited_db,
+    )
+    try:
+        response = client.post(
+            "/portfolios",
+            json={"name": "Growth", "capital_allocation": 200_000},
+        )
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 200
+    assert response.json()["capital_allocation"] == 200_000
+
+
+def test_create_portfolio_succeeds_when_allocation_uses_all_remaining_capital(
+    capital_limited_db: Session,
+) -> None:
+    client = _override(
+        _user(user_id=8, role="admin", lender_id=1),
+        capital_limited_db,
+    )
+    try:
+        response = client.post(
+            "/portfolios",
+            json={"name": "Growth", "capital_allocation": 300_000},
+        )
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 200
+    assert response.json()["capital_allocation"] == 300_000
+
+
+def test_create_portfolio_fails_when_allocation_exceeds_capital_base(
+    capital_limited_db: Session,
+) -> None:
+    client = _override(
+        _user(user_id=8, role="admin", lender_id=1),
+        capital_limited_db,
+    )
+    try:
+        response = client.post(
+            "/portfolios",
+            json={"name": "Too Large", "capital_allocation": 350_000},
+        )
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 400
+    assert "would exceed lender capital base" in response.json()["detail"]
+
+
+def test_create_portfolio_ignores_other_lender_allocations(
+    capital_limited_db: Session,
+) -> None:
+    client = _override(
+        _user(user_id=10, role="admin", lender_id=2),
+        capital_limited_db,
+    )
+    try:
+        response = client.post(
+            "/portfolios",
+            json={"name": "New", "capital_allocation": 900_000},
+        )
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 200
+
+
+def test_patch_portfolio_allocation_succeeds_within_capital_base(
+    capital_limited_db: Session,
+) -> None:
+    client = _override(
+        _user(user_id=8, role="admin", lender_id=1),
+        capital_limited_db,
+    )
+    try:
+        response = client.patch(
+            "/portfolios/1",
+            json={"capital_allocation": 500_000},
+        )
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 200
+    assert response.json()["capital_allocation"] == 500_000
+
+
+def test_patch_portfolio_allocation_fails_when_exceeding_capital_base(
+    capital_limited_db: Session,
+) -> None:
+    client = _override(
+        _user(user_id=8, role="admin", lender_id=1),
+        capital_limited_db,
+    )
+    try:
+        response = client.patch(
+            "/portfolios/1",
+            json={"capital_allocation": 800_000},
+        )
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 400
+    assert "would exceed lender capital base" in response.json()["detail"]
+
+
+def test_patch_portfolio_name_succeeds(capital_limited_db: Session) -> None:
+    client = _override(
+        _user(user_id=8, role="admin", lender_id=1),
+        capital_limited_db,
+    )
+    try:
+        response = client.patch(
+            "/portfolios/1",
+            json={"name": "Renamed Portfolio"},
+        )
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 200
+    assert response.json()["name"] == "Renamed Portfolio"
+
+
+def test_patch_portfolio_cross_lender_returns_not_found(
+    capital_limited_db: Session,
+) -> None:
+    client = _override(
+        _user(user_id=10, role="admin", lender_id=2),
+        capital_limited_db,
+    )
+    try:
+        response = client.patch(
+            "/portfolios/1",
+            json={"name": "Blocked"},
+        )
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Portfolio 1 not found"

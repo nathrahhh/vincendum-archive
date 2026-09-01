@@ -2,7 +2,7 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class DecisionStatus(str, Enum):
@@ -210,9 +210,24 @@ class LenderResponse(BaseModel):
     capital_base: float
 
 
+class LenderCapitalBaseUpdate(BaseModel):
+    capital_base: float = Field(..., gt=0)
+
+
 class PortfolioCreateRequest(BaseModel):
     name: str = Field(..., min_length=1)
     capital_allocation: float = Field(..., ge=0)
+
+
+class PortfolioUpdateRequest(BaseModel):
+    name: str | None = Field(default=None, min_length=1)
+    capital_allocation: float | None = Field(default=None, ge=0)
+
+    @model_validator(mode="after")
+    def require_at_least_one_field(self) -> "PortfolioUpdateRequest":
+        if self.name is None and self.capital_allocation is None:
+            raise ValueError("At least one field must be provided")
+        return self
 
 
 class PortfolioRecord(BaseModel):

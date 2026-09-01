@@ -17,3 +17,9 @@ export type LenderOnboardRequest = {
   name: string;
   capital_base: number;
 };
+
+export type LenderResponse = Lender;
+
+export type LenderCapitalBaseUpdate = {
+  capital_base: number;
+};

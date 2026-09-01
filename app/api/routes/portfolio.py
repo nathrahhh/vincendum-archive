@@ -4,14 +4,18 @@ from sqlalchemy.orm import Session
 from app.auth.permissions import require_admin
 from app.auth.tenant import get_user_lender_id, require_lender_user
 from app.db import get_db
-from app.models.schemas import PortfolioCreateRequest, PortfolioRecord
+from app.models.schemas import (
+    PortfolioCreateRequest,
+    PortfolioRecord,
+    PortfolioUpdateRequest,
+)
 from app.models.user import UserORM
 from app.services.portfolio_service import (
     PortfolioSummary,
     create_portfolio,
-    get_portfolio_for_lender,
     get_portfolio_summary,
     get_portfolios_for_lender,
+    update_portfolio,
 )
 
 router = APIRouter(prefix="/portfolios", tags=["portfolios"])
@@ -54,9 +58,29 @@ def get_portfolio(
 ) -> PortfolioSummary:
     """Return portfolio monitoring metrics for an owned portfolio."""
     lender_id = get_user_lender_id(current_user)
-    if get_portfolio_for_lender(db, portfolio_id, lender_id) is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Portfolio {portfolio_id} not found",
+    try:
+        return get_portfolio_summary(db, portfolio_id, lender_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from None
+
+
+@router.patch("/{portfolio_id}", response_model=PortfolioRecord)
+def patch_portfolio(
+    portfolio_id: int,
+    payload: PortfolioUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: UserORM = Depends(require_admin),
+    _: UserORM = Depends(require_lender_user),
+) -> PortfolioRecord:
+    """Update an owned portfolio's name and/or capital allocation."""
+    lender_id = get_user_lender_id(current_user)
+    try:
+        return update_portfolio(
+            db,
+            portfolio_id=portfolio_id,
+            lender_id=lender_id,
+            name=payload.name,
+            capital_allocation=payload.capital_allocation,
         )
-    return get_portfolio_summary(db, portfolio_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from None

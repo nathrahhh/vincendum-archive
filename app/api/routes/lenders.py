@@ -14,9 +14,15 @@ from app.auth.permissions import require_admin
 from app.auth.tenant import get_user_lender_id, require_lender_user
 from app.db import get_db
 from app.models.lender import LenderORM
-from app.models.schemas import IndustryExposure, LenderOnboardRequest, LenderResponse
+from app.models.schemas import (
+    IndustryExposure,
+    LenderCapitalBaseUpdate,
+    LenderOnboardRequest,
+    LenderResponse,
+)
 from app.models.user import UserORM
 from app.services.industry_exposure_service import get_industry_exposure
+from app.services.lender_service import update_lender_capital_base
 
 router = APIRouter(prefix="/lenders", tags=["lenders"])
 
@@ -121,6 +127,26 @@ def get_my_lender(
     ).scalar_one_or_none()
     if lender is None:
         raise HTTPException(status_code=404, detail="Lender not found")
+    return _to_response(lender)
+
+
+@router.patch("/me/capital-base", response_model=LenderResponse)
+def patch_my_lender_capital_base(
+    payload: LenderCapitalBaseUpdate,
+    db: Session = Depends(get_db),
+    current_user: UserORM = Depends(require_admin),
+    _: UserORM = Depends(require_lender_user),
+) -> LenderResponse:
+    """Update the authenticated lender's capital base."""
+    lender_id = get_user_lender_id(current_user)
+    try:
+        lender = update_lender_capital_base(
+            db,
+            lender_id,
+            payload.capital_base,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from None
     return _to_response(lender)
 
 

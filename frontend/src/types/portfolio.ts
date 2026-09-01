@@ -1,18 +1,32 @@
-export type Position = {
+export type PortfolioRecord = {
+  id: number;
   name: string;
-  value: number;
-  industry: string;
+  lender_id: number;
+  capital_allocation: number;
+};
+
+export type PortfolioSummary = {
+  portfolio_id: number;
+  portfolio_name: string;
+  capital_allocation: number;
+  total_exposure: number;
+  position_count: number;
+  client_count: number;
+  utilization_pct: number;
+};
+
+export type PortfolioCreateRequest = {
+  name: string;
+  capital_allocation: number;
+};
+
+export type PortfolioUpdateRequest = {
+  name?: string;
+  capital_allocation?: number;
 };
 
 export type IndustryExposure = {
   industry: string;
   value: number;
   percentage: number;
-};
-
-export type PortfolioResponse = {
-  positions: Position[];
-  total_portfolio_value: number;
-  capital_utilization_pct: number;
-  industry_exposure: IndustryExposure[];
 };

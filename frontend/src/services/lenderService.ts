@@ -33,6 +33,20 @@ export async function fetchIndustryExposure(): Promise<IndustryExposure[]> {
   }
 }
 
+/** PATCH /lenders/me/capital-base */
+export async function updateLenderCapitalBase(
+  capitalBase: number,
+): Promise<Lender> {
+  try {
+    return await request<Lender>("/lenders/me/capital-base", {
+      method: "PATCH",
+      body: JSON.stringify({ capital_base: capitalBase }),
+    });
+  } catch (error) {
+    throw toServiceError(error, "Failed to update capital base");
+  }
+}
+
 export async function fetchPublicLender(slug: string): Promise<Lender> {
   try {
     return await request<Lender>(

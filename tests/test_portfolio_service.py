@@ -20,8 +20,8 @@ from app.services.portfolio_service import (
     create_portfolio,
     get_portfolio_for_lender,
     get_portfolios_for_lender,
-    get_portfolio_industry_exposure,
     get_portfolio_summary,
+    update_portfolio,
 )
 
 _TEST_TABLES = [
@@ -185,7 +185,7 @@ def test_get_portfolio_summary_aggregates_exposure_and_utilization(
     )
     db_session.commit()
 
-    summary = get_portfolio_summary(db_session, portfolio_id=1)
+    summary = get_portfolio_summary(db_session, portfolio_id=1, lender_id=1)
 
     assert summary["portfolio_id"] == 1
     assert summary["portfolio_name"] == "Main"
@@ -194,27 +194,18 @@ def test_get_portfolio_summary_aggregates_exposure_and_utilization(
     assert summary["position_count"] == 3
     assert summary["client_count"] == 2
     assert summary["utilization_pct"] == 20.0
-    assert [item["industry"] for item in summary["industry_exposure"]] == [
-        "Technology",
-        "Manufacturing",
-    ]
-    assert summary["industry_exposure"][0]["value"] == 800_000
-    assert summary["industry_exposure"][0]["percentage"] == 80.0
-    assert summary["industry_exposure"][1]["value"] == 200_000
-    assert summary["industry_exposure"][1]["percentage"] == 20.0
 
 
 def test_get_portfolio_summary_empty_portfolio(db_session: Session) -> None:
     _seed_lender_and_portfolio(db_session)
     db_session.commit()
 
-    summary = get_portfolio_summary(db_session, portfolio_id=1)
+    summary = get_portfolio_summary(db_session, portfolio_id=1, lender_id=1)
 
     assert summary["total_exposure"] == 0.0
     assert summary["position_count"] == 0
     assert summary["client_count"] == 0
     assert summary["utilization_pct"] == 0.0
-    assert summary["industry_exposure"] == []
 
 
 def test_get_portfolio_summary_unknown_portfolio_raises(
@@ -224,41 +215,23 @@ def test_get_portfolio_summary_unknown_portfolio_raises(
     db_session.commit()
 
     with pytest.raises(ValueError, match="Portfolio 999 not found"):
-        get_portfolio_summary(db_session, portfolio_id=999)
+        get_portfolio_summary(db_session, portfolio_id=999, lender_id=1)
 
 
-def test_get_portfolio_industry_exposure_uses_client_industry(
-    db_session: Session,
-) -> None:
+def test_get_portfolio_summary_wrong_lender_raises(db_session: Session) -> None:
     _seed_lender_and_portfolio(db_session)
-    _add_client_deal_position(
-        db_session,
-        client_id=10,
-        deal_id=100,
-        position_id=1,
-        industry="Technology",
-        deal_name="Tech Loan",
-        value=250_000,
-    )
-    _add_client_deal_position(
-        db_session,
-        client_id=11,
-        deal_id=101,
-        position_id=2,
-        industry="Retail",
-        deal_name="Retail Loan",
-        value=750_000,
+    db_session.add(
+        LenderORM(
+            id=2,
+            name="Lender B",
+            slug="lender-b",
+            capital_base=10_000_000,
+        )
     )
     db_session.commit()
 
-    exposure = get_portfolio_industry_exposure(db_session, portfolio_id=1)
-
-    assert len(exposure) == 2
-    assert exposure[0]["industry"] == "Retail"
-    assert exposure[0]["value"] == 750_000
-    assert exposure[0]["percentage"] == 75.0
-    assert exposure[1]["industry"] == "Technology"
-    assert exposure[1]["percentage"] == 25.0
+    with pytest.raises(ValueError, match="Portfolio 1 not found"):
+        get_portfolio_summary(db_session, portfolio_id=1, lender_id=2)
 
 
 def test_get_portfolio_summary_zero_capital_allocation(db_session: Session) -> None:
@@ -277,7 +250,7 @@ def test_get_portfolio_summary_zero_capital_allocation(db_session: Session) -> N
     )
     db_session.commit()
 
-    summary = get_portfolio_summary(db_session, portfolio_id=1)
+    summary = get_portfolio_summary(db_session, portfolio_id=1, lender_id=1)
 
     assert summary["total_exposure"] == 100_000
     assert summary["utilization_pct"] == 0.0
@@ -405,3 +378,112 @@ def test_get_portfolio_for_lender_returns_none_for_other_lender(
     db_session.commit()
 
     assert get_portfolio_for_lender(db_session, portfolio_id=1, lender_id=1) is None
+
+
+def _seed_capital_limited_lender(db: Session) -> None:
+    db.add(
+        LenderORM(
+            id=1,
+            name="Lender A",
+            slug="lender-a",
+            capital_base=1_000_000,
+        )
+    )
+    db.add_all(
+        [
+            PortfolioORM(
+                id=1,
+                name="Portfolio A",
+                lender_id=1,
+                capital_allocation=400_000,
+            ),
+            PortfolioORM(
+                id=2,
+                name="Portfolio B",
+                lender_id=1,
+                capital_allocation=300_000,
+            ),
+        ]
+    )
+    db.flush()
+
+
+def test_create_portfolio_rejects_allocation_above_capital_base(
+    db_session: Session,
+) -> None:
+    _seed_capital_limited_lender(db_session)
+    db_session.commit()
+
+    with pytest.raises(HTTPException) as exc_info:
+        create_portfolio(
+            db_session,
+            lender_id=1,
+            name="Too Large",
+            capital_allocation=350_000,
+        )
+
+    assert exc_info.value.status_code == 400
+    assert "would exceed lender capital base" in exc_info.value.detail
+
+
+def test_create_portfolio_allows_allocation_within_remaining_capital(
+    db_session: Session,
+) -> None:
+    _seed_capital_limited_lender(db_session)
+    db_session.commit()
+
+    record = create_portfolio(
+        db_session,
+        lender_id=1,
+        name="Growth",
+        capital_allocation=300_000,
+    )
+
+    assert record.capital_allocation == 300_000
+
+
+def test_update_portfolio_allocation_within_capital_base(
+    db_session: Session,
+) -> None:
+    _seed_capital_limited_lender(db_session)
+    db_session.commit()
+
+    record = update_portfolio(
+        db_session,
+        portfolio_id=1,
+        lender_id=1,
+        capital_allocation=500_000,
+    )
+
+    assert record.capital_allocation == 500_000
+
+
+def test_update_portfolio_allocation_exceeds_capital_base(
+    db_session: Session,
+) -> None:
+    _seed_capital_limited_lender(db_session)
+    db_session.commit()
+
+    with pytest.raises(HTTPException) as exc_info:
+        update_portfolio(
+            db_session,
+            portfolio_id=1,
+            lender_id=1,
+            capital_allocation=800_000,
+        )
+
+    assert exc_info.value.status_code == 400
+    assert "would exceed lender capital base" in exc_info.value.detail
+
+
+def test_update_portfolio_wrong_lender_raises(db_session: Session) -> None:
+    _seed_capital_limited_lender(db_session)
+    db_session.commit()
+
+    with pytest.raises(ValueError, match="Portfolio 1 not found"):
+        update_portfolio(
+            db_session,
+            portfolio_id=1,
+            lender_id=2,
+            name="Blocked",
+        )

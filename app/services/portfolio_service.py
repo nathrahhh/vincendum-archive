@@ -10,16 +10,8 @@ from sqlalchemy.orm import Session
 
 from app.models.portfolio import PortfolioORM
 from app.models.schemas import PortfolioRecord
-from app.services.position_service import (
-    PortfolioPositionDetail,
-    get_positions_for_portfolio,
-)
-
-
-class PortfolioIndustryExposure(TypedDict):
-    industry: str
-    value: float
-    percentage: float
+from app.services.lender_service import validate_portfolio_capital_allocation
+from app.services.position_service import get_positions_for_portfolio
 
 
 class PortfolioSummary(TypedDict):
@@ -30,7 +22,6 @@ class PortfolioSummary(TypedDict):
     position_count: int
     client_count: int
     utilization_pct: float
-    industry_exposure: list[PortfolioIndustryExposure]
 
 
 def _to_portfolio_record(portfolio: PortfolioORM) -> PortfolioRecord:
@@ -40,13 +31,6 @@ def _to_portfolio_record(portfolio: PortfolioORM) -> PortfolioRecord:
         lender_id=portfolio.lender_id,
         capital_allocation=float(portfolio.capital_allocation),
     )
-
-
-def _get_portfolio_or_raise(db: Session, portfolio_id: int) -> PortfolioORM:
-    portfolio = db.get(PortfolioORM, portfolio_id)
-    if portfolio is None:
-        raise ValueError(f"Portfolio {portfolio_id} not found")
-    return portfolio
 
 
 def get_portfolio_for_lender(
@@ -63,6 +47,18 @@ def get_portfolio_for_lender(
     ).scalar_one_or_none()
 
 
+def _get_portfolio_for_lender_or_raise(
+    db: Session,
+    portfolio_id: int,
+    lender_id: int,
+) -> PortfolioORM:
+    """Return an owned portfolio or raise ``ValueError`` when not found."""
+    portfolio = get_portfolio_for_lender(db, portfolio_id, lender_id)
+    if portfolio is None:
+        raise ValueError(f"Portfolio {portfolio_id} not found")
+    return portfolio
+
+
 def create_portfolio(
     db: Session,
     *,
@@ -74,11 +70,12 @@ def create_portfolio(
     cleaned_name = name.strip()
     if not cleaned_name:
         raise HTTPException(status_code=400, detail="Portfolio name is required")
-    if capital_allocation < 0:
-        raise HTTPException(
-            status_code=400,
-            detail="Capital allocation cannot be negative",
-        )
+
+    validate_portfolio_capital_allocation(
+        db,
+        lender_id,
+        capital_allocation,
+    )
 
     portfolio = PortfolioORM(
         name=cleaned_name,
@@ -86,6 +83,37 @@ def create_portfolio(
         capital_allocation=capital_allocation,
     )
     db.add(portfolio)
+    db.commit()
+    db.refresh(portfolio)
+    return _to_portfolio_record(portfolio)
+
+
+def update_portfolio(
+    db: Session,
+    *,
+    portfolio_id: int,
+    lender_id: int,
+    name: str | None = None,
+    capital_allocation: float | None = None,
+) -> PortfolioRecord:
+    """Update an owned portfolio's name and/or capital allocation."""
+    portfolio = _get_portfolio_for_lender_or_raise(db, portfolio_id, lender_id)
+
+    if name is not None:
+        cleaned_name = name.strip()
+        if not cleaned_name:
+            raise HTTPException(status_code=400, detail="Portfolio name is required")
+        portfolio.name = cleaned_name
+
+    if capital_allocation is not None:
+        validate_portfolio_capital_allocation(
+            db,
+            lender_id,
+            capital_allocation,
+            exclude_portfolio_id=portfolio_id,
+        )
+        portfolio.capital_allocation = capital_allocation
+
     db.commit()
     db.refresh(portfolio)
     return _to_portfolio_record(portfolio)
@@ -104,61 +132,19 @@ def get_portfolios_for_lender(
     return [_to_portfolio_record(row) for row in rows]
 
 
-def _build_industry_exposure(
-    positions: list[PortfolioPositionDetail],
-) -> list[PortfolioIndustryExposure]:
-    """Aggregate ``positions`` by ``ClientORM.industry``."""
-    if not positions:
-        return []
-
-    by_industry: dict[str, float] = {}
-    for position in positions:
-        industry = position["client_industry"]
-        by_industry[industry] = by_industry.get(industry, 0.0) + position["value"]
-
-    total_exposure = sum(by_industry.values())
-    exposure = [
-        PortfolioIndustryExposure(
-            industry=industry,
-            value=round(amount, 4),
-            percentage=(
-                0.0
-                if total_exposure == 0
-                else round((amount / total_exposure) * 100, 4)
-            ),
-        )
-        for industry, amount in by_industry.items()
-    ]
-    exposure.sort(key=lambda item: item["value"], reverse=True)
-    return exposure
-
-
-def get_portfolio_industry_exposure(
-    db: Session,
-    portfolio_id: int,
-) -> list[PortfolioIndustryExposure]:
-    """
-    Aggregate position values by client industry for ``portfolio_id``.
-
-    Percentages are ``industry exposure / total portfolio exposure * 100``.
-    Industries are sorted by exposure descending.
-    """
-    positions = get_positions_for_portfolio(db, portfolio_id)
-    return _build_industry_exposure(positions)
-
-
 def get_portfolio_summary(
     db: Session,
     portfolio_id: int,
+    lender_id: int,
 ) -> PortfolioSummary:
     """
-    Return portfolio monitoring metrics for ``portfolio_id``.
+    Return portfolio monitoring metrics for ``portfolio_id`` owned by ``lender_id``.
 
-    Exposure and industry breakdowns are derived from positions linked through
-    Deal → Client where ``clients.portfolio_id`` matches the portfolio.
+    Exposure is derived from positions linked through Deal → Client where
+    ``clients.portfolio_id`` matches the portfolio.
     Utilization uses the portfolio's ``capital_allocation``.
     """
-    portfolio = _get_portfolio_or_raise(db, portfolio_id)
+    portfolio = _get_portfolio_for_lender_or_raise(db, portfolio_id, lender_id)
     positions = get_positions_for_portfolio(db, portfolio_id)
 
     total_exposure = round(sum(position["value"] for position in positions), 4)
@@ -178,5 +164,4 @@ def get_portfolio_summary(
         position_count=len(positions),
         client_count=client_count,
         utilization_pct=utilization_pct,
-        industry_exposure=_build_industry_exposure(positions),
     )
