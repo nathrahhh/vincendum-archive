@@ -5,8 +5,13 @@ import {
   createPortfolio,
   fetchPortfolio,
   fetchPortfolios,
+  updatePortfolio,
 } from "../services/portfolioService";
-import type { IndustryExposure, PortfolioSummary } from "../types";
+import type {
+  IndustryExposure,
+  PortfolioSummary,
+  PortfolioUpdateRequest,
+} from "../types";
 
 export default function DashboardPage() {
   const [summaries, setSummaries] = useState<PortfolioSummary[]>([]);
@@ -14,6 +19,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [industryExposureLoading, setIndustryExposureLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [createName, setCreateName] = useState("");
   const [createAllocation, setCreateAllocation] = useState("");
   const [createError, setCreateError] = useState<string | null>(null);
@@ -29,7 +35,9 @@ export default function DashboardPage() {
     const portfolioSummaries = await Promise.all(
       records.map((portfolio) => fetchPortfolio(portfolio.id)),
     );
-    setSummaries(portfolioSummaries);
+    setSummaries(
+      portfolioSummaries.sort((left, right) => left.portfolio_id - right.portfolio_id),
+    );
   }, []);
 
   useEffect(() => {
@@ -86,18 +94,49 @@ export default function DashboardPage() {
     };
   }, []);
 
+  const handleUpdatePortfolio = useCallback(
+    async (portfolioId: number, payload: PortfolioUpdateRequest) => {
+      await updatePortfolio(portfolioId, payload);
+      const updatedSummary = await fetchPortfolio(portfolioId);
+      setSummaries((current) =>
+        current
+          .map((summary) =>
+            summary.portfolio_id === portfolioId ? updatedSummary : summary,
+          )
+          .sort((left, right) => left.portfolio_id - right.portfolio_id),
+      );
+    },
+    [],
+  );
+
+  function openCreateForm() {
+    setCreateError(null);
+    setCreateName("");
+    setCreateAllocation("");
+    setShowCreateForm(true);
+  }
+
+  function closeCreateForm() {
+    setCreateError(null);
+    setCreateName("");
+    setCreateAllocation("");
+    setShowCreateForm(false);
+  }
+
   async function handleCreatePortfolio(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setCreateError(null);
     setCreateSubmitting(true);
     try {
-      await createPortfolio({
+      const created = await createPortfolio({
         name: createName.trim(),
         capital_allocation: Number(createAllocation),
       });
-      setCreateName("");
-      setCreateAllocation("");
-      await loadPortfolioSummaries();
+      const summary = await fetchPortfolio(created.id);
+      setSummaries((current) =>
+        [...current, summary].sort((left, right) => left.portfolio_id - right.portfolio_id),
+      );
+      closeCreateForm();
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : "Failed to create portfolio");
     } finally {
@@ -109,30 +148,24 @@ export default function DashboardPage() {
     <div className="dashboard">
       {error ? <p className="dashboard-error">{error}</p> : null}
 
-      {isLoading ? (
-        <p className="dashboard-panel__subtitle">Loading portfolios…</p>
+      {!isLoading ? (
+        <div className="dashboard-toolbar">
+          <button
+            type="button"
+            className="dashboard-button"
+            onClick={openCreateForm}
+          >
+            Add Portfolio
+          </button>
+        </div>
       ) : null}
 
-      {!isLoading && summaries.length > 0 ? (
-        <section className="dashboard-portfolio-cards">
-          {summaries.map((summary) => (
-            <PortfolioSummaryPanel
-              key={summary.portfolio_id}
-              summary={summary}
-            />
-          ))}
-        </section>
-      ) : null}
-
-      {!isLoading && summaries.length === 0 ? (
+      {showCreateForm ? (
         <section className="dashboard-panel">
-          <h2 className="dashboard-panel__title">Portfolios</h2>
-          <p className="dashboard-panel__subtitle">
-            No portfolios yet. Create one below to start monitoring.
-          </p>
+          <h2 className="dashboard-panel__title">Add Portfolio</h2>
           <form className="dashboard-form" onSubmit={handleCreatePortfolio}>
             <label>
-              Name
+              Portfolio name
               <input
                 type="text"
                 value={createName}
@@ -152,10 +185,45 @@ export default function DashboardPage() {
               />
             </label>
             {createError ? <p className="dashboard-error">{createError}</p> : null}
-            <button type="submit" disabled={createSubmitting}>
-              {createSubmitting ? "Creating…" : "Create portfolio"}
-            </button>
+            <div className="dashboard-form__actions">
+              <button type="submit" disabled={createSubmitting}>
+                {createSubmitting ? "Creating…" : "Create"}
+              </button>
+              <button
+                type="button"
+                className="dashboard-button dashboard-button--secondary"
+                onClick={closeCreateForm}
+                disabled={createSubmitting}
+              >
+                Cancel
+              </button>
+            </div>
           </form>
+        </section>
+      ) : null}
+
+      {isLoading ? (
+        <p className="dashboard-panel__subtitle">Loading portfolios…</p>
+      ) : null}
+
+      {!isLoading && summaries.length > 0 ? (
+        <section className="dashboard-portfolio-cards">
+          {summaries.map((summary) => (
+            <PortfolioSummaryPanel
+              key={summary.portfolio_id}
+              summary={summary}
+              onUpdate={handleUpdatePortfolio}
+            />
+          ))}
+        </section>
+      ) : null}
+
+      {!isLoading && summaries.length === 0 ? (
+        <section className="dashboard-panel">
+          <h2 className="dashboard-panel__title">Portfolios</h2>
+          <p className="dashboard-panel__subtitle">
+            No portfolios yet. Use Add Portfolio to create one.
+          </p>
         </section>
       ) : null}
 

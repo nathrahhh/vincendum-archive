@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi import HTTPException
 from sqlalchemy import create_engine
+from sqlalchemy.sql.selectable import Select
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -81,13 +83,14 @@ def _add_client(
     client_id: int,
     industry: str,
     client_name: str | None = None,
+    credit_limit: float | None = 1_000_000,
 ) -> None:
     db.add(
         ClientORM(
             id=client_id,
             name=client_name or f"Client {client_id}",
             industry=industry,
-            credit_limit=1_000_000,
+            credit_limit=credit_limit,
             lender_id=1,
             portfolio_id=1,
         )
@@ -194,6 +197,102 @@ def test_get_portfolio_summary_aggregates_exposure_and_utilization(
     assert summary["position_count"] == 3
     assert summary["client_count"] == 2
     assert summary["utilization_pct"] == 20.0
+    assert summary["remaining_capacity"] == 3_000_000
+
+
+def test_get_portfolio_summary_remaining_capacity_multiple_clients(
+    db_session: Session,
+) -> None:
+    _seed_lender_and_portfolio(db_session)
+    portfolio = db_session.get(PortfolioORM, 1)
+    assert portfolio is not None
+    portfolio.capital_allocation = 4_000_000
+    _add_client(
+        db_session,
+        client_id=10,
+        industry="Technology",
+        credit_limit=1_000_000,
+    )
+    _add_client(
+        db_session,
+        client_id=11,
+        industry="Manufacturing",
+        credit_limit=800_000,
+    )
+    db_session.commit()
+
+    summary = get_portfolio_summary(db_session, portfolio_id=1, lender_id=1)
+
+    assert summary["remaining_capacity"] == 2_200_000
+
+
+def test_get_portfolio_summary_remaining_capacity_no_clients(
+    db_session: Session,
+) -> None:
+    _seed_lender_and_portfolio(db_session)
+    db_session.commit()
+
+    summary = get_portfolio_summary(db_session, portfolio_id=1, lender_id=1)
+
+    assert summary["remaining_capacity"] == 5_000_000
+
+
+def test_get_portfolio_summary_remaining_capacity_none_credit_limit(
+    db_session: Session,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _seed_lender_and_portfolio(db_session)
+    _add_client(
+        db_session,
+        client_id=11,
+        industry="Manufacturing",
+        credit_limit=500_000,
+    )
+    db_session.commit()
+
+    original_execute = db_session.execute
+
+    def execute_with_null_credit_limit(statement, *args, **kwargs):
+        if isinstance(statement, Select) and any(
+            getattr(column, "key", None) == "credit_limit"
+            for column in statement.selected_columns
+        ):
+            result = MagicMock()
+            result.scalars.return_value.all.return_value = [None, 500_000]
+            return result
+        return original_execute(statement, *args, **kwargs)
+
+    monkeypatch.setattr(db_session, "execute", execute_with_null_credit_limit)
+
+    summary = get_portfolio_summary(db_session, portfolio_id=1, lender_id=1)
+
+    assert summary["remaining_capacity"] == 4_500_000
+
+
+def test_get_portfolio_summary_utilization_uses_exposure_not_credit_limits(
+    db_session: Session,
+) -> None:
+    _seed_lender_and_portfolio(db_session)
+    _add_client_deal_position(
+        db_session,
+        client_id=10,
+        deal_id=100,
+        position_id=1,
+        industry="Technology",
+        deal_name="Small Loan",
+        value=100_000,
+        client_name="High Limit Client",
+    )
+    client = db_session.get(ClientORM, 10)
+    assert client is not None
+    client.credit_limit = 4_000_000
+    db_session.commit()
+
+    summary = get_portfolio_summary(db_session, portfolio_id=1, lender_id=1)
+
+    assert summary["total_exposure"] == 100_000
+    assert summary["utilization_pct"] == 2.0
+    assert summary["remaining_capacity"] == 1_000_000
 
 
 def test_get_portfolio_summary_empty_portfolio(db_session: Session) -> None:
@@ -206,6 +305,7 @@ def test_get_portfolio_summary_empty_portfolio(db_session: Session) -> None:
     assert summary["position_count"] == 0
     assert summary["client_count"] == 0
     assert summary["utilization_pct"] == 0.0
+    assert summary["remaining_capacity"] == 5_000_000
 
 
 def test_get_portfolio_summary_unknown_portfolio_raises(

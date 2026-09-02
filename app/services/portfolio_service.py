@@ -8,6 +8,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.models.client import ClientORM
 from app.models.portfolio import PortfolioORM
 from app.models.schemas import PortfolioRecord
 from app.services.lender_service import validate_portfolio_capital_allocation
@@ -22,6 +23,7 @@ class PortfolioSummary(TypedDict):
     position_count: int
     client_count: int
     utilization_pct: float
+    remaining_capacity: float
 
 
 def _to_portfolio_record(portfolio: PortfolioORM) -> PortfolioRecord:
@@ -147,9 +149,18 @@ def get_portfolio_summary(
     portfolio = _get_portfolio_for_lender_or_raise(db, portfolio_id, lender_id)
     positions = get_positions_for_portfolio(db, portfolio_id)
 
+    credit_limits = db.execute(
+        select(ClientORM.credit_limit).where(
+            ClientORM.portfolio_id == portfolio_id,
+            ClientORM.lender_id == lender_id,
+        )
+    ).scalars().all()
+    total_credit_limit = sum(float(credit_limit or 0) for credit_limit in credit_limits)
+
     total_exposure = round(sum(position["value"] for position in positions), 4)
     client_count = len({position["client_id"] for position in positions})
     capital_allocation = float(portfolio.capital_allocation)
+    remaining_capacity = round(capital_allocation - total_credit_limit, 4)
     utilization_pct = (
         0.0
         if capital_allocation <= 0
@@ -164,4 +175,5 @@ def get_portfolio_summary(
         position_count=len(positions),
         client_count=client_count,
         utilization_pct=utilization_pct,
+        remaining_capacity=remaining_capacity,
     )

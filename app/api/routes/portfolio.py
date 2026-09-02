@@ -7,6 +7,7 @@ from app.db import get_db
 from app.models.schemas import (
     PortfolioCreateRequest,
     PortfolioRecord,
+    PortfolioSummaryResponse,
     PortfolioUpdateRequest,
 )
 from app.models.user import UserORM
@@ -49,7 +50,7 @@ def list_portfolios(
     return get_portfolios_for_lender(db, lender_id)
 
 
-@router.get("/{portfolio_id}")
+@router.get("/{portfolio_id}", response_model=PortfolioSummaryResponse)
 def get_portfolio(
     portfolio_id: int,
     db: Session = Depends(get_db),

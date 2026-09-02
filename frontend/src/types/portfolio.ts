@@ -13,6 +13,7 @@ export type PortfolioSummary = {
   position_count: number;
   client_count: number;
   utilization_pct: number;
+  remaining_capacity: number;
 };
 
 export type PortfolioCreateRequest = {

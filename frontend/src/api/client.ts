@@ -20,7 +20,16 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`API ${response.status}: ${response.statusText}`);
+    let message = `API ${response.status}: ${response.statusText}`;
+    try {
+      const body = (await response.json()) as { detail?: unknown };
+      if (typeof body.detail === "string") {
+        message = body.detail;
+      }
+    } catch {
+      // Keep the default status message when the body is not JSON.
+    }
+    throw new Error(message);
   }
 
   return response.json();

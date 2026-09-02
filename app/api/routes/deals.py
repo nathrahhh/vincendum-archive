@@ -18,7 +18,6 @@ from app.services.deal_service import _to_deal_record
 from app.services.deal_service import approve_deal as approve_deal_service
 from app.services.deal_service import create_deal as create_deal_service
 from app.services.deal_service import reject_deal as reject_deal_service
-from app.services.concentration_risk_engine import RiskEngine
 
 router = APIRouter()
 deals_router = APIRouter(prefix="/deals", tags=["deals"])

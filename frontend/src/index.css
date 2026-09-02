@@ -288,6 +288,51 @@ a {
   font: inherit;
 }
 
+.dashboard-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dashboard-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.dashboard-button {
+  padding: 0.5rem 0.85rem;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.dashboard-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dashboard-button--secondary {
+  border-color: #d1d5db;
+  background: #fff;
+  color: #374151;
+}
+
+.dashboard-portfolio-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.dashboard-portfolio-card__header .dashboard-panel__title {
+  margin: 0;
+}
+
 .dashboard-portfolio-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

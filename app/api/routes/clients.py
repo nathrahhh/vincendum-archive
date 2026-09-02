@@ -59,7 +59,8 @@ def get_client(
     ).scalar_one_or_none()
     if row is None:
         raise HTTPException(status_code=404, detail=f"Client {client_id} not found")
-    return _client_to_dict(row)
+    exposure = get_client_exposure(db, client_id)
+    return {**_client_to_dict(row), **exposure}
 
 
 @clients_router.put("/{client_id}/credit-limit")
@@ -117,7 +118,8 @@ def get_my_client(
     db: Session = Depends(get_db),
     current_client: ClientORM = Depends(get_current_client),
 ) -> dict:
-    return _client_to_dict(current_client)
+    exposure = get_client_exposure(db, current_client.id)
+    return {**_client_to_dict(current_client), **exposure}
 
 
 router.include_router(clients_router)

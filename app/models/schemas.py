@@ -23,12 +23,15 @@ class IndustryExposure(BaseModel):
     percentage: float
 
 
-class PortfolioResponse(BaseModel):
-    positions: list[Position]
-    total_portfolio_value: float
-    capital_utilization_pct: float
-    industry_exposure: list[IndustryExposure]
-
+class PortfolioSummaryResponse(BaseModel):
+    portfolio_id: int
+    portfolio_name: str
+    capital_allocation: float
+    total_exposure: float
+    position_count: int
+    client_count: int
+    utilization_pct: float
+    remaining_capacity: float
 
 class DealRequest(BaseModel):
     """Client-submitted deal application fields.
