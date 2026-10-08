@@ -1,5 +1,23 @@
 # Vincendum
 
+> **Archived version**
+>
+> This repository contains an earlier version of Vincendum and is no longer actively maintained. It is preserved as a portfolio artifact to demonstrate the full-stack architecture and engineering work involved in the project.
+>
+> The current version of Vincendum is deployed at **https://app.vincendum.com**.
+>
+> This version demonstrates experience with:
+>
+> * React / Vite frontend development
+> * FastAPI REST APIs
+> * PostgreSQL and SQLAlchemy
+> * Alembic database migrations
+> * Redis
+> * Auth0 authentication
+> * AWS S3 document storage
+> * Docker-based development
+> * TrueLayer / Open Banking integration
+
 Vincendum is a credit risk and concentration risk engine built with:
 
 - FastAPI
